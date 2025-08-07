@@ -6,7 +6,7 @@ import shutil
 from langchain.vectorstores import Chroma
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from .data_loader import load_documents_from_csvs
-from config import (
+from ..config import (
     SCREENS_DATA_PATH,
     DOORS_DATA_PATH,
     VIDEOS_DATA_PATH,
@@ -82,31 +82,3 @@ class RAGProcessor:
         docs = self.retriever.get_relevant_documents(query)
         print(f"检索到 {len(docs)} 个相关文档。")
         return docs
-
-if __name__ == '__main__':
-    # 测试代码
-    print("--- 测试RAG处理器 ---")
-    
-    # 第一次初始化，应该会创建数据库
-    print("\n[1] 第一次初始化（或强制重新加载）...")
-    rag_processor = RAGProcessor(force_reload=True)
-    
-    # 第二次初始化，应该会从本地加载
-    print("\n[2] 第二次初始化（从本地加载）...")
-    rag_processor_load = RAGProcessor()
-
-    # 测试检索功能
-    print("\n[3] 测试检索功能...")
-    test_query_1 = "我想看关于5G的视频"
-    retrieved_docs_1 = rag_processor.retrieve_context(test_query_1)
-    for i, doc in enumerate(retrieved_docs_1):
-        print(f"  文档 {i+1}: {doc.page_content}")
-        print(f"  元数据: {doc.metadata}\n")
-
-    test_query_2 = "打开智能家居区的门"
-    retrieved_docs_2 = rag_processor.retrieve_context(test_query_2)
-    for i, doc in enumerate(retrieved_docs_2):
-        print(f"  文档 {i+1}: {doc.page_content}")
-        print(f"  元数据: {doc.metadata}\n")
-        
-    print("--- RAG处理器测试完成 ---")

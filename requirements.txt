@@ -2,9 +2,10 @@ pyaudio
 numpy
 funasr
 torch
-volcenginesdkarkruntime
+# volcenginesdkarkruntime
 pandas
 openpyxl
 langchain
 chromadb
 sentence-transformers
+langchain-community

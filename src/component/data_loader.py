@@ -93,28 +93,3 @@ def format_docs_for_prompt(docs):
     # 为了可读性，进行简单的JSON格式化
     import json
     return json.dumps(knowledge_base, ensure_ascii=False, indent=2)
-
-if __name__ == '__main__':
-    # 测试代码
-    from config import SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH
-    
-    try:
-        all_data_paths = [SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH]
-        docs = load_documents_from_csvs(all_data_paths)
-        print(f"成功加载 {len(docs)} 个文档。")
-        
-        # 打印第一个文档的内容和元数据
-        if docs:
-            print("\n--- 第一个文档示例 ---")
-            print(f"内容: {docs[0].page_content}")
-            print(f"元数据: {docs[0].metadata}")
-            print("---------------------\n")
-        
-        # 测试格式化函数
-        formatted_context = format_docs_for_prompt(docs) # 测试所有文档
-        print("--- 格式化后的上下文示例 ---")
-        print(formatted_context)
-        print("--------------------------\n")
-
-    except (FileNotFoundError, IOError) as e:
-        print(f"错误: {e}")

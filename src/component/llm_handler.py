@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from volcenginesdkarkruntime import Ark
-from config import (
+from ..config import (
     ARK_API_KEY,
     ARK_BASE_URL,
     LLM_MODEL_NAME,
@@ -81,34 +81,3 @@ class LLMHandler:
             print(error_message)
             # 返回一个标准的错误JSON
             return '{"action": "error", "reason": "api_failure"}'
-
-if __name__ == '__main__':
-    # 测试代码
-    from .rag_processor import RAGProcessor
-
-    print("--- 测试LLM处理器 ---")
-    
-    # 1. 初始化RAG处理器以获取上下文
-    print("\n[1] 初始化RAG处理器...")
-    rag_processor = RAGProcessor()
-    
-    # 2. 初始化LLM处理器
-    print("\n[2] 初始化LLM处理器...")
-    llm_handler = LLMHandler()
-    
-    # 3. 模拟用户输入并进行测试
-    print("\n[3] 模拟用户输入并获取响应...")
-    test_query = "在主屏幕上播放一下关于企业文化的视频"
-    
-    # a. RAG检索
-    retrieved_docs = rag_processor.retrieve_context(test_query)
-    
-    # b. LLM获取响应
-    response_json = llm_handler.get_response(test_query, retrieved_docs)
-    
-    print(f"\n--- 测试结果 ---")
-    print(f"用户查询: '{test_query}'")
-    print(f"大模型响应: {response_json}")
-    print("----------------\n")
-    
-    print("--- LLM处理器测试完成 ---")
