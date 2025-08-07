@@ -33,7 +33,9 @@ CHUNK = 1024
 RECORD_SECONDS = 5  # 每次处理的音频块时长
 
 # --- RAG and ChromaDB Settings ---
-EXCEL_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "data.xlsx")
+SCREENS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "screens.csv")
+DOORS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "doors.csv")
+VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
 CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 # RAG检索返回的文档数量

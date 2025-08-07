@@ -34,7 +34,7 @@ def main():
         "--force-rag-reload",
         action="store_true",
         help="强制重新加载数据源并重建向量数据库。\n"
-             "如果你的 'data/data.xlsx' 文件有更新，请使用此选项。"
+             "如果你的 'data/screens.csv', 'data/doors.csv', 或 'data/videos.csv' 文件有更新，请使用此选项。"
     )
     
     args = parser.parse_args()

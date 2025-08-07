@@ -5,26 +5,30 @@ import pandas as pd
 from langchain.docstore.document import Document
 import os
 
-def load_documents_from_excel(file_path):
+def load_documents_from_csvs(file_paths):
     """
-    从Excel文件加载数据并转换为LangChain的Document对象。
+    从多个CSV文件加载数据并转换为LangChain的Document对象。
     
     Args:
-        file_path (str): Excel文件的路径。
+        file_paths (list[str]): CSV文件路径的列表。
         
     Returns:
         list[Document]: Document对象列表。
     """
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"数据文件未找到: {file_path}")
-        
-    try:
-        df = pd.read_excel(file_path)
-    except Exception as e:
-        raise IOError(f"读取Excel文件失败: {e}")
+    dfs = []
+    for file_path in file_paths:
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"数据文件未找到: {file_path}")
+        try:
+            df = pd.read_csv(file_path)
+            dfs.append(df)
+        except Exception as e:
+            raise IOError(f"读取CSV文件 '{file_path}' 失败: {e}")
+    
+    combined_df = pd.concat(dfs, ignore_index=True)
 
     documents = []
-    for _, row in df.iterrows():
+    for _, row in combined_df.iterrows():
         # 将每一行转换为一个文本内容，用于向量化
         # 我们将所有相关信息合并，以便语义搜索能捕捉到
         content = f"类型: {row['type']}, 名称: {row['name']}"
@@ -92,10 +96,11 @@ def format_docs_for_prompt(docs):
 
 if __name__ == '__main__':
     # 测试代码
-    from config import EXCEL_DATA_PATH
+    from config import SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH
     
     try:
-        docs = load_documents_from_excel(EXCEL_DATA_PATH)
+        all_data_paths = [SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH]
+        docs = load_documents_from_csvs(all_data_paths)
         print(f"成功加载 {len(docs)} 个文档。")
         
         # 打印第一个文档的内容和元数据
@@ -106,7 +111,7 @@ if __name__ == '__main__':
             print("---------------------\n")
         
         # 测试格式化函数
-        formatted_context = format_docs_for_prompt(docs[:3]) # 取前3个测试
+        formatted_context = format_docs_for_prompt(docs) # 测试所有文档
         print("--- 格式化后的上下文示例 ---")
         print(formatted_context)
         print("--------------------------\n")

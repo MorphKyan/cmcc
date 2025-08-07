@@ -1,0 +1,4 @@
+type,name,aliases,description,filename
+screen,主屏幕,"中间的屏幕,大屏幕",,
+screen,左侧互动大屏,"左边的屏幕,左边那个屏",,
+screen,右侧演示屏,"右边的屏幕,右边那个屏",,

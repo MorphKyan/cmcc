@@ -5,9 +5,11 @@ import os
 import shutil
 from langchain.vectorstores import Chroma
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from .data_loader import load_documents_from_excel
+from .data_loader import load_documents_from_csvs
 from .config import (
-    EXCEL_DATA_PATH,
+    SCREENS_DATA_PATH,
+    DOORS_DATA_PATH,
+    VIDEOS_DATA_PATH,
     CHROMA_DB_PATH,
     EMBEDDING_MODEL,
     TOP_K_RESULTS
@@ -44,12 +46,13 @@ class RAGProcessor:
 
     def _create_and_persist_db(self):
         """
-        从Excel加载文档，创建向量数据库并持久化到磁盘。
+        从CSV加载文档，创建向量数据库并持久化到磁盘。
         """
         try:
-            documents = load_documents_from_excel(EXCEL_DATA_PATH)
+            data_paths = [SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH]
+            documents = load_documents_from_csvs(data_paths)
             if not documents:
-                raise ValueError("从Excel加载的文档为空，无法创建数据库。")
+                raise ValueError("从CSV加载的文档为空，无法创建数据库。")
             
             print(f"成功加载 {len(documents)} 个文档，正在创建向量嵌入...")
             
