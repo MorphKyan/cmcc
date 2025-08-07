@@ -5,11 +5,10 @@ import argparse
 import sys
 import os
 
-# 将项目根目录添加到Python路径中，以便可以正确导入模块
-# 这使得我们可以从任何地方运行 `python main.py`
+# 将包含 component 的目录（即 src 目录）添加到 Python 路径中
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from cmcc_assistant.speech_recognizer import RealTimeSpeechRecognizer
+from component.speech_recognizer import RealTimeSpeechRecognizer
 
 def main():
     """

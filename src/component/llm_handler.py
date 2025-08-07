@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from volcenginesdkarkruntime import Ark
-from cmcc_assistant.config import (
+from .config import (
     ARK_API_KEY,
     ARK_BASE_URL,
     LLM_MODEL_NAME,
     SYSTEM_PROMPT_TEMPLATE
 )
-from cmcc_assistant.data_loader import format_docs_for_prompt
+from .data_loader import format_docs_for_prompt
 
 class LLMHandler:
     def __init__(self):
@@ -84,7 +84,7 @@ class LLMHandler:
 
 if __name__ == '__main__':
     # 测试代码
-    from cmcc_assistant.rag_processor import RAGProcessor
+    from .rag_processor import RAGProcessor
 
     print("--- 测试LLM处理器 ---")
     

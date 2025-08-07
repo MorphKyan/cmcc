@@ -9,13 +9,13 @@ import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
-from cmcc_assistant.config import (
+from .config import (
     SENSE_VOICE_MODEL_DIR, VAD_MODEL, VAD_KWARGS, LANGUAGE, USE_ITN,
     BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, FORMAT, CHANNELS, RATE,
     CHUNK, RECORD_SECONDS
 )
-from cmcc_assistant.rag_processor import RAGProcessor
-from cmcc_assistant.llm_handler import LLMHandler
+from .rag_processor import RAGProcessor
+from .llm_handler import LLMHandler
 
 class RealTimeSpeechRecognizer:
     def __init__(self, device="auto", force_rag_reload=False):

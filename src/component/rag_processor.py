@@ -5,10 +5,10 @@ import os
 import shutil
 from langchain.vectorstores import Chroma
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from cmcc_assistant.data_loader import load_documents_from_excel
-from cmcc_assistant.config import (
-    EXCEL_DATA_PATH, 
-    CHROMA_DB_PATH, 
+from .data_loader import load_documents_from_excel
+from .config import (
+    EXCEL_DATA_PATH,
+    CHROMA_DB_PATH,
     EMBEDDING_MODEL,
     TOP_K_RESULTS
 )

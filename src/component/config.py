@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import pyaudio
+import os
+
+# 获取项目根目录（假设config.py在 src/component/ 下）
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 # --- API Keys and Endpoints ---
 # 请从火山引擎官网获取您的API Key并替换
@@ -28,8 +33,8 @@ CHUNK = 1024
 RECORD_SECONDS = 5  # 每次处理的音频块时长
 
 # --- RAG and ChromaDB Settings ---
-EXCEL_DATA_PATH = "data/data.xlsx"
-CHROMA_DB_PATH = "chroma_db"
+EXCEL_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "data.xlsx")
+CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 # RAG检索返回的文档数量
 TOP_K_RESULTS = 3 
