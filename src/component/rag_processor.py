@@ -6,7 +6,7 @@ import shutil
 from langchain.vectorstores import Chroma
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from .data_loader import load_documents_from_csvs
-from .config import (
+from config import (
     SCREENS_DATA_PATH,
     DOORS_DATA_PATH,
     VIDEOS_DATA_PATH,

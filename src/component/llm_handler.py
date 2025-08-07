@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from volcenginesdkarkruntime import Ark
-from .config import (
+from config import (
     ARK_API_KEY,
     ARK_BASE_URL,
     LLM_MODEL_NAME,

@@ -14,10 +14,10 @@ import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
-from .config import (
+from config import (
     SENSE_VOICE_MODEL_DIR, VAD_MODEL, VAD_KWARGS, LANGUAGE, USE_ITN,
     BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, FORMAT, CHANNELS, RATE,
-    CHUNK, RECORD_SECONDS
+    CHUNK
 )
 from .rag_processor import RAGProcessor
 from .llm_handler import LLMHandler

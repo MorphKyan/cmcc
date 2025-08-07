@@ -4,8 +4,8 @@
 import pyaudio
 import os
 
-# 获取项目根目录（假设config.py在 src/component/ 下）
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# 获取项目根目录（假设config.py在 src/ 下）
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # --- API Keys and Endpoints ---
