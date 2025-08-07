@@ -3,8 +3,13 @@
 
 import pyaudio
 import numpy as np
-import threading
 import queue
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional
+
+import numpy as np
+import pyaudio
 import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
@@ -18,14 +23,19 @@ from .rag_processor import RAGProcessor
 from .llm_handler import LLMHandler
 
 class RealTimeSpeechRecognizer:
-    def __init__(self, device="auto", force_rag_reload=False):
+    """
+    一个集成了实时语音识别、RAG和LLM的控制器。
+    """
+    def __init__(self, device: str = "auto", force_rag_reload: bool = False, record_seconds: int = 5):
         """
         初始化实时语音识别器。
         
         Args:
-            device (str): "auto", "cuda:0", or "cpu".
-            force_rag_reload (bool): 是否强制重新加载RAG数据。
+            device: 推理设备 ("auto", "cuda:0", or "cpu").
+            force_rag_reload: 是否强制重新加载RAG数据。
+            record_seconds: 每次识别的录音时长。
         """
+        self.record_seconds = record_seconds
         self._setup_device(device)
         self._init_asr_model()
         
@@ -33,10 +43,13 @@ class RealTimeSpeechRecognizer:
         self.rag_processor = RAGProcessor(force_reload=force_rag_reload)
         self.llm_handler = LLMHandler()
         
-        self.audio_queue = queue.Queue()
+        self.audio_queue: queue.Queue[bytes] = queue.Queue()
         self._init_audio_stream()
+        
+        # 使用线程池管理识别任务
+        self.executor = ThreadPoolExecutor(max_workers=4)
 
-    def _setup_device(self, device):
+    def _setup_device(self, device: str):
         """设置推理设备 (CPU/GPU)"""
         if device == "auto":
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -67,12 +80,12 @@ class RealTimeSpeechRecognizer:
             stream_callback=self._audio_callback
         )
 
-    def _audio_callback(self, in_data, frame_count, time_info, status):
-        """音频流回调函数，将数据放入队列"""
+    def _audio_callback(self, in_data: bytes, frame_count: int, time_info: dict, status: int) -> tuple[Optional[bytes], int]:
+        """音频流回调函数，将数据放入队列。"""
         self.audio_queue.put(in_data)
         return (None, pyaudio.paContinue)
 
-    def _process_recognition_and_llm(self, audio_data):
+    def _process_recognition_and_llm(self, audio_data: np.ndarray):
         """在一个线程中处理ASR识别和LLM调用"""
         try:
             # 1. ASR - 语音转文字
@@ -116,11 +129,12 @@ class RealTimeSpeechRecognizer:
         
         try:
             while True:
-                frames = [self.audio_queue.get() for _ in range(int(RATE / CHUNK * RECORD_SECONDS))]
+                # 从队列中获取数据并拼接成一个完整的音频块
+                frames = [self.audio_queue.get() for _ in range(int(RATE / CHUNK * self.record_seconds))]
                 audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
                 
-                # 在新线程中处理，避免阻塞主录音循环
-                threading.Thread(target=self._process_recognition_and_llm, args=(audio_data,)).start()
+                # 使用线程池提交任务，避免阻塞主录音循环
+                self.executor.submit(self._process_recognition_and_llm, audio_data)
                 
         except KeyboardInterrupt:
             print("\n" + "-" * 50)
@@ -131,6 +145,7 @@ class RealTimeSpeechRecognizer:
     def stop(self):
         """停止并清理资源"""
         print("正在关闭音频流和清理资源...")
+        self.executor.shutdown(wait=True)  # 等待所有任务完成
         self.stream.stop_stream()
         self.stream.close()
         self.audio.terminate()

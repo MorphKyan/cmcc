@@ -2,12 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import sys
-import os
-
-# 将包含 component 的目录（即 src 目录）添加到 Python 路径中
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 from component.speech_recognizer import RealTimeSpeechRecognizer
 
 def main():
@@ -37,13 +31,21 @@ def main():
              "如果你的 'data/screens.csv', 'data/doors.csv', 或 'data/videos.csv' 文件有更新，请使用此选项。"
     )
     
+    parser.add_argument(
+        "--record-seconds",
+        type=int,
+        default=5,
+        help="每次识别处理的录音时长（秒）。默认为 5 秒。"
+    )
+    
     args = parser.parse_args()
     
     try:
         # 创建识别器实例
         recognizer = RealTimeSpeechRecognizer(
             device=args.device,
-            force_rag_reload=args.force_rag_reload
+            force_rag_reload=args.force_rag_reload,
+            record_seconds=args.record_seconds
         )
         
         # 开始识别
@@ -51,6 +53,8 @@ def main():
         
     except Exception as e:
         print(f"\n[严重错误] 程序启动失败: {e}")
+        # 在异常情况下，确保 sys 模块可用
+        import sys
         sys.exit(1)
 
 if __name__ == "__main__":

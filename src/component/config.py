@@ -30,7 +30,6 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000  # FunASR的最佳采样率
 CHUNK = 1024
-RECORD_SECONDS = 5  # 每次处理的音频块时长
 
 # --- RAG and ChromaDB Settings ---
 SCREENS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "screens.csv")
