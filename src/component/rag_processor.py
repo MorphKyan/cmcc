@@ -3,8 +3,8 @@
 
 import os
 import shutil
-from langchain.vectorstores import Chroma
-from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 from .data_loader import load_documents_from_csvs
 from ..config import (
     SCREENS_DATA_PATH,
@@ -79,6 +79,6 @@ class RAGProcessor:
             list[Document]: 检索到的相关Document对象列表。
         """
         print(f"正在为查询检索上下文: '{query}'")
-        docs = self.retriever.get_relevant_documents(query)
+        docs = self.retriever.invoke(query)
         print(f"检索到 {len(docs)} 个相关文档。")
         return docs

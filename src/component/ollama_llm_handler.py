@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import ollama
+from ..config import SYSTEM_PROMPT_TEMPLATE
+from .data_loader import format_docs_for_prompt
+
+class OllamaLLMHandler:
+    def __init__(self, model='llama3.1:8b'):
+        """
+        初始化本地Ollama大语言模型处理器。
+        
+        Args:
+            model (str): 要使用的Ollama模型名称。
+        """
+        try:
+            self.client = ollama.Client()
+            # 检查与Ollama服务器的连接
+            self.client.list()
+        except Exception as e:
+            print(f"[错误] 初始化Ollama客户端或连接Ollama服务器失败: {e}")
+            # 如果客户端初始化失败，后续无法调用，直接退出
+            exit(1)
+            
+        self.model = model
+        self.conversation_history = []
+        print(f"Ollama大语言模型处理器初始化完成，使用模型: {self.model}")
+
+    def _construct_prompt(self, user_input, rag_docs):
+        """
+        构建包含RAG上下文的系统提示。
+        """
+        rag_context = format_docs_for_prompt(rag_docs)
+        system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
+            rag_context=rag_context,
+            USER_INPUT=user_input
+        )
+        return system_prompt
+
+    def get_response(self, user_input, rag_docs):
+        """
+        结合RAG上下文，获取大模型的响应。
+        
+        Args:
+            user_input (str): 用户的原始输入文本。
+            rag_docs (list[Document]): RAG检索器返回的文档列表。
+            
+        Returns:
+            str: 大模型返回的JSON格式指令或错误信息。
+        """
+        system_prompt = self._construct_prompt(user_input, rag_docs)
+        
+        self.conversation_history = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input}
+        ]
+        
+        print("\n--- 发送给大模型的最终Prompt ---")
+        print(system_prompt.replace(user_input, f"{{{{USER_INPUT}}}}"))
+        print(f"用户指令: {user_input}")
+        print("--------------------------------\n")
+
+        try:
+            response = self.client.chat(
+                model=self.model,
+                messages=self.conversation_history
+            )
+            
+            assistant_message = response['message']['content']
+            
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": assistant_message
+            })
+            
+            return assistant_message
+            
+        except Exception as api_error:
+            error_message = f"[错误] 调用Ollama API出错: {api_error}"
+            print(error_message)
+            return '{"action": "error", "reason": "api_failure"}'

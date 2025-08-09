@@ -6,7 +6,7 @@ import json
 # 将项目根目录添加到 Python 路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.component.llm_handler import LLMHandler
+from src.component.ark_llm_handler import LLMHandler
 from src.component.rag_processor import RAGProcessor
 
 class TestLLMHandler(unittest.TestCase):

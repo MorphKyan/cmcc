@@ -20,8 +20,30 @@ class TestRAGProcessor(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """在所有测试结束后，再次清理数据库"""
+        import gc
+        import time
+        # 强制垃圾回收，确保所有Chroma实例都被释放
+        gc.collect()
+        time.sleep(0.1)  # 短暂等待文件句柄释放
+        
         if os.path.exists(CHROMA_DB_PATH):
-            shutil.rmtree(CHROMA_DB_PATH)
+            # 尝试多次删除，因为Windows有时需要一点时间来释放文件锁
+            for i in range(3):
+                try:
+                    shutil.rmtree(CHROMA_DB_PATH)
+                    break
+                except PermissionError:
+                    if i < 2:  # 不是最后一次尝试
+                        time.sleep(0.5)  # 等待一段时间再重试
+                    else:
+                        print(f"警告：无法删除数据库目录 {CHROMA_DB_PATH}，可能有文件仍在使用中")
+                        # 列出无法删除的文件
+                        for root, dirs, files in os.walk(CHROMA_DB_PATH):
+                            for file in files:
+                                try:
+                                    os.unlink(os.path.join(root, file))
+                                except PermissionError:
+                                    print(f"  无法删除: {os.path.join(root, file)}")
 
     def test_1_initialization_and_creation(self):
         """
@@ -60,7 +82,7 @@ class TestRAGProcessor(unittest.TestCase):
         self.assertTrue(len(retrieved_docs_1) > 0, "对于查询1，应至少检索到一个文档")
         print(f"查询 '{test_query_1}' 检索到 {len(retrieved_docs_1)} 个文档。")
         # 简单的内容检查
-        self.assertIn("video", retrieved_docs_1.metadata.get("type", ""), "检索到的文档类型应为video")
+        self.assertTrue(any("video" in doc.metadata.get("type", "") for doc in retrieved_docs_1), "检索到的文档中应至少有一个类型为video")
 
         # 测试查询2
         test_query_2 = "打开智能家居区的门"
@@ -68,7 +90,7 @@ class TestRAGProcessor(unittest.TestCase):
         self.assertIsInstance(retrieved_docs_2, list)
         self.assertTrue(len(retrieved_docs_2) > 0, "对于查询2，应至少检索到一个文档")
         print(f"查询 '{test_query_2}' 检索到 {len(retrieved_docs_2)} 个文档。")
-        self.assertIn("door", retrieved_docs_2.metadata.get("type", ""), "检索到的文档类型应为door")
+        self.assertTrue(any("door" in doc.metadata.get("type", "") for doc in retrieved_docs_2), "检索到的文档中应至少有一个类型为door")
         
         print("--- 检索功能测试完成 ---")
 

@@ -19,17 +19,17 @@ from config import (
     CHUNK
 )
 from .rag_processor import RAGProcessor
-from .llm_handler import LLMHandler
 
 class RealTimeSpeechRecognizer:
     """
     一个集成了实时语音识别、RAG和LLM的控制器。
     """
-    def __init__(self, device: str = "auto", force_rag_reload: bool = False, record_seconds: int = 5):
+    def __init__(self, llm_handler, device: str = "auto", force_rag_reload: bool = False, record_seconds: int = 5):
         """
         初始化实时语音识别器。
         
         Args:
+            llm_handler: 已初始化的LLM处理器实例。
             device: 推理设备 ("auto", "cuda:0", or "cpu").
             force_rag_reload: 是否强制重新加载RAG数据。
             record_seconds: 每次识别的录音时长。
@@ -40,7 +40,7 @@ class RealTimeSpeechRecognizer:
         
         # 初始化核心处理器
         self.rag_processor = RAGProcessor(force_reload=force_rag_reload)
-        self.llm_handler = LLMHandler()
+        self.llm_handler = llm_handler
 
         # 初始化处理队列
         self.audio_queue = queue.Queue()
