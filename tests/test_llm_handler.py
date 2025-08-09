@@ -8,6 +8,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from src.component.ark_llm_handler import LLMHandler
 from src.component.rag_processor import RAGProcessor
+from src.config import (
+    SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH,
+    CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS,
+    ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE
+)
 
 class TestLLMHandler(unittest.TestCase):
 
@@ -21,11 +26,24 @@ class TestLLMHandler(unittest.TestCase):
         # 1. 初始化RAG处理器以获取上下文
         print("\n 初始化RAG处理器...")
         # 使用 force_reload=True 确保我们从一个干净的状态开始
-        rag_processor = RAGProcessor(force_reload=True) 
+        rag_processor = RAGProcessor(
+            screens_data_path=SCREENS_DATA_PATH,
+            doors_data_path=DOORS_DATA_PATH,
+            videos_data_path=VIDEOS_DATA_PATH,
+            chroma_db_path=CHROMA_DB_PATH,
+            embedding_model=EMBEDDING_MODEL,
+            top_k_results=TOP_K_RESULTS,
+            force_reload=True
+        )
         
         # 2. 初始化LLM处理器
         print("\n 初始化LLM处理器...")
-        llm_handler = LLMHandler()
+        llm_handler = LLMHandler(
+            ark_api_key=ARK_API_KEY,
+            ark_base_url=ARK_BASE_URL,
+            llm_model_name=LLM_MODEL_NAME,
+            system_prompt_template=SYSTEM_PROMPT_TEMPLATE
+        )
         
         # 3. 模拟用户输入并进行测试
         print("\n 模拟用户输入并获取响应...")

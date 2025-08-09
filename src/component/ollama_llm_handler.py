@@ -2,17 +2,19 @@
 # -*- coding: utf-8 -*-
 
 import ollama
-from ..config import SYSTEM_PROMPT_TEMPLATE
 from .data_loader import format_docs_for_prompt
 
 class OllamaLLMHandler:
-    def __init__(self, model='llama3.1:8b'):
+    def __init__(self, system_prompt_template, model='llama3.1:8b'):
         """
         初始化本地Ollama大语言模型处理器。
         
         Args:
+            system_prompt_template (str): 系统提示模板。
             model (str): 要使用的Ollama模型名称。
         """
+        self.system_prompt_template = system_prompt_template
+        
         try:
             self.client = ollama.Client()
             # 检查与Ollama服务器的连接
@@ -31,7 +33,7 @@ class OllamaLLMHandler:
         构建包含RAG上下文的系统提示。
         """
         rag_context = format_docs_for_prompt(rag_docs)
-        system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
+        system_prompt = self.system_prompt_template.format(
             rag_context=rag_context,
             USER_INPUT=user_input
         )

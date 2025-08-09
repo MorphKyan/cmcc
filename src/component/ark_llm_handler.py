@@ -2,26 +2,29 @@
 # -*- coding: utf-8 -*-
 
 from volcenginesdkarkruntime import Ark
-from ..config import (
-    ARK_API_KEY,
-    ARK_BASE_URL,
-    LLM_MODEL_NAME,
-    SYSTEM_PROMPT_TEMPLATE
-)
 from .data_loader import format_docs_for_prompt
 
 class LLMHandler:
-    def __init__(self):
+    def __init__(self, ark_api_key, ark_base_url, llm_model_name, system_prompt_template):
         """
         初始化大语言模型处理器。
+        
+        Args:
+            ark_api_key (str): 火山引擎API密钥。
+            ark_base_url (str): 火山引擎API基础URL。
+            llm_model_name (str): 大语言模型名称。
+            system_prompt_template (str): 系统提示模板。
         """
+        self.system_prompt_template = system_prompt_template
+        
         try:
-            self.client = Ark(api_key=ARK_API_KEY, base_url=ARK_BASE_URL)
+            self.client = Ark(api_key=ark_api_key, base_url=ark_base_url)
         except Exception as e:
             print(f"[错误] 初始化火山引擎客户端失败: {e}")
             # 如果客户端初始化失败，后续无法调用，直接退出
             exit(1)
             
+        self.llm_model_name = llm_model_name
         self.conversation_history = []
         print("大语言模型处理器初始化完成。")
 
@@ -30,7 +33,7 @@ class LLMHandler:
         构建包含RAG上下文的系统提示。
         """
         rag_context = format_docs_for_prompt(rag_docs)
-        system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
+        system_prompt = self.system_prompt_template.format(
             rag_context=rag_context,
             USER_INPUT=user_input  # 模板中也包含USER_INPUT占位符
         )
@@ -62,7 +65,7 @@ class LLMHandler:
 
         try:
             response = self.client.chat.completions.create(
-                model=LLM_MODEL_NAME,
+                model=self.llm_model_name,
                 messages=self.conversation_history
             )
             

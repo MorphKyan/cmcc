@@ -7,7 +7,12 @@ import json
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.component.data_loader import load_documents_from_csvs, format_docs_for_prompt
-from src.config import SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH
+
+# 定义测试所需的数据路径
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SCREENS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "screens.csv")
+DOORS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "doors.csv")
+VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
 
 class TestDataLoader(unittest.TestCase):
 

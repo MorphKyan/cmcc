@@ -16,7 +16,10 @@ from funasr.utils.postprocess_utils import rich_transcription_postprocess
 from config import (
     SENSE_VOICE_MODEL_DIR, VAD_MODEL, VAD_KWARGS, LANGUAGE, USE_ITN,
     BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, FORMAT, CHANNELS, RATE,
-    CHUNK
+    CHUNK,
+    SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH,
+    CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS,
+    ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE
 )
 from .rag_processor import RAGProcessor
 
@@ -39,7 +42,15 @@ class RealTimeSpeechRecognizer:
         self._init_asr_model()
         
         # 初始化核心处理器
-        self.rag_processor = RAGProcessor(force_reload=force_rag_reload)
+        self.rag_processor = RAGProcessor(
+            screens_data_path=SCREENS_DATA_PATH,
+            doors_data_path=DOORS_DATA_PATH,
+            videos_data_path=VIDEOS_DATA_PATH,
+            chroma_db_path=CHROMA_DB_PATH,
+            embedding_model=EMBEDDING_MODEL,
+            top_k_results=TOP_K_RESULTS,
+            force_reload=force_rag_reload
+        )
         self.llm_handler = llm_handler
 
         # 初始化处理队列

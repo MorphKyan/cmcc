@@ -5,6 +5,7 @@ import argparse
 from component.speech_recognizer import RealTimeSpeechRecognizer
 from component.ark_llm_handler import LLMHandler as ArkLLMHandler
 from component.ollama_llm_handler import OllamaLLMHandler
+from config import ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE
 
 def main():
     """
@@ -55,9 +56,14 @@ def main():
     try:
         # 根据provider选择并初始化LLM Handler
         if args.llm_provider == "ollama":
-            llm_handler = OllamaLLMHandler()
+            llm_handler = OllamaLLMHandler(system_prompt_template=SYSTEM_PROMPT_TEMPLATE)
         else: # 默认为 "ark"
-            llm_handler = ArkLLMHandler()
+            llm_handler = ArkLLMHandler(
+                ark_api_key=ARK_API_KEY,
+                ark_base_url=ARK_BASE_URL,
+                llm_model_name=LLM_MODEL_NAME,
+                system_prompt_template=SYSTEM_PROMPT_TEMPLATE
+            )
 
         # 创建识别器实例，并传入LLM Handler
         recognizer = RealTimeSpeechRecognizer(

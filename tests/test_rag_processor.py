@@ -7,7 +7,10 @@ import shutil
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.component.rag_processor import RAGProcessor
-from src.config import CHROMA_DB_PATH
+from src.config import (
+    SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH,
+    CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
+)
 
 class TestRAGProcessor(unittest.TestCase):
 
@@ -51,7 +54,15 @@ class TestRAGProcessor(unittest.TestCase):
         """
         print("\n--- 测试RAG处理器：数据库创建 ---")
         # 使用 force_reload=True 来确保数据库被创建
-        rag_processor = RAGProcessor(force_reload=True)
+        rag_processor = RAGProcessor(
+            screens_data_path=SCREENS_DATA_PATH,
+            doors_data_path=DOORS_DATA_PATH,
+            videos_data_path=VIDEOS_DATA_PATH,
+            chroma_db_path=CHROMA_DB_PATH,
+            embedding_model=EMBEDDING_MODEL,
+            top_k_results=TOP_K_RESULTS,
+            force_reload=True
+        )
         self.assertTrue(os.path.exists(CHROMA_DB_PATH), "数据库目录应已创建")
         print("--- 数据库创建测试完成 ---")
 
@@ -62,9 +73,24 @@ class TestRAGProcessor(unittest.TestCase):
         print("\n--- 测试RAG处理器：从本地加载 ---")
         # 确保数据库存在
         if not os.path.exists(CHROMA_DB_PATH):
-            RAGProcessor(force_reload=True)
+            RAGProcessor(
+                screens_data_path=SCREENS_DATA_PATH,
+                doors_data_path=DOORS_DATA_PATH,
+                videos_data_path=VIDEOS_DATA_PATH,
+                chroma_db_path=CHROMA_DB_PATH,
+                embedding_model=EMBEDDING_MODEL,
+                top_k_results=TOP_K_RESULTS,
+                force_reload=True
+            )
             
-        rag_processor_load = RAGProcessor()
+        rag_processor_load = RAGProcessor(
+            screens_data_path=SCREENS_DATA_PATH,
+            doors_data_path=DOORS_DATA_PATH,
+            videos_data_path=VIDEOS_DATA_PATH,
+            chroma_db_path=CHROMA_DB_PATH,
+            embedding_model=EMBEDDING_MODEL,
+            top_k_results=TOP_K_RESULTS
+        )
         self.assertIsNotNone(rag_processor_load.vector_store, "向量存储应已加载")
         print("--- 从本地加载测试完成 ---")
 
@@ -73,7 +99,14 @@ class TestRAGProcessor(unittest.TestCase):
         测试RAG处理器的检索功能。
         """
         print("\n--- 测试RAG处理器：检索功能 ---")
-        rag_processor = RAGProcessor() # 加载现有DB
+        rag_processor = RAGProcessor(
+            screens_data_path=SCREENS_DATA_PATH,
+            doors_data_path=DOORS_DATA_PATH,
+            videos_data_path=VIDEOS_DATA_PATH,
+            chroma_db_path=CHROMA_DB_PATH,
+            embedding_model=EMBEDDING_MODEL,
+            top_k_results=TOP_K_RESULTS
+        ) # 加载现有DB
 
         # 测试查询1
         test_query_1 = "我想看关于5G的视频"
