@@ -44,7 +44,7 @@ def main():
     parser.add_argument(
         "--llm-provider",
         type=str,
-        default="ark",
+        default="ollama",
         choices=["ark", "ollama"],
         help="选择大语言模型提供商。\n"
              "  'ark': 使用火山引擎方舟大模型 (默认)。\n"

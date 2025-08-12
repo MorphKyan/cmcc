@@ -87,4 +87,9 @@ class RAGProcessor:
         print(f"正在为查询检索上下文: '{query}'")
         docs = self.retriever.invoke(query)
         print(f"检索到 {len(docs)} 个相关文档。")
+        # 打印检索到的内容，方便调试
+        for i, doc in enumerate(docs):
+            print(f"文档 {i+1}:")
+            print(f"  内容: {doc.page_content}")
+            print(f"  元数据: {doc.metadata}")
         return docs

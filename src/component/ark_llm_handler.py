@@ -77,10 +77,26 @@ class LLMHandler:
                 "content": assistant_message
             })
             
-            return assistant_message
+            # 验证LLM输出是否为有效的JSON格式
+            import json
+            try:
+                # 尝试解析LLM的输出
+                parsed_response = json.loads(assistant_message)
+                # 检查是否包含必需的action字段
+                if isinstance(parsed_response, dict) and "action" in parsed_response:
+                    # 返回格式化的JSON字符串
+                    return json.dumps(parsed_response, ensure_ascii=False)
+                else:
+                    # 如果解析后的对象不包含action字段，返回错误
+                    print(f"[警告] LLM输出格式不正确，缺少action字段: {assistant_message}")
+                    return '{"action": "error", "reason": "invalid_format", "target": null, "device": null, "value": null}'
+            except json.JSONDecodeError:
+                # 如果无法解析为JSON，返回错误
+                print(f"[警告] LLM输出不是有效的JSON格式: {assistant_message}")
+                return '{"action": "error", "reason": "invalid_json", "target": null, "device": null, "value": null}'
             
         except Exception as api_error:
             error_message = f"[错误] 调用大模型API出错: {api_error}"
             print(error_message)
             # 返回一个标准的错误JSON
-            return '{"action": "error", "reason": "api_failure"}'
+            return '{"action": "error", "reason": "api_failure", "target": null, "device": null, "value": null}'
