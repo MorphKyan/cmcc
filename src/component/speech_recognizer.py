@@ -17,9 +17,10 @@ from config import (
     SENSE_VOICE_MODEL_DIR, VAD_MODEL, VAD_KWARGS, LANGUAGE, USE_ITN,
     BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, FORMAT, CHANNELS, RATE,
     CHUNK,
-    SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH,
+    VIDEOS_DATA_PATH,
     CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS,
-    ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE
+    ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE,
+    SCREENS_INFO, DOORS_INFO
 )
 from .rag_processor import RAGProcessor
 
@@ -43,8 +44,6 @@ class RealTimeSpeechRecognizer:
         
         # 初始化核心处理器
         self.rag_processor = RAGProcessor(
-            screens_data_path=SCREENS_DATA_PATH,
-            doors_data_path=DOORS_DATA_PATH,
             videos_data_path=VIDEOS_DATA_PATH,
             chroma_db_path=CHROMA_DB_PATH,
             embedding_model=EMBEDDING_MODEL,

@@ -8,9 +8,10 @@ import os
 def load_documents_from_csvs(file_paths):
     """
     从多个CSV文件加载数据并转换为LangChain的Document对象。
+    注意：此函数现在只处理videos类型的数据，screens和doors已移至提示词常驻部分
     
     Args:
-        file_paths (list[str]): CSV文件路径的列表。
+        file_paths (list[str]): CSV文件路径的列表（应只包含videos.csv）。
         
     Returns:
         list[Document]: Document对象列表。
@@ -21,9 +22,15 @@ def load_documents_from_csvs(file_paths):
             raise FileNotFoundError(f"数据文件未找到: {file_path}")
         try:
             df = pd.read_csv(file_path)
-            dfs.append(df)
+            # 只处理videos类型的数据
+            df = df[df['type'] == 'video']
+            if not df.empty:
+                dfs.append(df)
         except Exception as e:
             raise IOError(f"读取CSV文件 '{file_path}' 失败: {e}")
+    
+    if not dfs:
+        return []
     
     combined_df = pd.concat(dfs, ignore_index=True)
 
@@ -54,19 +61,18 @@ def load_documents_from_csvs(file_paths):
 def format_docs_for_prompt(docs):
     """
     将检索到的Document对象格式化为可以插入到Prompt中的字符串。
+    注意：此函数现在只处理videos类型的数据，screens和doors已移至提示词常驻部分
     
     Args:
-        docs (list[Document]): 检索到的Document对象列表。
+        docs (list[Document]): 检索到的Document对象列表（应只包含videos类型的数据）。
         
     Returns:
-        str: 格式化后的知识库字符串。
+        str: 格式化后的知识库字符串（只包含videos部分）。
     """
     if not docs:
         return "没有在知识库中找到相关信息。"
 
     knowledge_base = {
-        "screens": [],
-        "doors": [],
         "videos": []
     }
 
@@ -74,17 +80,8 @@ def format_docs_for_prompt(docs):
         meta = doc.metadata
         item_type = meta.get("type")
         
-        if item_type == "screen":
-            knowledge_base["screens"].append({
-                "name": meta.get("name"),
-                "aliases": meta.get("aliases", "").split(',')
-            })
-        elif item_type == "door":
-            knowledge_base["doors"].append({
-                "name": meta.get("name"),
-                "aliases": meta.get("aliases", "").split(',')
-            })
-        elif item_type == "video":
+        # 只处理videos类型的数据
+        if item_type == "video":
             knowledge_base["videos"].append({
                 "filename": meta.get("filename"),
                 "description": meta.get("description")

@@ -3,6 +3,7 @@
 
 import pyaudio
 import os
+import pandas as pd
 
 # 获取项目根目录（假设config.py在 src/ 下）
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,8 +33,8 @@ RATE = 16000  # FunASR的最佳采样率
 CHUNK = 1024
 
 # --- RAG and ChromaDB Settings ---
-SCREENS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "screens.csv")
-DOORS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "doors.csv")
+# SCREENS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "screens.csv")  # 不再作为RAG数据源
+# DOORS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "doors.csv")      # 不再作为RAG数据源
 VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
 CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -47,6 +48,9 @@ SYSTEM_PROMPT_TEMPLATE = """
 
 # 知识库 (Knowledge Base)
 你唯一可操作的设备和内容如下：
+
+{SCREENS_INFO}
+{DOORS_INFO}
 {rag_context}
 
 # 行为准则与输出格式
@@ -114,6 +118,61 @@ SYSTEM_PROMPT_TEMPLATE = """
 # 用户当前指令:
 {{USER_INPUT}}
 """
+
+
+def load_screens_data():
+    """加载屏幕数据并格式化为提示词中的常驻部分"""
+    screens_data_path = os.path.join(PROJECT_ROOT, "data", "screens.csv")
+    try:
+        df = pd.read_csv(screens_data_path)
+        screens_info = []
+        for _, row in df.iterrows():
+            screen_info = {
+                "name": row['name'],
+                "aliases": row['aliases'].split(',') if pd.notna(row['aliases']) else []
+            }
+            screens_info.append(screen_info)
+        
+        # 格式化为字符串
+        screens_str = "## 屏幕 (Screens)\n"
+        for screen in screens_info:
+            aliases_str = ", ".join(screen['aliases']) if screen['aliases'] else "无"
+            screens_str += f"- 名称: {screen['name']}\n"
+            screens_str += f"  别名: {aliases_str}\n"
+        return screens_str
+    except Exception as e:
+        print(f"加载屏幕数据时出错: {e}")
+        return ""
+
+
+def load_doors_data():
+    """加载门数据并格式化为提示词中的常驻部分"""
+    doors_data_path = os.path.join(PROJECT_ROOT, "data", "doors.csv")
+    try:
+        df = pd.read_csv(doors_data_path)
+        doors_info = []
+        for _, row in df.iterrows():
+            door_info = {
+                "name": row['name'],
+                "aliases": row['aliases'].split(',') if pd.notna(row['aliases']) else []
+            }
+            doors_info.append(door_info)
+        
+        # 格式化为字符串
+        doors_str = "## 门 (Doors)\n"
+        for door in doors_info:
+            aliases_str = ", ".join(door['aliases']) if door['aliases'] else "无"
+            doors_str += f"- 名称: {door['name']}\n"
+            doors_str += f"  别名: {aliases_str}\n"
+        return doors_str
+    except Exception as e:
+        print(f"加载门数据时出错: {e}")
+        return ""
+
+
+# 加载并格式化 screens 和 doors 数据
+SCREENS_INFO = load_screens_data()
+DOORS_INFO = load_doors_data()
 
 SYSTEM_PROMPT_TEMPLATE_V1 = """
 # 角色与任务

@@ -3,6 +3,7 @@
 
 import ollama
 from .data_loader import format_docs_for_prompt
+from config import SCREENS_INFO, DOORS_INFO
 
 class OllamaLLMHandler:
     def __init__(self, system_prompt_template, model='llama3.1:8b'):
@@ -30,10 +31,12 @@ class OllamaLLMHandler:
 
     def _construct_prompt(self, user_input, rag_docs):
         """
-        构建包含RAG上下文的系统提示。
+        构建包含RAG上下文的系统提示，并嵌入screens和doors信息。
         """
         rag_context = format_docs_for_prompt(rag_docs)
         system_prompt = self.system_prompt_template.format(
+            SCREENS_INFO=SCREENS_INFO,
+            DOORS_INFO=DOORS_INFO,
             rag_context=rag_context,
             USER_INPUT=user_input
         )
