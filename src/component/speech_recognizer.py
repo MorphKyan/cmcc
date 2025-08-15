@@ -103,31 +103,90 @@ class RealTimeSpeechRecognizer:
 
     def _asr_thread_loop(self):
         """ASR线程循环，处理语音识别。"""
+        # 初始化缓存用于流式识别
+        cache = {}
+        chunk_interval = 10  # 每10个chunk处理一次，约0.64秒
+        chunk_count = 0
+        accumulated_frames = []
+        
         while not self.stop_event.is_set():
             try:
-                # 从队列中获取数据并拼接成一个完整的音频块
-                frames = [self.audio_queue.get(timeout=1) for _ in range(int(RATE / CHUNK * self.record_seconds))]
-                audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
+                # 从队列中获取音频数据
+                frame = self.audio_queue.get(timeout=1)
+                accumulated_frames.append(frame)
+                chunk_count += 1
                 
-                if audio_data.dtype == np.int16:
-                    audio_data = audio_data.astype(np.float32) / 32768.0
+                # 每隔一定chunk数或队列为空时处理一次
+                if chunk_count >= chunk_interval or self.audio_queue.empty():
+                    # 将累积的音频帧合并
+                    audio_data = np.frombuffer(b''.join(accumulated_frames), dtype=np.int16)
+                    
+                    if audio_data.dtype == np.int16:
+                        audio_data = audio_data.astype(np.float32) / 32768.0
 
-                res = self.model.generate(
-                    input=audio_data, cache={}, language=LANGUAGE, use_itn=USE_ITN,
-                    batch_size_s=BATCH_SIZE_S, merge_vad=MERGE_VAD,
-                    merge_length_s=MERGE_LENGTH_S
-                )
+                    # 使用流式识别模式
+                    res = self.model.generate(
+                        input=audio_data, 
+                        cache=cache,  # 使用缓存保持连续性
+                        language=LANGUAGE, 
+                        use_itn=USE_ITN,
+                        batch_size_s=BATCH_SIZE_S, 
+                        merge_vad=MERGE_VAD,
+                        merge_length_s=MERGE_LENGTH_S,
+                        stream_mode=True  # 启用流式模式
+                    )
 
-                if res and res[0].get("text"):
-                    recognized_text = rich_transcription_postprocess(res[0]["text"])
-                    if recognized_text.strip():
-                        print(f"\n[识别结果] {recognized_text}")
-                        self.asr_output_queue.put(recognized_text)
+                    # 更新缓存
+                    if isinstance(res, dict) and "cache" in res:
+                        cache = res["cache"]
+                    
+                    # 处理识别结果
+                    if res and isinstance(res, list) and len(res) > 0 and res[0].get("text"):
+                        recognized_text = rich_transcription_postprocess(res[0]["text"])
+                        if recognized_text.strip():
+                            print(f"\n[识别结果] {recognized_text}")
+                            self.asr_output_queue.put(recognized_text)
+                    
+                    # 重置累积帧和计数器
+                    accumulated_frames = []
+                    chunk_count = 0
 
             except queue.Empty:
+                # 队列为空时，如果有累积的音频数据也进行处理
+                if accumulated_frames:
+                    audio_data = np.frombuffer(b''.join(accumulated_frames), dtype=np.int16)
+                    
+                    if audio_data.dtype == np.int16:
+                        audio_data = audio_data.astype(np.float32) / 32768.0
+
+                    res = self.model.generate(
+                        input=audio_data, 
+                        cache=cache, 
+                        language=LANGUAGE, 
+                        use_itn=USE_ITN,
+                        batch_size_s=BATCH_SIZE_S, 
+                        merge_vad=MERGE_VAD,
+                        merge_length_s=MERGE_LENGTH_S,
+                        stream_mode=True
+                    )
+
+                    if isinstance(res, dict) and "cache" in res:
+                        cache = res["cache"]
+                    
+                    if res and isinstance(res, list) and len(res) > 0 and res[0].get("text"):
+                        recognized_text = rich_transcription_postprocess(res[0]["text"])
+                        if recognized_text.strip():
+                            print(f"\n[识别结果] {recognized_text}")
+                            self.asr_output_queue.put(recognized_text)
+                    
+                    accumulated_frames = []
+                    chunk_count = 0
                 continue
             except Exception as e:
                 print(f"[ASR错误] {e}")
+                # 出错时重置状态
+                accumulated_frames = []
+                chunk_count = 0
 
     def _rag_thread_loop(self):
         """RAG线程循环，处理上下文检索。"""
