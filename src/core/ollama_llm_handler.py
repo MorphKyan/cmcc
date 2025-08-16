@@ -66,10 +66,10 @@ class OllamaLLMHandler:
             {"role": "user", "content": user_input}
         ]
         
-        print("\n--- 发送给大模型的最终Prompt ---")
-        print(system_prompt.replace(user_input, f"{{{{USER_INPUT}}}}"))
+        # print("\n--- 发送给大模型的最终Prompt ---")
+        # print(system_prompt.replace(user_input, f"{{{{USER_INPUT}}}}"))
         print(f"用户指令: {user_input}")
-        print("--------------------------------\n")
+        # print("--------------------------------\n")
 
         try:
             response = self.client.chat(

@@ -16,9 +16,7 @@ from funasr.utils.postprocess_utils import rich_transcription_postprocess
 from config import (
     SENSE_VOICE_MODEL_DIR, VAD_MODEL, VAD_KWARGS, LANGUAGE, USE_ITN,
     BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, FORMAT, CHANNELS, RATE,
-    CHUNK,
-    VIDEOS_DATA_PATH,
-    CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
+    CHUNK, VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
 )
 from core.rag_processor import RAGProcessor
 
@@ -101,68 +99,31 @@ class VoiceAssistant:
 
     def _asr_thread_loop(self):
         """ASR线程循环，处理语音识别。"""
-        # 初始化缓存用于流式识别
-        cache = {}
-        audio_buffer = []
-        # 累积16个块再处理，约1.024秒
-        buffer_chunk_count = 16
-
         while not self.stop_event.is_set():
             try:
-                # 从队列中获取音频数据块并存入缓冲区
-                frame = self.audio_queue.get(timeout=1)
-                audio_buffer.append(frame)
-
-                # 当缓冲区中的数据块达到指定数量时，再进行处理
-                if len(audio_buffer) < buffer_chunk_count:
-                    continue
-
-                # 合并缓冲区中的所有数据块
-                concatenated_frame = b"".join(audio_buffer)
-                audio_buffer.clear()  # 清空缓冲区
-
-                audio_data = np.frombuffer(concatenated_frame, dtype=np.int16)
+                # 从队列中获取数据并拼接成一个完整的音频块
+                frames = [self.audio_queue.get(timeout=1) for _ in range(int(RATE / CHUNK * self.record_seconds))]
+                audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
                 
-                # 转换数据类型以进行推理
                 if audio_data.dtype == np.int16:
                     audio_data = audio_data.astype(np.float32) / 32768.0
 
-                # 使用流式识别模式处理合并后的大数据块
                 res = self.model.generate(
-                    input=audio_data,
-                    cache=cache,
-                    language=LANGUAGE,
-                    use_itn=USE_ITN,
-                    batch_size_s=BATCH_SIZE_S,
-                    merge_vad=MERGE_VAD,
-                    merge_length_s=MERGE_LENGTH_S,
-                    stream_mode=True
+                    input=audio_data, cache={}, language=LANGUAGE, use_itn=USE_ITN,
+                    batch_size_s=BATCH_SIZE_S, merge_vad=MERGE_VAD,
+                    merge_length_s=MERGE_LENGTH_S
                 )
 
-                # 更新缓存
-                if isinstance(res, dict) and "cache" in res:
-                    cache = res["cache"]
-                
-                # 处理识别结果，仅当VAD判断为最终结果时才输出
-                if res and isinstance(res, list) and len(res) > 0:
-                    # is_final键表示VAD是否检测到一句话的结束
-                    is_final = res[0].get("is_final", True)  # 默认为True以兼容旧版
-                    text = res[0].get("text")
-                    
-                    if text and is_final:
-                        recognized_text = rich_transcription_postprocess(text)
-                        if recognized_text.strip():
-                            print(f"\n[识别结果] {recognized_text}")
-                            self.asr_output_queue.put(recognized_text)
+                if res and res[0].get("text"):
+                    recognized_text = rich_transcription_postprocess(res[0]["text"])
+                    if recognized_text.strip():
+                        print(f"\n[识别结果] {recognized_text}")
+                        self.asr_output_queue.put(recognized_text)
 
             except queue.Empty:
-                # 队列为空时继续等待，无需特殊处理
                 continue
             except Exception as e:
                 print(f"[ASR错误] {e}")
-                # 出错时重置缓存和缓冲区，避免影响后续识别
-                cache = {}
-                audio_buffer.clear()
 
     def _rag_thread_loop(self):
         """RAG线程循环，处理上下文检索。"""
