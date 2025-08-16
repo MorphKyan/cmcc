@@ -22,9 +22,9 @@ from config import (
     ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE,
     SCREENS_INFO, DOORS_INFO
 )
-from .rag_processor import RAGProcessor
+from core.rag_processor import RAGProcessor
 
-class RealTimeSpeechRecognizer:
+class VoiceAssistant:
     """
     一个集成了实时语音识别、RAG和LLM的控制器。
     """

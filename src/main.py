@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-from component.speech_recognizer import RealTimeSpeechRecognizer
-from component.ark_llm_handler import LLMHandler as ArkLLMHandler
-from component.ollama_llm_handler import OllamaLLMHandler
+from app.voice_assistant import VoiceAssistant
+from core.ark_llm_handler import LLMHandler as ArkLLMHandler
+from core.ollama_llm_handler import OllamaLLMHandler
 from config import ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE
 
 def main():
@@ -66,7 +66,7 @@ def main():
             )
 
         # 创建识别器实例，并传入LLM Handler
-        recognizer = RealTimeSpeechRecognizer(
+        assistant = VoiceAssistant(
             llm_handler=llm_handler,
             device=args.device,
             force_rag_reload=args.force_rag_reload,
@@ -74,7 +74,7 @@ def main():
         )
         
         # 开始识别
-        recognizer.start()
+        assistant.start()
         
     except Exception as e:
         print(f"\n[严重错误] 程序启动失败: {e}")
