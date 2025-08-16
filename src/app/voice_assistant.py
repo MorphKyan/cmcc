@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pyaudio
 import numpy as np
 import queue
 import threading
-from typing import Optional
 
 import numpy as np
-import pyaudio
 import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
@@ -19,6 +16,7 @@ from config import (
     CHUNK, VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
 )
 from core.rag_processor import RAGProcessor
+from core.audio_input import AudioInputHandler
 
 class VoiceAssistant:
     """
@@ -49,11 +47,12 @@ class VoiceAssistant:
         self.llm_handler = llm_handler
 
         # 初始化处理队列
-        self.audio_queue = queue.Queue()
         self.asr_output_queue = queue.Queue()
         self.rag_output_queue = queue.Queue()
 
-        self._init_audio_stream()
+        # 初始化音频输入处理器
+        self.audio_input_handler = AudioInputHandler()
+        self.audio_input_handler.init_audio_stream()
 
         # 初始化线程和停止事件
         self.stop_event = threading.Event()
@@ -80,29 +79,13 @@ class VoiceAssistant:
         )
         print("语音识别模型加载完成。")
 
-    def _init_audio_stream(self):
-        """初始化PyAudio音频流"""
-        self.audio = pyaudio.PyAudio()
-        self.stream = self.audio.open(
-            format=FORMAT,
-            channels=CHANNELS,
-            rate=RATE,
-            input=True,
-            frames_per_buffer=CHUNK,
-            stream_callback=self._audio_callback
-        )
-
-    def _audio_callback(self, in_data: bytes, frame_count: int, time_info: dict, status: int) -> tuple[Optional[bytes], int]:
-        """音频流回调函数，将数据放入队列。"""
-        self.audio_queue.put(in_data)
-        return (None, pyaudio.paContinue)
 
     def _asr_thread_loop(self):
         """ASR线程循环，处理语音识别。"""
         while not self.stop_event.is_set():
             try:
                 # 从队列中获取数据并拼接成一个完整的音频块
-                frames = [self.audio_queue.get(timeout=1) for _ in range(int(RATE / CHUNK * self.record_seconds))]
+                frames = [self.audio_input_handler.get_audio_data(timeout=1) for _ in range(int(RATE / CHUNK * self.record_seconds))]
                 audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
                 
                 if audio_data.dtype == np.int16:
@@ -166,7 +149,7 @@ class VoiceAssistant:
         self.rag_thread.start()
         self.llm_thread.start()
 
-        self.stream.start_stream()
+        self.audio_input_handler.start_stream()
 
         try:
             # 保持主线程运行，直到接收到中断信号
@@ -184,10 +167,7 @@ class VoiceAssistant:
         self.stop_event.set()
 
         # 停止音频流
-        if self.stream.is_active():
-            self.stream.stop_stream()
-        self.stream.close()
-        self.audio.terminate()
+        self.audio_input_handler.stop()
 
         # 等待所有线程结束
         if self.asr_thread and self.asr_thread.is_alive():
