@@ -4,6 +4,8 @@
 import numpy as np
 import queue
 import threading
+from collections import deque
+import time
 
 import numpy as np
 import torch
@@ -12,11 +14,12 @@ from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
 from config import (
     SENSE_VOICE_MODEL_DIR, VAD_MODEL, VAD_KWARGS, LANGUAGE, USE_ITN,
-    BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, FORMAT, CHANNELS, RATE,
+    BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, RATE,
     CHUNK, VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
 )
 from core.rag_processor import RAGProcessor
 from core.audio_input import AudioInputHandler
+from core.vad_processor import VADProcessor
 
 class VoiceAssistant:
     """
@@ -47,15 +50,20 @@ class VoiceAssistant:
         self.llm_handler = llm_handler
 
         # 初始化处理队列
+        self.vad_output_queue = queue.Queue()
         self.asr_output_queue = queue.Queue()
         self.rag_output_queue = queue.Queue()
 
         # 初始化音频输入处理器
         self.audio_input_handler = AudioInputHandler()
         self.audio_input_handler.init_audio_stream()
+        
+        # 初始化VAD处理器
+        self.vad_processor = VADProcessor()
 
         # 初始化线程和停止事件
         self.stop_event = threading.Event()
+        self.vad_thread = None
         self.asr_thread = None
         self.rag_thread = None
         self.llm_thread = None
@@ -80,17 +88,66 @@ class VoiceAssistant:
         print("语音识别模型加载完成。")
 
 
+    def _vad_thread_loop(self):
+        """VAD线程循环，处理实时音频流并分割语音片段。"""
+        speech_buffer = deque()
+        is_speaking = False
+        last_speech_time = time.time()
+
+        while not self.stop_event.is_set():
+            try:
+                audio_chunk_bytes = self.audio_input_handler.get_audio_data(timeout=1)
+                audio_chunk = np.frombuffer(audio_chunk_bytes, dtype=np.int16)
+
+                # 使用VAD检测语音活动
+                speech_segments = self.vad_processor.process_audio_chunk(audio_chunk)
+
+                if speech_segments:
+                    if not is_speaking:
+                        print("[VAD] 检测到语音开始...")
+                        is_speaking = True
+                    speech_buffer.append(audio_chunk)
+                    last_speech_time = time.time()
+                else:
+                    if is_speaking:
+                        # 如果语音结束，且在一定时间内（例如0.5秒）没有新的语音活动
+                        if time.time() - last_speech_time > 0.5:
+                            print("[VAD] 检测到语音结束，发送语音片段进行识别...")
+                            # 拼接完整的语音片段
+                            complete_speech = np.concatenate(list(speech_buffer))
+                            speech_buffer.clear()
+                            is_speaking = False
+                            
+                            # 将语音片段放入ASR队列
+                            self.vad_output_queue.put(complete_speech)
+                    else:
+                        # 持续丢弃静默期间的音频块
+                        if len(speech_buffer) > 0:
+                            speech_buffer.popleft()
+
+            except queue.Empty:
+                # 如果在超时后仍然是说话状态，说明可能语音流末尾有语音，也需要处理
+                if is_speaking and time.time() - last_speech_time > 0.8:
+                    print("[VAD] 超时后语音结束，发送语音片段...")
+                    complete_speech = np.concatenate(list(speech_buffer))
+                    speech_buffer.clear()
+                    is_speaking = False
+                    self.vad_output_queue.put(complete_speech)
+                continue
+            except Exception as e:
+                print(f"[VAD错误] {e}")
+
     def _asr_thread_loop(self):
         """ASR线程循环，处理语音识别。"""
         while not self.stop_event.is_set():
             try:
-                # 从队列中获取数据并拼接成一个完整的音频块
-                frames = [self.audio_input_handler.get_audio_data(timeout=1) for _ in range(int(RATE / CHUNK * self.record_seconds))]
-                audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
+                # 从VAD队列中获取分割好的语音片段
+                audio_data = self.vad_output_queue.get(timeout=1)
                 
                 if audio_data.dtype == np.int16:
                     audio_data = audio_data.astype(np.float32) / 32768.0
-
+                
+                # 进行语音识别
                 res = self.model.generate(
                     input=audio_data, cache={}, language=LANGUAGE, use_itn=USE_ITN,
                     batch_size_s=BATCH_SIZE_S, merge_vad=MERGE_VAD,
@@ -141,10 +198,12 @@ class VoiceAssistant:
 
         # 启动处理线程
         self.stop_event.clear()
+        self.vad_thread = threading.Thread(target=self._vad_thread_loop, daemon=True)
         self.asr_thread = threading.Thread(target=self._asr_thread_loop, daemon=True)
         self.rag_thread = threading.Thread(target=self._rag_thread_loop, daemon=True)
         self.llm_thread = threading.Thread(target=self._llm_thread_loop, daemon=True)
 
+        self.vad_thread.start()
         self.asr_thread.start()
         self.rag_thread.start()
         self.llm_thread.start()
@@ -170,6 +229,8 @@ class VoiceAssistant:
         self.audio_input_handler.stop()
 
         # 等待所有线程结束
+        if self.vad_thread and self.vad_thread.is_alive():
+            self.vad_thread.join()
         if self.asr_thread and self.asr_thread.is_alive():
             self.asr_thread.join()
         if self.rag_thread and self.rag_thread.is_alive():
