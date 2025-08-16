@@ -47,8 +47,8 @@ def main():
         default="ollama",
         choices=["ark", "ollama"],
         help="选择大语言模型提供商。\n"
-             "  'ark': 使用火山引擎方舟大模型 (默认)。\n"
-             "  'ollama': 使用本地部署的Ollama模型。"
+             "  'ark': 使用火山引擎方舟大模型。\n"
+             "  'ollama': 使用本地部署的Ollama模型(默认)。"
     )
     
     args = parser.parse_args()

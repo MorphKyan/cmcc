@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import ollama
 from .data_loader import format_docs_for_prompt
 from config import SCREENS_INFO, DOORS_INFO
@@ -34,9 +35,14 @@ class OllamaLLMHandler:
         构建包含RAG上下文的系统提示，并嵌入screens和doors信息。
         """
         rag_context = format_docs_for_prompt(rag_docs)
+        
+        # 将屏幕和门的信息转换为JSON字符串，确保格式正确
+        screens_info_json = json.dumps(SCREENS_INFO, ensure_ascii=False, indent=2)
+        doors_info_json = json.dumps(DOORS_INFO, ensure_ascii=False, indent=2)
+        
         system_prompt = self.system_prompt_template.format(
-            SCREENS_INFO=SCREENS_INFO,
-            DOORS_INFO=DOORS_INFO,
+            SCREENS_INFO=screens_info_json,
+            DOORS_INFO=doors_info_json,
             rag_context=rag_context,
             USER_INPUT=user_input
         )

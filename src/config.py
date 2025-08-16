@@ -121,7 +121,7 @@ SYSTEM_PROMPT_TEMPLATE = """
 
 
 def load_screens_data():
-    """加载屏幕数据并格式化为提示词中的常驻部分"""
+    """加载屏幕数据并返回结构化列表"""
     screens_data_path = os.path.join(PROJECT_ROOT, "data", "screens.csv")
     try:
         df = pd.read_csv(screens_data_path)
@@ -129,24 +129,17 @@ def load_screens_data():
         for _, row in df.iterrows():
             screen_info = {
                 "name": row['name'],
-                "aliases": row['aliases'].split(',') if pd.notna(row['aliases']) else []
+                "aliases": [alias.strip() for alias in row['aliases'].split(',')] if pd.notna(row['aliases']) else []
             }
             screens_info.append(screen_info)
-        
-        # 格式化为字符串
-        screens_str = "## 屏幕 (Screens)\n"
-        for screen in screens_info:
-            aliases_str = ", ".join(screen['aliases']) if screen['aliases'] else "无"
-            screens_str += f"- 名称: {screen['name']}\n"
-            screens_str += f"  别名: {aliases_str}\n"
-        return screens_str
+        return screens_info
     except Exception as e:
         print(f"加载屏幕数据时出错: {e}")
-        return ""
+        return []
 
 
 def load_doors_data():
-    """加载门数据并格式化为提示词中的常驻部分"""
+    """加载门数据并返回结构化列表"""
     doors_data_path = os.path.join(PROJECT_ROOT, "data", "doors.csv")
     try:
         df = pd.read_csv(doors_data_path)
@@ -154,20 +147,13 @@ def load_doors_data():
         for _, row in df.iterrows():
             door_info = {
                 "name": row['name'],
-                "aliases": row['aliases'].split(',') if pd.notna(row['aliases']) else []
+                "aliases": [alias.strip() for alias in row['aliases'].split(',')] if pd.notna(row['aliases']) else []
             }
             doors_info.append(door_info)
-        
-        # 格式化为字符串
-        doors_str = "## 门 (Doors)\n"
-        for door in doors_info:
-            aliases_str = ", ".join(door['aliases']) if door['aliases'] else "无"
-            doors_str += f"- 名称: {door['name']}\n"
-            doors_str += f"  别名: {aliases_str}\n"
-        return doors_str
+        return doors_info
     except Exception as e:
         print(f"加载门数据时出错: {e}")
-        return ""
+        return []
 
 
 # 加载并格式化 screens 和 doors 数据
