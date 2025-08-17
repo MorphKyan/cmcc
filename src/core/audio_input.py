@@ -41,10 +41,18 @@ class AudioInputHandler:
             
     def stop(self):
         """停止并清理音频资源"""
-        if self.stream and self.stream.is_active():
-            self.stream.stop_stream()
         if self.stream:
-            self.stream.close()
+            try:
+                if self.stream.is_active():
+                    self.stream.stop_stream()
+            except OSError:
+                # 流可能已经关闭，忽略错误
+                pass
+            try:
+                self.stream.close()
+            except OSError:
+                # 流可能已经关闭，忽略错误
+                pass
         self.audio.terminate()
         
     def get_audio_data(self, timeout=None):

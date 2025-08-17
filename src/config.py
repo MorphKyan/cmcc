@@ -19,7 +19,8 @@ LLM_MODEL_NAME = "doubao-seed-1-6-flash-250715"
 # --- Speech Recognition Settings ---
 SENSE_VOICE_MODEL_DIR = "iic/SenseVoiceSmall"
 VAD_MODEL = "fsmn-vad"
-VAD_KWARGS = {"max_single_segment_time": 30000}
+VAD_KWARGS = {"max_single_segment_time": 30000,
+              "max_end_silence_time": 500,}
 LANGUAGE = "auto"
 USE_ITN = True
 BATCH_SIZE_S = 60

@@ -49,10 +49,10 @@ class VADTestSuite:
             str: 音频文件路径，如果未找到则返回None
         """
         try:
-            from funasr import AutoModel
-            model = AutoModel(model="fsmn-vad", model_revision="v2.0.4")
-            model_path = model.model_path
-            wav_file = f"{model_path}/example/vad_example.wav"
+            # from funasr import AutoModel
+            # model = AutoModel(model="fsmn-vad", model_revision="v2.0.4")
+            # model_path = model.model_path
+            wav_file = f"C:/Users/morph/funasr/test_audio_output.wav"
             return wav_file if os.path.exists(wav_file) else None
         except Exception as e:
             print(f"获取模型示例文件时出错: {e}")

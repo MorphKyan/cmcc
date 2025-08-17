@@ -94,8 +94,6 @@ class VoiceAssistant:
             try:
                 audio_chunk_bytes = self.audio_input_handler.get_audio_data(timeout=1)
                 audio_chunk = np.frombuffer(audio_chunk_bytes, dtype=np.int16)
-                # [调试] 打印int16数据的最大绝对值
-                print(f"[Debug] Max absolute value in int16 chunk: {np.max(np.abs(audio_chunk))}")
                 # 使用VAD检测语音活动
                 speech_segments = self.vad_processor.process_audio_chunk(audio_chunk)
 
