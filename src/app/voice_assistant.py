@@ -90,49 +90,22 @@ class VoiceAssistant:
 
     def _vad_thread_loop(self):
         """VAD线程循环，处理实时音频流并分割语音片段。"""
-        speech_buffer = deque()
-        is_speaking = False
-        last_speech_time = time.time()
-
         while not self.stop_event.is_set():
             try:
                 audio_chunk_bytes = self.audio_input_handler.get_audio_data(timeout=1)
-                audio_chunk = np.frombuffer(audio_chunk_bytes, dtype=np.int16)
+                # 直接转换为float32格式
+                audio_chunk = np.frombuffer(audio_chunk_bytes, dtype=np.int16).astype(np.float32) / 32768.0
 
                 # 使用VAD检测语音活动
                 speech_segments = self.vad_processor.process_audio_chunk(audio_chunk)
 
-                if speech_segments:
-                    if not is_speaking:
-                        print("[VAD] 检测到语音开始...")
-                        is_speaking = True
-                    speech_buffer.append(audio_chunk)
-                    last_speech_time = time.time()
-                else:
-                    if is_speaking:
-                        # 如果语音结束，且在一定时间内（例如0.5秒）没有新的语音活动
-                        if time.time() - last_speech_time > 0.5:
-                            print("[VAD] 检测到语音结束，发送语音片段进行识别...")
-                            # 拼接完整的语音片段
-                            complete_speech = np.concatenate(list(speech_buffer))
-                            speech_buffer.clear()
-                            is_speaking = False
-                            
-                            # 将语音片段放入ASR队列
-                            self.vad_output_queue.put(complete_speech)
-                    else:
-                        # 持续丢弃静默期间的音频块
-                        if len(speech_buffer) > 0:
-                            speech_buffer.popleft()
+                # 将检测到的语音片段放入ASR队列
+                for segment in speech_segments:
+                    start, end, audio_data = segment
+                    print(f"[VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {len(audio_data)/RATE:.2f}s")
+                    self.vad_output_queue.put(audio_data)
 
             except queue.Empty:
-                # 如果在超时后仍然是说话状态，说明可能语音流末尾有语音，也需要处理
-                if is_speaking and time.time() - last_speech_time > 0.8:
-                    print("[VAD] 超时后语音结束，发送语音片段...")
-                    complete_speech = np.concatenate(list(speech_buffer))
-                    speech_buffer.clear()
-                    is_speaking = False
-                    self.vad_output_queue.put(complete_speech)
                 continue
             except Exception as e:
                 print(f"[VAD错误] {e}")
