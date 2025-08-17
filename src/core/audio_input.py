@@ -3,7 +3,6 @@
 
 import pyaudio
 import queue
-import numpy as np
 from typing import Optional
 from config import FORMAT, CHANNELS, RATE, CHUNK
 

@@ -14,7 +14,7 @@ class VADProcessor:
     """
     实时语音活动检测(VAD)处理器
     """
-    def __init__(self, chunk_size: int = 200, sample_rate: int = 16000):
+    def __init__(self, chunk_size: int = 1024, sample_rate: int = 16000):
         """
         初始化VAD处理器
         

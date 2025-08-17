@@ -15,7 +15,7 @@ from funasr.utils.postprocess_utils import rich_transcription_postprocess
 from config import (
     SENSE_VOICE_MODEL_DIR, VAD_MODEL, VAD_KWARGS, LANGUAGE, USE_ITN,
     BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, RATE,
-    CHUNK, VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
+    VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
 )
 from core.rag_processor import RAGProcessor
 from core.audio_input import AudioInputHandler
@@ -93,9 +93,9 @@ class VoiceAssistant:
         while not self.stop_event.is_set():
             try:
                 audio_chunk_bytes = self.audio_input_handler.get_audio_data(timeout=1)
-                # 直接转换为float32格式
-                audio_chunk = np.frombuffer(audio_chunk_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-
+                audio_chunk = np.frombuffer(audio_chunk_bytes, dtype=np.int16)
+                # [调试] 打印int16数据的最大绝对值
+                print(f"[Debug] Max absolute value in int16 chunk: {np.max(np.abs(audio_chunk))}")
                 # 使用VAD检测语音活动
                 speech_segments = self.vad_processor.process_audio_chunk(audio_chunk)
 
