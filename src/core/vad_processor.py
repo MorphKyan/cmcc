@@ -16,7 +16,7 @@ class VADProcessor:
     
     该处理器使用输入缓存机制来处理任意长度的音频输入流，确保能够正确处理不规则大小的音频块。
     """
-    def __init__(self, chunk_size: int = 1024, sample_rate: int = 16000):
+    def __init__(self, chunk_size: int = 200, sample_rate: int = 16000):
         """
         初始化VAD处理器
         
@@ -40,7 +40,8 @@ class VADProcessor:
         self.audio_buffer = None
         
         # 当前语音段的开始时间
-        self.current_segment_start_time = None
+        self.last_start_time = None
+        self.buffer_start_sample_num = 0
         
         # 输入缓存，用于累积音频数据直到满足处理要求
         self.input_buffer = np.array([], dtype=np.float32)
@@ -60,7 +61,6 @@ class VADProcessor:
             audio_chunk = audio_chunk.astype(np.float32) / 32768.0
         elif audio_chunk.dtype == np.int32:
             audio_chunk = audio_chunk.astype(np.float32) / 2147483648.0
-        print(f"average: {np.mean(np.abs(audio_chunk))} max:{np.max(np.abs(audio_chunk))}")
 
         # 将新的音频块添加到输入缓存
         self.input_buffer = np.concatenate([self.input_buffer, audio_chunk])
@@ -72,49 +72,46 @@ class VADProcessor:
             self.audio_buffer = np.concatenate([self.audio_buffer, audio_chunk])
             
         # 处理缓存中的音频数据
-        # 只有当输入缓存足够大时才处理
-        segments = []
-        if len(self.input_buffer) >= self.chunk_stride:
-            segments = self._process_buffered_audio()
+        segments = self._process_buffered_audio()
         
-        # 注意：根据新逻辑，我们不再处理剩余的不完整音频数据
-        # 而是等待更多数据到达直到缓存足够大
-
         completed_segments = []
         last_end_time = -1
 
         for start, end in segments:
             # 情况一：新的语音段开始
             if start != -1 and end == -1:
-                if self.current_segment_start_time is None:
-                    self.current_segment_start_time = start
+                if self.last_start_time is None:
+                    self.last_start_time = start
             
             # 情况二：语音段结束
             elif start == -1 and end != -1:
-                if self.current_segment_start_time is not None:
+                if self.last_start_time is not None:
                     # 语音段已完整，提取音频
-                    start_sample = int(self.current_segment_start_time * self.sample_rate / 1000)
-                    end_sample = int(end * self.sample_rate / 1000)
-                    
+                    start_sample = int(self.last_start_time * self.sample_rate / 1000) - self.buffer_start_sample_num
+                    end_sample = int(end * self.sample_rate / 1000) - self.buffer_start_sample_num
+
                     segment_audio = self.audio_buffer[max(0, start_sample):end_sample]
-                    completed_segments.append((self.current_segment_start_time, end, segment_audio))
+                    if(segment_audio.size == 0):
+                        print(f"[VAD警告] 检测到空的音频段: {self.last_start_time}ms - {end}ms")
+                    completed_segments.append((self.last_start_time, end, segment_audio))
                     last_end_time = end
                     
                     # 重置当前语音段状态
-                    self.current_segment_start_time = None
+                    self.last_start_time = None
 
             # 情况三：短语音段（在单个块内开始和结束）
             elif start != -1 and end != -1:
                 # 如果之前有一个未结束的段，先将其结束
-                if self.current_segment_start_time is not None:
-                    start_sample = int(self.current_segment_start_time * self.sample_rate / 1000)
-                    end_sample = int(start * self.sample_rate / 1000)
-                    segment_audio = self.audio_buffer[max(0, start_sample):end_sample]
-                    completed_segments.append((self.current_segment_start_time, start, segment_audio))
-                    self.current_segment_start_time = None
+                if self.last_start_time is not None:
+                    start_sample = int(self.last_start_time * self.sample_rate / 1000) - self.buffer_start_sample_num
+                    end_sample = int(start * self.sample_rate / 1000) - self.buffer_start_sample_num
 
-                start_sample = int(start * self.sample_rate / 1000)
-                end_sample = int(end * self.sample_rate / 1000)
+                    segment_audio = self.audio_buffer[max(0, start_sample):end_sample]
+                    completed_segments.append((self.last_start_time, start, segment_audio))
+                    self.last_start_time = None
+
+                start_sample = int(start * self.sample_rate / 1000) - self.buffer_start_sample_num
+                end_sample = int(end * self.sample_rate / 1000) - self.buffer_start_sample_num
 
                 segment_audio = self.audio_buffer[max(0, start_sample):end_sample]
                 completed_segments.append((start, end, segment_audio))
@@ -124,7 +121,9 @@ class VADProcessor:
             # 移除已处理的音频数据
             remove_samples = int(last_end_time * self.sample_rate / 1000)
             if remove_samples > 0:
-                self.audio_buffer = self.audio_buffer[remove_samples:]
+                print(f"[VAD] 移除已处理的音频数据: {self.buffer_start_sample_num}到{remove_samples}的采样点, 当前缓存起始时间为: {remove_samples / self.sample_rate:.2f}秒")
+                self.audio_buffer = self.audio_buffer[remove_samples - self.buffer_start_sample_num:]
+                self.buffer_start_sample_num = remove_samples
             
         return completed_segments
         
@@ -209,5 +208,5 @@ class VADProcessor:
         """重置VAD缓存和语音段状态"""
         self.cache = {}
         self.audio_buffer = None
-        self.current_segment_start_time = None
+        self.last_start_time = None
         self.input_buffer = np.array([], dtype=np.float32)
