@@ -13,6 +13,8 @@ from config import VAD_MODEL, VAD_KWARGS
 class VADProcessor:
     """
     实时语音活动检测(VAD)处理器
+    
+    该处理器使用输入缓存机制来处理任意长度的音频输入流，确保能够正确处理不规则大小的音频块。
     """
     def __init__(self, chunk_size: int = 1024, sample_rate: int = 16000):
         """
@@ -40,6 +42,9 @@ class VADProcessor:
         # 当前语音段的开始时间
         self.current_segment_start_time = None
         
+        # 输入缓存，用于累积音频数据直到满足处理要求
+        self.input_buffer = np.array([], dtype=np.float32)
+        
     def process_audio_chunk(self, audio_chunk: np.ndarray) -> list:
         """
         处理音频块，检测语音活动
@@ -57,23 +62,23 @@ class VADProcessor:
             audio_chunk = audio_chunk.astype(np.float32) / 2147483648.0
         print(f"average: {np.mean(np.abs(audio_chunk))} max:{np.max(np.abs(audio_chunk))}")
 
+        # 将新的音频块添加到输入缓存
+        self.input_buffer = np.concatenate([self.input_buffer, audio_chunk])
+        
         # 将新的音频块拼接到全局缓存
         if self.audio_buffer is None:
             self.audio_buffer = audio_chunk
         else:
             self.audio_buffer = np.concatenate([self.audio_buffer, audio_chunk])
             
-        res = self.model.generate(
-            input=audio_chunk, 
-            cache=self.cache, 
-            is_final=False,
-            chunk_size=self.chunk_size,
-            **VAD_KWARGS
-        )
-        
+        # 处理缓存中的音频数据
+        # 只有当输入缓存足够大时才处理
         segments = []
-        if res and res[0].get("value"):
-            segments = res[0]["value"]
+        if len(self.input_buffer) >= self.chunk_stride:
+            segments = self._process_buffered_audio()
+        
+        # 注意：根据新逻辑，我们不再处理剩余的不完整音频数据
+        # 而是等待更多数据到达直到缓存足够大
 
         completed_segments = []
         last_end_time = -1
@@ -154,8 +159,55 @@ class VADProcessor:
                 
         return speech_segments
         
+    def _get_processable_chunks(self) -> list:
+        """
+        从输入缓存中提取可处理的音频块
+        
+        该方法会从输入缓存中提取所有完整的音频块，并更新缓存以移除已处理的数据。
+        
+        Returns:
+            可处理的音频块列表
+        """
+        chunks = []
+        while len(self.input_buffer) >= self.chunk_stride:
+            # 提取一个完整的块
+            chunk = self.input_buffer[:self.chunk_stride]
+            chunks.append(chunk)
+            # 更新缓存（移除已处理的数据）
+            self.input_buffer = self.input_buffer[self.chunk_stride:]
+        return chunks
+    
+    def _process_buffered_audio(self) -> list:
+        """
+        处理缓存中的音频数据
+        
+        该方法会获取所有可处理的音频块，并使用VAD模型处理这些块以检测语音活动。
+        
+        Returns:
+            检测到的语音段列表
+        """
+        # 获取可处理的音频块
+        processable_chunks = self._get_processable_chunks()
+        
+        all_segments = []
+        for chunk in processable_chunks:
+            # 处理每个音频块
+            segments = self.model.generate(
+                input=chunk,
+                cache=self.cache,
+                is_final=False,
+                chunk_size=self.chunk_size,
+                **VAD_KWARGS
+            )
+            
+            if segments and segments[0].get("value"):
+                all_segments.extend(segments[0]["value"])
+                
+        return all_segments
+    
     def reset_cache(self):
         """重置VAD缓存和语音段状态"""
         self.cache = {}
         self.audio_buffer = None
         self.current_segment_start_time = None
+        self.input_buffer = np.array([], dtype=np.float32)

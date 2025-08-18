@@ -80,7 +80,7 @@ Initializes the VAD processor.
 
 #### `process_audio_chunk(audio_chunk: np.ndarray) -> list`
 
-Processes a single audio chunk and detects voice activity.
+Processes a single audio chunk and detects voice activity. Uses an input buffer to handle variable-length audio chunks and accumulate data until processing requirements are met.
 
 **Parameters:**
 - `audio_chunk` (np.ndarray): Audio data chunk

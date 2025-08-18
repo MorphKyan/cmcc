@@ -258,6 +258,93 @@ class VADTestSuite:
         
         return silent_test_passed and speech_test_passed
 
+    def test_irregular_chunk_sizes(self):
+        """测试不规则大小的音频块处理"""
+        print("正在测试不规则大小的音频块处理...")
+        
+        # 初始化VAD处理器
+        vad_processor = self.initialize_vad_processor()
+        
+        # 获取模型示例文件
+        wav_file = self.get_model_example_file()
+        if not wav_file:
+            print("未找到模型示例音频文件，跳过不规则大小测试")
+            return False
+        
+        # 加载音频文件
+        speech, sr = self.load_audio_file(wav_file)
+        if speech is None:
+            return False
+        
+        # 检查采样率是否匹配
+        if sr != TEST_SAMPLE_RATE:
+            print(f"警告: 示例音频采样率 ({sr}Hz) 与测试采样率 ({TEST_SAMPLE_RATE}Hz) 不同。")
+        
+        # 创建不规则大小的音频块进行测试
+        irregular_chunk_sizes = [100, 500, 1200, 800, 300]  # 不同的块大小（采样点数）
+        total_processed = 0
+        all_segments = []
+        
+        vad_processor.reset_cache()  # 重置缓存以进行独立测试
+        
+        for chunk_size in irregular_chunk_sizes:
+            # 获取音频块
+            if total_processed >= len(speech):
+                break
+                
+            speech_chunk = speech[total_processed:total_processed + chunk_size]
+            total_processed += len(speech_chunk)
+            
+            if len(speech_chunk) == 0:
+                continue
+            
+            # 处理音频块
+            segments = vad_processor.process_audio_chunk(speech_chunk)
+            all_segments.extend(segments)
+            
+            print(f"处理了 {len(speech_chunk)} 个采样点的音频块，检测到 {len(segments)} 个语音段")
+        
+        # 检查是否检测到了语音段
+        if all_segments:
+            print(f"不规则大小音频块测试通过: 总共检测到 {len(all_segments)} 个语音段")
+            return True
+        else:
+            print("不规则大小音频块测试失败: 未检测到任何语音段")
+            return False
+
+    def test_input_buffer_accumulation(self):
+        """测试输入缓存累积功能"""
+        print("正在测试输入缓存累积功能...")
+        
+        # 初始化VAD处理器
+        vad_processor = self.initialize_vad_processor()
+        
+        # 创建小的音频块（小于chunk_stride）
+        small_chunk_size = 100  # 采样点数
+        small_chunk = np.random.rand(small_chunk_size).astype(np.float32)
+        
+        # 多次处理小块，测试缓存累积
+        for i in range(5):
+            segments = vad_processor.process_audio_chunk(small_chunk)
+            print(f"第 {i+1} 次处理小块，检测到 {len(segments)} 个语音段")
+            
+        # 检查输入缓存是否正确累积
+        expected_buffer_size = 5 * small_chunk_size
+        actual_buffer_size = len(vad_processor.input_buffer)
+        
+        print(f"期望缓存大小: {expected_buffer_size}, 实际缓存大小: {actual_buffer_size}")
+        
+        # 重置缓存
+        vad_processor.reset_cache()
+        buffer_cleared = len(vad_processor.input_buffer) == 0
+        
+        if buffer_cleared:
+            print("输入缓存累积测试通过: 缓存正确累积并能被重置")
+            return True
+        else:
+            print("输入缓存累积测试失败: 缓存未被正确重置")
+            return False
+
     def run_all_tests(self):
         """运行所有测试"""
         print("VAD功能测试")
@@ -270,6 +357,18 @@ class VADTestSuite:
         
         # 测试 process_audio_chunk 函数
         chunk_test_passed = self.test_process_audio_chunk()
+        
+        print("\n" + "=" * 50)
+        
+        # 测试不规则大小的音频块处理
+        print("正在测试不规则大小的音频块处理...")
+        irregular_chunk_test_passed = self.test_irregular_chunk_sizes()
+        
+        print("\n" + "=" * 50)
+        
+        # 测试输入缓存累积功能
+        print("正在测试输入缓存累积功能...")
+        buffer_accumulation_test_passed = self.test_input_buffer_accumulation()
         
         print("\n" + "=" * 50)
         
@@ -293,10 +392,14 @@ class VADTestSuite:
         print("测试总结:")
         print(f"  模型示例测试: {'通过' if model_test_passed else '失败'}")
         print(f"  音频块测试: {'通过' if chunk_test_passed else '失败'}")
+        print(f"  不规则块测试: {'通过' if irregular_chunk_test_passed else '失败'}")
+        print(f"  缓存累积测试: {'通过' if buffer_accumulation_test_passed else '失败'}")
         print(f"  边界条件测试: {'通过' if boundary_test_passed else '失败'}")
         print(f"  文件测试: {'通过' if file_test_passed else '失败'}")
         
-        all_tests_passed = model_test_passed and chunk_test_passed and boundary_test_passed and file_test_passed
+        all_tests_passed = (model_test_passed and chunk_test_passed and 
+                           irregular_chunk_test_passed and buffer_accumulation_test_passed and
+                           boundary_test_passed and file_test_passed)
         print(f"  总体结果: {'通过' if all_tests_passed else '失败'}")
         
         return all_tests_passed
