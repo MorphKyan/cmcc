@@ -70,7 +70,6 @@ def main():
             llm_handler=llm_handler,
             device=args.device,
             force_rag_reload=args.force_rag_reload,
-            record_seconds=args.record_seconds
         )
         
         # 开始识别

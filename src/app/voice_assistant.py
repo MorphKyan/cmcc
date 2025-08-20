@@ -4,28 +4,21 @@
 import numpy as np
 import queue
 import threading
-from collections import deque
-import time
-
-import numpy as np
-import torch
-from funasr import AutoModel
-from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
 from config import (
-    SENSE_VOICE_MODEL_DIR, VAD_MODEL, VAD_KWARGS, LANGUAGE, USE_ITN,
-    BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S, RATE,
+    RATE,
     VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
 )
 from core.rag_processor import RAGProcessor
 from core.audio_input import AudioInputHandler
 from core.vad_processor import VADProcessor
+from core.asr_processor import ASRProcessor
 
 class VoiceAssistant:
     """
     一个集成了实时语音识别、RAG和LLM的控制器。
     """
-    def __init__(self, llm_handler, device: str = "auto", force_rag_reload: bool = False, record_seconds: int = 5):
+    def __init__(self, llm_handler, device: str = "auto", force_rag_reload: bool = False):
         """
         初始化实时语音识别器。
         
@@ -33,13 +26,17 @@ class VoiceAssistant:
             llm_handler: 已初始化的LLM处理器实例。
             device: 推理设备 ("auto", "cuda:0", or "cpu").
             force_rag_reload: 是否强制重新加载RAG数据。
-            record_seconds: 每次识别的录音时长。
         """
-        self.record_seconds = record_seconds
-        self._setup_device(device)
-        self._init_asr_model()
-        
-        # 初始化核心处理器
+        self.device = device
+
+        # 初始化音频输入处理器
+        self.audio_input_handler = AudioInputHandler()
+        self.audio_input_handler.init_audio_stream()
+        # 初始化VAD处理器
+        self.vad_processor = VADProcessor()        
+        # 初始化ASR处理器
+        self.asr_processor = ASRProcessor(device=device)
+        # 初始化RAG处理器
         self.rag_processor = RAGProcessor(
             videos_data_path=VIDEOS_DATA_PATH,
             chroma_db_path=CHROMA_DB_PATH,
@@ -47,6 +44,7 @@ class VoiceAssistant:
             top_k_results=TOP_K_RESULTS,
             force_reload=force_rag_reload
         )
+        # LLM处理器
         self.llm_handler = llm_handler
 
         # 初始化处理队列
@@ -54,39 +52,12 @@ class VoiceAssistant:
         self.asr_output_queue = queue.Queue()
         self.rag_output_queue = queue.Queue()
 
-        # 初始化音频输入处理器
-        self.audio_input_handler = AudioInputHandler()
-        self.audio_input_handler.init_audio_stream()
-        
-        # 初始化VAD处理器
-        self.vad_processor = VADProcessor()
-
         # 初始化线程和停止事件
         self.stop_event = threading.Event()
         self.vad_thread = None
         self.asr_thread = None
         self.rag_thread = None
         self.llm_thread = None
-
-    def _setup_device(self, device: str):
-        """设置推理设备 (CPU/GPU)"""
-        if device == "auto":
-            self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        else:
-            self.device = device
-        print(f"正在使用 {self.device} 进行推理...")
-
-    def _init_asr_model(self):
-        """初始化FunASR语音识别模型"""
-        print("正在加载语音识别模型...")
-        self.model = AutoModel(
-            model=SENSE_VOICE_MODEL_DIR,
-            vad_model=VAD_MODEL,
-            vad_kwargs=VAD_KWARGS,
-            device=self.device,
-        )
-        print("语音识别模型加载完成。")
-
 
     def _vad_thread_loop(self):
         """VAD线程循环，处理实时音频流并分割语音片段。"""
@@ -115,21 +86,12 @@ class VoiceAssistant:
                 # 从VAD队列中获取分割好的语音片段
                 audio_data = self.vad_output_queue.get(timeout=1)
                 
-                if audio_data.dtype == np.int16:
-                    audio_data = audio_data.astype(np.float32) / 32768.0
+                # 使用ASR处理器处理音频数据
+                recognized_text = self.asr_processor.process_audio_data(audio_data)
                 
-                # 进行语音识别
-                res = self.model.generate(
-                    input=audio_data, cache={}, language=LANGUAGE, use_itn=USE_ITN,
-                    batch_size_s=BATCH_SIZE_S, merge_vad=MERGE_VAD,
-                    merge_length_s=MERGE_LENGTH_S
-                )
-
-                if res and res[0].get("text"):
-                    recognized_text = rich_transcription_postprocess(res[0]["text"])
-                    if recognized_text.strip():
-                        print(f"\n[识别结果] {recognized_text}")
-                        self.asr_output_queue.put(recognized_text)
+                if recognized_text and recognized_text.strip():
+                    print(f"\n[识别结果] {recognized_text}")
+                    self.asr_output_queue.put(recognized_text)
 
             except queue.Empty:
                 continue
