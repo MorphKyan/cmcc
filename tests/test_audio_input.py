@@ -36,9 +36,6 @@ class TestAudioInputHandler(unittest.TestCase):
         
     def test_init_audio_stream(self):
         """测试音频流的初始化"""
-        # 初始化音频流
-        self.audio_handler.init_audio_stream()
-        
         # 检查流是否已创建
         self.assertIsNotNone(self.audio_handler.stream)
         
@@ -49,9 +46,6 @@ class TestAudioInputHandler(unittest.TestCase):
         
     def test_audio_capture_and_save(self):
         """测试音频捕获并保存到文件"""
-        # 初始化音频流
-        self.audio_handler.init_audio_stream()
-        
         # 启动音频流
         self.audio_handler.start_stream()
         
@@ -110,9 +104,6 @@ class TestAudioInputHandler(unittest.TestCase):
             
     def test_get_audio_data(self):
         """测试获取音频数据"""
-        # 初始化音频流
-        self.audio_handler.init_audio_stream()
-        
         # 启动音频流
         self.audio_handler.start_stream()
         

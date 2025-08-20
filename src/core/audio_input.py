@@ -16,10 +16,6 @@ class AudioInputHandler:
         """
         self.audio_queue = queue.Queue()
         self.audio = pyaudio.PyAudio()
-        self.stream = None
-        
-    def init_audio_stream(self):
-        """初始化PyAudio音频流"""
         self.stream = self.audio.open(
             format=FORMAT,
             channels=CHANNELS,

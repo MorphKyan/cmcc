@@ -31,7 +31,6 @@ class VoiceAssistant:
 
         # 初始化音频输入处理器
         self.audio_input_handler = AudioInputHandler()
-        self.audio_input_handler.init_audio_stream()
         # 初始化VAD处理器
         self.vad_processor = VADProcessor()        
         # 初始化ASR处理器
