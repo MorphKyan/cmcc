@@ -3,11 +3,8 @@
 
 import numpy as np
 from funasr import AutoModel
-import sys
-import os
 
-# Add the parent directory to the path to import config
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# 使用相对导入简化配置导入
 from config import VAD_MODEL, VAD_KWARGS
 
 class VADProcessor:
