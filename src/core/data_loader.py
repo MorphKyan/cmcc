@@ -38,11 +38,11 @@ def load_documents_from_csvs(file_paths):
     for _, row in combined_df.iterrows():
         # 将每一行转换为一个文本内容，用于向量化
         # 我们将所有相关信息合并，以便语义搜索能捕捉到
-        content = f"类型: {row['type']}, 名称: {row['name']}"
+        content = f"视频名称: {row['name']}\n"
         if pd.notna(row['aliases']):
-            content += f", 别名: {row['aliases']}"
+            content += f"相关术语: {row['aliases']}\n"
         if pd.notna(row['description']):
-            content += f", 描述: {row['description']}"
+            content += f",内容描述: {row['description']}"
         
         # metadata存储了原始的、结构化的信息
         metadata = {

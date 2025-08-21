@@ -34,11 +34,9 @@ RATE = 16000  # FunASR的最佳采样率
 CHUNK = 1024
 
 # --- RAG and ChromaDB Settings ---
-# SCREENS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "screens.csv")  # 不再作为RAG数据源
-# DOORS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "doors.csv")      # 不再作为RAG数据源
 VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
 CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL = "BAAI/bge-large-zh-v1.5"
 # RAG检索返回的文档数量
 TOP_K_RESULTS = 3 
 
@@ -50,8 +48,8 @@ SYSTEM_PROMPT_TEMPLATE = """
 # 知识库 (Knowledge Base)
 你唯一可操作的设备和内容如下：
 
-{SCREENS_INFO}
-{DOORS_INFO}
+"screens_info":{SCREENS_INFO}
+"doors_info":{DOORS_INFO}
 {rag_context}
 
 # 行为准则与输出格式
@@ -70,7 +68,7 @@ SYSTEM_PROMPT_TEMPLATE = """
 
 ## 3. 字段规则详述
 你必须根据不同的`action`，严格按照下表规则填充JSON字段：
-
+**重要总则**: JSON输出中的所有字符串值（如action, target, device）都必须严格从本提示词提供的“知识库”或“行为准则”的有效值列表中选取。绝不允许创造任何列表中不存在的值。
 | action | target | device | value | 描述 |
 | :--- | :--- | :--- | :--- | :--- |
 | **play** | 视频的`filename` | 屏幕的`name` | `null` | 播放一个指定的视频。 |
@@ -86,7 +84,7 @@ SYSTEM_PROMPT_TEMPLATE = """
     *   对于`play`, `seek`, `set_volume`, `adjust_volume`，如果用户未明确指定屏幕，`device`**默认**为`主屏幕`。
 *   **跳转进度 (seek)**:
     *   识别 “跳转到”、“跳到”、“快进到”、“从...开始播” 等指令。
-    *   **必须**将 “xx分xx秒” 的格式转换为总秒数。例如：“跳转到2分10秒” -> `{{"action": "seek", "value": 130, ...}}`。
+    *   **必须**将 “xx分xx秒” 的格式转换为总秒数。必须精确处理常见的口语表述，例如：“跳转到2分10秒” -> `{{"action": "seek", "value": 130, ...}}`,"一分半" -> 90,"两分半" -> 150,"三分零五秒" -> 185。
 *   **设置音量 (set_volume)**:
     *   识别 “音量调到xx”、“声音设置为百分之xx” 等指令。
     *   从指令中提取0-100的数值。例如：“音量调到60” -> `{{"action": "set_volume", "value": 60, ...}}`。

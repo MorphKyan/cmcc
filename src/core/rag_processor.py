@@ -8,11 +8,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from .data_loader import load_documents_from_csvs
 
 class RAGProcessor:
-    def __init__(self, videos_data_path, 
-                 chroma_db_path, embedding_model, top_k_results, force_reload=False):
+    def __init__(self, videos_data_path, chroma_db_path, embedding_model, top_k_results, force_reload=False):
         """
         初始化RAG处理器。
-        注意：screens和doors数据已移至提示词常驻部分，不再作为RAG数据源
         
         Args:
             videos_data_path (str): 视频数据CSV文件路径。
@@ -50,7 +48,6 @@ class RAGProcessor:
     def _create_and_persist_db(self):
         """
         从CSV加载文档，创建向量数据库并持久化到磁盘。
-        注意：此函数现在只加载videos.csv文件
         """
         try:
             # 只加载videos数据

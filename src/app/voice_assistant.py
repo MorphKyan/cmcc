@@ -29,8 +29,7 @@ class VoiceAssistant:
         """
         self.device = device
 
-        # 初始化音频输入处理器
-        self.audio_input_handler = AudioInputHandler()
+
         # 初始化VAD处理器
         self.vad_processor = VADProcessor()        
         # 初始化ASR处理器
@@ -45,7 +44,9 @@ class VoiceAssistant:
         )
         # LLM处理器
         self.llm_handler = llm_handler
-
+        # 初始化音频输入处理器
+        self.audio_input_handler = AudioInputHandler()
+        
         # 初始化处理队列
         self.vad_output_queue = queue.Queue()
         self.asr_output_queue = queue.Queue()

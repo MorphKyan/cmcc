@@ -60,7 +60,7 @@ class OllamaLLMHandler:
             str: 大模型返回的JSON格式指令或错误信息。
         """
         system_prompt = self._construct_prompt(user_input, rag_docs)
-        
+        print(system_prompt)
         self.conversation_history = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input}
