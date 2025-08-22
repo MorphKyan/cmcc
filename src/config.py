@@ -19,8 +19,7 @@ LLM_MODEL_NAME = "doubao-seed-1-6-flash-250715"
 # --- Speech Recognition Settings ---
 SENSE_VOICE_MODEL_DIR = "iic/SenseVoiceSmall"
 VAD_MODEL = "fsmn-vad"
-VAD_KWARGS = {"max_single_segment_time": 30000,
-              "max_end_silence_time": 500,}
+VAD_KWARGS = {"max_single_segment_time": 30000}
 LANGUAGE = "auto"
 USE_ITN = True
 BATCH_SIZE_S = 60
@@ -67,8 +66,8 @@ SYSTEM_PROMPT_TEMPLATE = """
 *   `adjust_volume`: 相对提高或降低音量
 
 ## 3. 字段规则详述
-你必须根据不同的`action`，严格按照下表规则填充JSON字段：
 **重要总则**: JSON输出中的所有字符串值（如action, target, device）都必须严格从本提示词提供的“知识库”或“行为准则”的有效值列表中选取。绝不允许创造任何列表中不存在的值。
+你必须根据不同的`action`，严格按照下表规则填充JSON字段：
 | action | target | device | value | 描述 |
 | :--- | :--- | :--- | :--- | :--- |
 | **play** | 视频的`filename` | 屏幕的`name` | `null` | 播放一个指定的视频。 |
@@ -117,7 +116,6 @@ SYSTEM_PROMPT_TEMPLATE = """
 # 用户当前指令:
 {{USER_INPUT}}
 """
-
 
 def load_screens_data():
     """加载屏幕数据并返回结构化列表"""
