@@ -3,8 +3,14 @@
 
 import json
 import ollama
-from .data_loader import format_docs_for_prompt
-from config import SCREENS_INFO, DOORS_INFO
+import sys
+import os
+
+# Add the project root directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from src.core.data_loader import format_docs_for_prompt
+from src.config import SCREENS_INFO, DOORS_INFO
 
 class OllamaLLMHandler:
     def __init__(self, system_prompt_template, model='qwen3:8b'):

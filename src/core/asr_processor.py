@@ -38,7 +38,7 @@ class ASRProcessor:
         print("ASR处理器正在加载语音识别模型...")
         self.model = AutoModel(
             model=SENSE_VOICE_MODEL_DIR,
-            trust_remote_code=True,
+            trust_remote_code=False,
             vad_model=VAD_MODEL,
             vad_kwargs=VAD_KWARGS,
             device=self.device,
