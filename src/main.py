@@ -19,7 +19,7 @@ def main():
     parser.add_argument(
         "--device",
         type=str,
-        default="auto",
+        default="cpu",
         choices=["auto", "cpu", "cuda:0"],
         help="选择用于推理的设备。\n"
              "  'auto': 自动检测CUDA，如果可用则使用GPU，否则使用CPU (默认)。\n"

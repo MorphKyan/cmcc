@@ -190,7 +190,8 @@ class OllamaLLMHandler:
             response = self.client.chat(
                 model=self.model,
                 messages=self.conversation_history,
-                tools=self.tools
+                tools=self.tools,
+                think=False
             )
             
             # 检查是否有工具调用
