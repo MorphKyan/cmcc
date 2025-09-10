@@ -196,57 +196,63 @@ class OllamaLLMHandler:
             
             # 检查是否有工具调用
             if response['message'].get('tool_calls'):
-                # 处理工具调用
+                # 处理多个工具调用
                 tool_calls = response['message']['tool_calls']
-                function_call = tool_calls[0]['function']
-                function_name = function_call['name']
-                arguments = function_call['arguments']
+                results = []
                 
-                # 根据函数名构建相应的JSON响应
-                if function_name == "play_video":
-                    result = {
-                        "action": "play",
-                        "target": arguments["target"],
-                        "device": arguments["device"],
-                        "value": None
-                    }
-                elif function_name == "control_door":
-                    result = {
-                        "action": arguments["action"],
-                        "target": arguments["target"],
-                        "device": None,
-                        "value": None
-                    }
-                elif function_name == "seek_video":
-                    result = {
-                        "action": "seek",
-                        "target": None,
-                        "device": arguments["device"],
-                        "value": arguments["value"]
-                    }
-                elif function_name == "set_volume":
-                    result = {
-                        "action": "set_volume",
-                        "target": None,
-                        "device": arguments["device"],
-                        "value": arguments["value"]
-                    }
-                elif function_name == "adjust_volume":
-                    result = {
-                        "action": "adjust_volume",
-                        "target": None,
-                        "device": arguments["device"],
-                        "value": arguments["value"]
-                    }
-                else:
-                    # 未知函数调用
-                    result = {
-                        "action": "error",
-                        "reason": "unknown_function",
-                        "target": None,
-                        "device": None,
-                        "value": None
-                    }
+                # 遍历所有工具调用
+                for tool_call in tool_calls:
+                    function_call = tool_call['function']
+                    function_name = function_call['name']
+                    arguments = function_call['arguments']
+                    
+                    # 根据函数名构建相应的JSON响应
+                    if function_name == "play_video":
+                        result = {
+                            "action": "play",
+                            "target": arguments["target"],
+                            "device": arguments["device"],
+                            "value": None
+                        }
+                    elif function_name == "control_door":
+                        result = {
+                            "action": arguments["action"],
+                            "target": arguments["target"],
+                            "device": None,
+                            "value": None
+                        }
+                    elif function_name == "seek_video":
+                        result = {
+                            "action": "seek",
+                            "target": None,
+                            "device": arguments["device"],
+                            "value": arguments["value"]
+                        }
+                    elif function_name == "set_volume":
+                        result = {
+                            "action": "set_volume",
+                            "target": None,
+                            "device": arguments["device"],
+                            "value": arguments["value"]
+                        }
+                    elif function_name == "adjust_volume":
+                        result = {
+                            "action": "adjust_volume",
+                            "target": None,
+                            "device": arguments["device"],
+                            "value": arguments["value"]
+                        }
+                    else:
+                        # 未知函数调用
+                        result = {
+                            "action": "error",
+                            "reason": "unknown_function",
+                            "target": None,
+                            "device": None,
+                            "value": None
+                        }
+                    
+                    results.append(result)
                 
                 # 将结果添加到对话历史中
                 self.conversation_history.append({
@@ -255,34 +261,19 @@ class OllamaLLMHandler:
                     "tool_calls": tool_calls
                 })
                 
-                self.conversation_history.append({
-                    "role": "tool",
-                    "content": json.dumps(result, ensure_ascii=False),
-                    "name": function_name
-                })
+                # 为每个工具调用添加工具响应到对话历史
+                for i, (tool_call, result) in enumerate(zip(tool_calls, results)):
+                    function_name = tool_call['function']['name']
+                    self.conversation_history.append({
+                        "role": "tool",
+                        "content": json.dumps(result, ensure_ascii=False),
+                        "name": function_name
+                    })
                 
-                # 返回格式化的JSON字符串
-                return json.dumps(result, ensure_ascii=False)
+                return json.dumps(results, ensure_ascii=False)
             else:
-                # 没有工具调用，返回模型的直接响应
-                assistant_message = response['message']['content']
-                
-                self.conversation_history.append({
-                    "role": "assistant",
-                    "content": assistant_message
-                })
-                
-                # 尝试解析为JSON，如果失败则返回错误
-                try:
-                    parsed_response = json.loads(assistant_message)
-                    if isinstance(parsed_response, dict) and "action" in parsed_response:
-                        return json.dumps(parsed_response, ensure_ascii=False)
-                    else:
-                        print(f"[警告] LLM输出格式不正确，缺少action字段: {assistant_message}")
-                        return '{"action": "error", "reason": "invalid_format", "target": null, "device": null, "value": null}'
-                except json.JSONDecodeError:
-                    print(f"[警告] LLM输出不是有效的JSON格式: {assistant_message}")
-                    return '{"action": "error", "reason": "invalid_json", "target": null, "device": null, "value": null}'
+                # 没有工具调用，直接输出空数组
+                return '[]'
             
         except Exception as api_error:
             error_message = f"[错误] 调用Ollama API出错: {api_error}"
