@@ -35,7 +35,7 @@ CHUNK = 1024
 # --- RAG and ChromaDB Settings ---
 VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
 CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
-EMBEDDING_MODEL = "BAAI/bge-large-zh-v1.5"
+EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-8B"
 # RAG检索返回的文档数量
 TOP_K_RESULTS = 3 
 
