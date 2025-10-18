@@ -10,3 +10,6 @@ chromadb
 sentence-transformers
 langchain-community
 ollama
+fastapi
+uvicorn[standard]
+python-multipart

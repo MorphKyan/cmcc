@@ -4,8 +4,7 @@
 import numpy as np
 from funasr import AutoModel
 
-# 使用相对导入简化配置导入
-from config import VAD_MODEL, VAD_KWARGS
+from config import FUNASR_VAD_MODEL, FUNASR_VAD_KWARGS
 
 class VADProcessor:
     """
@@ -27,7 +26,7 @@ class VADProcessor:
         
         # 初始化VAD模型
         print("正在加载VAD模型...")
-        self.model = AutoModel(model=VAD_MODEL, model_revision="v2.0.4")
+        self.model = AutoModel(model=FUNASR_VAD_MODEL, model_revision="v2.0.4")
         print("VAD模型加载完成。")
         
         # VAD模型缓存
@@ -193,7 +192,7 @@ class VADProcessor:
                 cache=self.cache,
                 is_final=False,
                 chunk_size=self.chunk_size,
-                **VAD_KWARGS
+                **FUNASR_VAD_KWARGS
             )
             
             if segments and segments[0].get("value"):

@@ -19,7 +19,7 @@ def main():
     parser.add_argument(
         "--device",
         type=str,
-        default="cpu",
+        default="auto",
         choices=["auto", "cpu", "cuda:0"],
         help="选择用于推理的设备。\n"
              "  'auto': 自动检测CUDA，如果可用则使用GPU，否则使用CPU (默认)。\n"
@@ -34,13 +34,6 @@ def main():
              "如果你的 'data/videos.csv' 文件有更新，请使用此选项。"
     )
     
-    parser.add_argument(
-        "--record-seconds",
-        type=int,
-        default=5,
-        help="每次识别处理的录音时长（秒）。默认为 5 秒。"
-    )
-
     parser.add_argument(
         "--llm-provider",
         type=str,
@@ -76,8 +69,7 @@ def main():
         assistant.start()
         
     except Exception as e:
-        print(f"\n[严重错误] 程序启动失败: {e}")
-        # 在异常情况下，确保 sys 模块可用
+        print(f"\n程序启动失败: {e}")
         import sys
         sys.exit(1)
 

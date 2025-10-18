@@ -89,3 +89,29 @@ class RAGProcessor:
         #     print(f"  内容: {doc.page_content}")
         #     print(f"  元数据: {doc.metadata}")
         return docs
+
+    def refresh_database(self):
+        """
+        刷新数据库，重新加载CSV数据并重建向量数据库。
+        """
+        print("正在刷新RAG数据库...")
+        try:
+            # 删除旧的数据库
+            if os.path.exists(self.chroma_db_path):
+                print(f"正在删除旧的数据库 '{self.chroma_db_path}'...")
+                shutil.rmtree(self.chroma_db_path)
+            
+            # 重新创建数据库
+            print("正在重新创建数据库...")
+            self._create_and_persist_db()
+            
+            # 重新初始化retriever
+            self.retriever = self.vector_store.as_retriever(
+                search_kwargs={"k": self.top_k_results}
+            )
+            
+            print("RAG数据库刷新完成。")
+            return True
+        except Exception as e:
+            print(f"[错误] 刷新数据库失败: {e}")
+            return False
