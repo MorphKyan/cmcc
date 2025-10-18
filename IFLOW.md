@@ -12,6 +12,7 @@
 - **大语言模型 (LLM)**: 支持本地Ollama模型和火山引擎方舟模型
 - **RAG (检索增强生成)**: Langchain, ChromaDB, HuggingFace Embeddings
 - **数据处理**: Pandas
+- **Web API**: FastAPI, Uvicorn
 
 ### 项目架构
 
@@ -22,13 +23,14 @@
 3.  **RAG处理 (`src/core/rag_processor.py`)**: 负责创建和查询本地ChromaDB向量数据库，为LLM提供上下文信息。
 4.  **LLM交互**:
     -   Ollama (`src/core/ollama_llm_handler.py`): 与本地Ollama大模型交互。
-    -   火山引擎 (`src/core/ark_llm_handler.py`): 与火山引擎方舟大模型交互。
+    -   火山引擎 (`src/core/ark_llm_handler.py`)**: 与火山引擎方舟大模型交互。
 5.  **音频处理**:
     -   音频输入 (`src/core/audio_input.py`): 处理麦克风音频输入。
     -   VAD处理 (`src/core/vad_processor.py`): 检测语音活动。
     -   ASR处理 (`src/core/asr_processor.py`): 将语音转换为文本。
 6.  **应用核心 (`src/app/voice_assistant.py`)**: 整合所有模块，实现核心业务逻辑。
 7.  **主入口 (`main.py`)**: 程序的启动点，处理命令行参数并初始化`VoiceAssistant`。
+8.  **Web API服务 (`src/api/fastapi_app.py`)**: 提供基于FastAPI的RESTful API服务，支持RAG查询、数据库刷新和文件上传等功能。
 
 ### 数据源
 
@@ -37,6 +39,19 @@
 -   `data/videos.csv`: 视频信息。
 
 ## 构建和运行
+
+### 环境准备
+
+在启动项目之前，需要激活conda环境。
+
+1.  首先执行以下命令以激活conda：
+    ```bash
+    C:/ProgramData/miniconda3/Scripts/activate
+    ```
+2.  然后激活项目所需的conda环境（例如 `funasr12`）：
+    ```bash
+    conda activate funasr12
+    ```
 
 ### 安装依赖
 
@@ -55,17 +70,40 @@ pip install -r requirements.txt
 
 ### 启动程序
 
+#### 1. 启动主语音控制程序
+
 在项目根目录下执行以下命令启动程序：
 
 ```bash
 python main.py
 ```
 
+#### 2. 启动Web API服务
+
+在项目根目录下执行以下命令启动FastAPI服务：
+
+```bash
+python src/api/fastapi_app.py
+```
+
+或者使用uvicorn命令启动：
+
+```bash
+uvicorn src.api.fastapi_app:app --host 0.0.0.0 --port 8000
+```
+
 ### 命令行选项
+
+#### 主程序 (`main.py`)
 
 -   `--device [auto|cpu|cuda:0]`: 选择用于推理的设备 (默认: `auto`)。
 -   `--force-rag-reload`: 强制重新加载数据源并重建向量数据库。
 -   `--llm-provider [ark|ollama]`: 选择大语言模型提供商 (默认: `ollama`)。
+
+#### Web API服务 (`src/api/fastapi_app.py`)
+
+-   `--host`: 指定绑定的主机地址 (默认: 0.0.0.0)
+-   `--port`: 指定绑定的端口号 (默认: 8000)
 
 ## 开发约定
 
@@ -75,3 +113,4 @@ python main.py
 -   **实时处理**: 采用多线程处理音频流、VAD、ASR、RAG和LLM调用，保证实时性。
 -   **错误处理**: 各模块包含基本的错误处理逻辑，确保程序稳定性。
 -   **Prompt Engineering**: 使用详细的系统提示模板指导LLM行为，支持Function Calling。
+-   **API设计**: 遵循RESTful API设计原则，提供清晰的接口文档和错误处理机制。
