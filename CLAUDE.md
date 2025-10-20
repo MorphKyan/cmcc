@@ -49,7 +49,7 @@ The system is modular with the following components:
 
 ### Running the Application
 ```bash
-python src/main.py
+python src/main_test.py
 ```
 
 Options:

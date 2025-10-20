@@ -76,26 +76,26 @@ python main.py
     默认情况下，程序会自动检测并使用GPU（如果可用）。您可以强制指定设备：
     ```bash
     # 强制使用CPU
-    python main.py --device cpu
+    python main_test.py --device cpu
 
     # 强制使用GPU
-    python main.py --device cuda:0
+    python main_test.py --device cuda:0
     ```
 
 -   **更新知识库**:
     如果您修改了 `data/` 目录下的CSV文件（例如，添加了新的视频或设备），您需要使用 `--force-rag-reload` 标志来强制重建向量数据库，以使更改生效：
     ```bash
-    python main.py --force-rag-reload
+    python main_test.py --force-rag-reload
     ```
 
 -   **启用API服务**:
     您可以在启动主程序的同时启动RESTful API服务：
     ```bash
     # 启动主程序并同时启动API服务
-    python main.py --enable-api
+    python main_test.py --enable-api
 
     # 启动主程序并同时启动API服务，指定端口
-    python main.py --enable-api --api-port 8000
+    python main_test.py --enable-api --api-port 8000
     ```
 
 ## 如何工作
