@@ -3,8 +3,8 @@
 
 import argparse
 from app.voice_assistant import VoiceAssistant
-from core.ark_llm_handler import LLMHandler as ArkLLMHandler
-from core.ollama_llm_handler import OllamaLLMHandler
+from src.module.llm.ark_llm_handler import LLMHandler as ArkLLMHandler
+from src.module.llm.ollama_llm_handler import OllamaLLMHandler
 from config import ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE
 
 def main():

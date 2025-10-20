@@ -3,7 +3,7 @@
 
 import json
 import ollama
-from .data_loader import format_docs_for_prompt
+from src.module.data_loader import format_docs_for_prompt
 from config import SCREENS_INFO, DOORS_INFO
 
 class OllamaLLMHandler:

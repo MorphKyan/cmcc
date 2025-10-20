@@ -5,7 +5,7 @@ import os
 import shutil
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from .data_loader import load_documents_from_csvs
+from src.module.data_loader import load_documents_from_csvs
 
 class RAGProcessor:
     def __init__(self, videos_data_path, chroma_db_path, embedding_model, top_k_results, force_reload=False):

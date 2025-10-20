@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from volcenginesdkarkruntime import Ark
-from .data_loader import format_docs_for_prompt
+from src.module.data_loader import format_docs_for_prompt
 from config import SCREENS_INFO, DOORS_INFO
 
 class LLMHandler:

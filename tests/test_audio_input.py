@@ -7,13 +7,13 @@ import unittest
 import numpy as np
 import soundfile as sf
 import time
-import threading
 
 # 将项目根目录添加到 Python 路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.core.audio_input import AudioInputHandler
-from src.config import FORMAT, CHANNELS, RATE, CHUNK
+from src.module.input.audio_input import AudioInputHandler
+from src.config import FORMAT, CHANNELS, RATE
+
 
 class TestAudioInputHandler(unittest.TestCase):
     """AudioInputHandler测试类"""
