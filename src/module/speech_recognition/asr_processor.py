@@ -6,7 +6,8 @@ import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
-from config import (
+# 使用相对导入
+from src.config import (
     FUNASR_MODEL, FUNASR_VAD_MODEL, FUNASR_VAD_KWARGS, FUNASR_LANGUAGE, FUNASR_USE_ITN,
     BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S
 )

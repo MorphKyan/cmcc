@@ -254,7 +254,7 @@ async def upload_videos_csv(file: UploadFile = File(...)):
 def run_api(host='0.0.0.0', port=5000):
     """运行API服务"""
     import uvicorn
-    uvicorn.run("src.api.rag_api_fastapi:app", host=host, port=port, reload=False)
+    uvicorn.run("src.api.main:app", host=host, port=port, reload=False)
 
 if __name__ == '__main__':
     import argparse

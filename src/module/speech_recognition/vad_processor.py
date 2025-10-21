@@ -4,7 +4,8 @@
 import numpy as np
 from funasr import AutoModel
 
-from config import FUNASR_VAD_MODEL, FUNASR_VAD_KWARGS
+# 使用相对导入
+from src.config import FUNASR_VAD_MODEL, FUNASR_VAD_KWARGS
 
 class VADProcessor:
     """
