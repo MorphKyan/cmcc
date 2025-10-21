@@ -18,14 +18,13 @@ class VoiceAssistant:
     """
     一个集成了实时语音识别、RAG和LLM的控制器。
     """
-    def __init__(self, llm_handler, device: str = "auto", force_rag_reload: bool = False):
+    def __init__(self, llm_handler, device: str = "auto"):
         """
         初始化实时语音识别器。
-        
+
         Args:
             llm_handler: 已初始化的LLM处理器实例。
             device: 推理设备 ("auto", "cuda:0", or "cpu").
-            force_rag_reload: 是否强制重新加载RAG数据。
         """
         self.device = device
 
@@ -39,8 +38,7 @@ class VoiceAssistant:
             videos_data_path=VIDEOS_DATA_PATH,
             chroma_db_path=CHROMA_DB_PATH,
             embedding_model=EMBEDDING_MODEL,
-            top_k_results=TOP_K_RESULTS,
-            force_reload=force_rag_reload
+            top_k_results=TOP_K_RESULTS
         )
         # LLM处理器
         self.llm_handler = llm_handler

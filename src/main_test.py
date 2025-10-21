@@ -26,13 +26,7 @@ def main():
              "  'cpu': 强制使用CPU。\n"
              "  'cuda:0': 强制使用第一个GPU设备。"
     )
-    
-    parser.add_argument(
-        "--force-rag-reload",
-        action="store_true",
-        help="强制重新加载数据源并重建向量数据库。\n"
-             "如果你的 'data/videos.csv' 文件有更新，请使用此选项。"
-    )
+
     
     parser.add_argument(
         "--llm-provider",
@@ -62,7 +56,6 @@ def main():
         assistant = VoiceAssistant(
             llm_handler=llm_handler,
             device=args.device,
-            force_rag_reload=args.force_rag_reload,
         )
         
         # 开始识别
