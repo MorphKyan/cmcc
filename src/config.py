@@ -19,7 +19,7 @@ LLM_MODEL_NAME = "doubao-seed-1-6-flash-250715"
 # --- Speech Recognition Settings ---
 FUNASR_MODEL = "iic/SenseVoiceSmall"
 FUNASR_VAD_MODEL = "fsmn-vad"
-FUNASR_VAD_KWARGS = {"max_single_segment_time": 30000} # 最大切割音频时长(ms)
+FUNASR_VAD_KWARGS = {"max_single_segment_time": 20000} # 最大切割音频时长(ms)
 FUNASR_LANGUAGE = "auto"
 FUNASR_USE_ITN = True
 BATCH_SIZE_S = 60 # 动态batch，batch中的音频总时长上限(秒)
@@ -35,7 +35,7 @@ CHUNK = 1024
 # --- RAG and ChromaDB Settings ---
 VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
 CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
-EMBEDDING_MODEL = "BAAI/bge-large-zh-v1.5"
+EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-0.6B"
 # RAG检索返回的文档数量
 TOP_K_RESULTS = 3 
 
@@ -121,9 +121,6 @@ SYSTEM_PROMPT_TEMPLATE = """
           adjust_volume(device="主屏幕", value="up")
         ]
         ```
-
-# 用户当前指令:
-{USER_INPUT}
 """
 
 def load_screens_data():

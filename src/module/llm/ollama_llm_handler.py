@@ -149,8 +149,7 @@ class OllamaLLMHandler:
         构建包含RAG上下文的系统提示，并嵌入screens和doors信息。
         """
         rag_context = format_docs_for_prompt(rag_docs)
-        
-        # 将屏幕和门的信息转换为JSON字符串，确保格式正确
+
         screens_info_json = json.dumps(SCREENS_INFO, ensure_ascii=False, indent=2)
         doors_info_json = json.dumps(DOORS_INFO, ensure_ascii=False, indent=2)
         
@@ -174,19 +173,14 @@ class OllamaLLMHandler:
             str: 大模型返回的JSON格式指令或错误信息。
         """
         system_prompt = self._construct_prompt(user_input, rag_docs)
-        # print(system_prompt)
         self.conversation_history = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input}
         ]
         
-        # print("\n--- 发送给大模型的最终Prompt ---")
-        # print(system_prompt.replace(user_input, f"{{{{USER_INPUT}}}}"))
         print(f"用户指令: {user_input}")
-        # print("--------------------------------\n")
 
         try:
-            # 使用function calling方式调用模型
             response = self.client.chat(
                 model=self.model,
                 messages=self.conversation_history,

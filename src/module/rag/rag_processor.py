@@ -11,7 +11,6 @@ from src.module.data_loader import load_documents_from_csvs
 
 class RAGProcessor:
     def __init__(self, videos_data_path, chroma_db_path, embedding_model, top_k_results):
-
         """
         初始化RAG处理器。
 

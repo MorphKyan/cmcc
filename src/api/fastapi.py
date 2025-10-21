@@ -16,7 +16,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 sys.path.insert(0, project_root)
 
 # 使用绝对导入而不是相对导入
-from src.module.llm.rag_processor import RAGProcessor
+from src.module.rag.rag_processor import RAGProcessor
 from src.config import VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
 
 app = FastAPI(title="API Service", description="RESTful API for assistant", version="1.0.0")
