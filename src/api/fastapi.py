@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
 import threading
 import os
 import sys
@@ -17,12 +19,50 @@ sys.path.insert(0, project_root)
 from src.module.llm.rag_processor import RAGProcessor
 from src.config import VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
 
-app = Flask(__name__)
-CORS(app)  # 允许跨域请求
+app = FastAPI(title="API Service", description="RESTful API for assistant", version="1.0.0")
+
+# 添加CORS中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 在生产环境中应该指定具体的域名
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 全局变量存储RAG处理器实例
 rag_processor = None
 rag_lock = threading.Lock()  # 用于线程安全
+
+# Pydantic模型定义
+class HealthResponse(BaseModel):
+    status: str
+    service: str
+
+class RefreshResponse(BaseModel):
+    status: str
+    message: str
+
+class StatusResponse(BaseModel):
+    status: str
+    data: Optional[dict] = None
+    message: Optional[str] = None
+
+class QueryRequest(BaseModel):
+    query: str
+
+class QueryResult(BaseModel):
+    content: str
+    metadata: dict
+
+class QueryResponse(BaseModel):
+    status: str
+    data: Optional[dict] = None
+    message: Optional[str] = None
+
+class UploadResponse(BaseModel):
+    status: str
+    message: str
 
 def initialize_rag_processor():
     """初始化RAG处理器"""
@@ -84,84 +124,57 @@ def validate_csv_structure(file_path):
 if not initialize_rag_processor():
     print("警告: RAG处理器初始化失败")
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
+@app.get("/api/health", response_model=HealthResponse)
+async def health_check():
     """健康检查端点"""
-    return jsonify({
-        "status": "healthy",
-        "service": "RAG API Service"
-    })
+    return HealthResponse(status="healthy", service="RAG API Service")
 
-@app.route('/api/rag/refresh', methods=['POST'])
-def refresh_rag():
+@app.post("/api/rag/refresh", response_model=RefreshResponse)
+async def refresh_rag():
     """刷新RAG数据库端点"""
     try:
         success = refresh_rag_database()
         if success:
-            return jsonify({
-                "status": "success",
-                "message": "RAG数据库已成功刷新"
-            }), 200
+            return RefreshResponse(status="success", message="RAG数据库已成功刷新")
         else:
-            return jsonify({
-                "status": "error",
-                "message": "刷新RAG数据库失败"
-            }), 500
+            raise HTTPException(status_code=500, detail="刷新RAG数据库失败")
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": f"刷新RAG数据库时发生异常: {str(e)}"
-        }), 500
+        raise HTTPException(status_code=500, detail=f"刷新RAG数据库时发生异常: {str(e)}")
 
-@app.route('/api/rag/status', methods=['GET'])
-def rag_status():
+@app.get("/api/rag/status", response_model=StatusResponse)
+async def rag_status():
     """获取RAG状态"""
     global rag_processor
     try:
         if rag_processor is None:
-            return jsonify({
-                "status": "error",
-                "message": "RAG处理器未初始化"
-            }), 500
+            raise HTTPException(status_code=500, detail="RAG处理器未初始化")
         
         # 检查数据库是否存在
         db_exists = os.path.exists(CHROMA_DB_PATH)
         
-        return jsonify({
-            "status": "success",
-            "data": {
-                "initialized": rag_processor is not None,
-                "database_exists": db_exists,
-                "database_path": CHROMA_DB_PATH,
-                "embedding_model": EMBEDDING_MODEL,
-                "top_k_results": TOP_K_RESULTS
-            }
-        }), 200
+        data = {
+            "initialized": rag_processor is not None,
+            "database_exists": db_exists,
+            "database_path": CHROMA_DB_PATH,
+            "embedding_model": EMBEDDING_MODEL,
+            "top_k_results": TOP_K_RESULTS
+        }
+        
+        return StatusResponse(status="success", data=data)
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": f"获取RAG状态时发生异常: {str(e)}"
-        }), 500
+        raise HTTPException(status_code=500, detail=f"获取RAG状态时发生异常: {str(e)}")
 
-@app.route('/api/rag/query', methods=['POST'])
-def query_rag():
+@app.post("/api/rag/query", response_model=QueryResponse)
+async def query_rag(request: QueryRequest):
     """查询RAG数据库"""
     global rag_processor
     try:
         if rag_processor is None:
-            return jsonify({
-                "status": "error",
-                "message": "RAG处理器未初始化"
-            }), 500
+            raise HTTPException(status_code=500, detail="RAG处理器未初始化")
         
-        data = request.get_json()
-        query_text = data.get('query')
-        
+        query_text = request.query
         if not query_text:
-            return jsonify({
-                "status": "error",
-                "message": "缺少查询参数 'query'"
-            }), 400
+            raise HTTPException(status_code=400, detail="查询参数 'query' 不能为空")
         
         # 执行查询
         retrieved_docs = rag_processor.retrieve_context(query_text)
@@ -174,51 +187,32 @@ def query_rag():
                 "metadata": doc.metadata
             })
         
-        return jsonify({
-            "status": "success",
-            "data": {
-                "query": query_text,
-                "results": results,
-                "count": len(results)
-            }
-        }), 200
+        data = {
+            "query": query_text,
+            "results": results,
+            "count": len(results)
+        }
+        
+        return QueryResponse(status="success", data=data)
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": f"查询RAG数据库时发生异常: {str(e)}"
-        }), 500
+        raise HTTPException(status_code=500, detail=f"查询RAG数据库时发生异常: {str(e)}")
 
-@app.route('/api/rag/upload-videos', methods=['POST'])
-def upload_videos_csv():
+@app.post("/api/rag/upload-videos", response_model=UploadResponse)
+async def upload_videos_csv(file: UploadFile = File(...)):
     """上传videos.csv文件并更新RAG数据库"""
     global rag_processor
     try:
-        # 检查是否有文件上传
-        if 'file' not in request.files:
-            return jsonify({
-                "status": "error",
-                "message": "缺少文件上传"
-            }), 400
-        
-        file = request.files['file']
-        
-        # 检查文件名
-        if file.filename == '':
-            return jsonify({
-                "status": "error",
-                "message": "未选择文件"
-            }), 400
-        
         # 检查文件类型
         if not file.filename.endswith('.csv'):
-            return jsonify({
-                "status": "error",
-                "message": "只支持上传CSV文件"
-            }), 400
+            raise HTTPException(status_code=400, detail="只支持上传CSV文件")
         
         # 保存上传的文件到临时位置
         temp_file_path = os.path.join(os.path.dirname(VIDEOS_DATA_PATH), 'temp_videos.csv')
-        file.save(temp_file_path)
+        
+        # 读取上传的文件内容
+        contents = await file.read()
+        with open(temp_file_path, 'wb') as f:
+            f.write(contents)
         
         # 验证CSV文件结构
         is_valid, message = validate_csv_structure(temp_file_path)
@@ -226,10 +220,7 @@ def upload_videos_csv():
             # 删除临时文件
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
-            return jsonify({
-                "status": "error",
-                "message": message
-            }), 400
+            raise HTTPException(status_code=400, detail=message)
         
         # 备份原文件
         backup_path = VIDEOS_DATA_PATH + '.backup'
@@ -245,33 +236,25 @@ def upload_videos_csv():
             # 如果刷新失败，恢复备份文件
             if os.path.exists(backup_path):
                 shutil.move(backup_path, VIDEOS_DATA_PATH)
-            return jsonify({
-                "status": "error",
-                "message": "上传成功但刷新RAG数据库失败，已恢复原文件"
-            }), 500
+            raise HTTPException(status_code=500, detail="上传成功但刷新RAG数据库失败，已恢复原文件")
         
         # 删除备份文件
         if os.path.exists(backup_path):
             os.remove(backup_path)
         
-        return jsonify({
-            "status": "success",
-            "message": "videos.csv文件上传成功，RAG数据库已更新"
-        }), 200
+        return UploadResponse(status="success", message="videos.csv文件上传成功，RAG数据库已更新")
         
     except Exception as e:
         # 删除可能存在的临时文件
         temp_file_path = os.path.join(os.path.dirname(VIDEOS_DATA_PATH), 'temp_videos.csv')
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-        return jsonify({
-            "status": "error",
-            "message": f"上传videos.csv文件时发生异常: {str(e)}"
-        }), 500
+        raise HTTPException(status_code=500, detail=f"上传videos.csv文件时发生异常: {str(e)}")
 
 def run_api(host='0.0.0.0', port=5000):
     """运行API服务"""
-    app.run(host=host, port=port, debug=False, use_reloader=False)
+    import uvicorn
+    uvicorn.run("src.api.rag_api_fastapi:app", host=host, port=port, reload=False)
 
 if __name__ == '__main__':
     import argparse
