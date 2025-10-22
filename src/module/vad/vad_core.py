@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import numpy as np
 from funasr import AutoModel
-
-# 使用相对导入
+import numpy.typing as npt
 from src.config import FUNASR_VAD_MODEL, FUNASR_VAD_KWARGS
 
 
@@ -30,7 +28,7 @@ class VADCore:
         self.model = AutoModel(model=FUNASR_VAD_MODEL, model_revision="v2.0.4")
         print("VAD模型加载完成。")
 
-    def process_chunk(self, chunk: np.ndarray[np.float32], cache) -> list:
+    def process_chunk(self, chunk: npt.NDArray, cache) -> list:
         segments = self.model.generate(
             input=chunk,
             cache=cache,
