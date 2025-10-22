@@ -16,12 +16,11 @@ class VADProcessor:
         self.chunk_stride_bytes = self.chunk_size_samples * self.bytes_per_sample
         self.cache = {}
         self.input_buffer: bytearray = bytearray()
-        self.total_sample_processed = 0
         self.history_buffer_max_bytes = 30 * self.sample_rate * 2  # 时长*采样率*每sample byte数
         self.history_buffer: bytearray = bytearray()
         self.last_start_time = None  # 上一segment的开始时间戳（累积）
         self.last_end_time = None  # 上一segment的结束时间戳（累积）
-        self.buffer_start_sample_num = 0  # buffer头的偏移量
+        self.buffer_head_index = 0  # buffer头的偏移量
         self.chunk_queue: asyncio.Queue[npt.NDArray] = asyncio.Queue()
 
     def append_audio(self, data: bytes):
@@ -39,7 +38,6 @@ class VADProcessor:
             chunk_bytes = self.input_buffer[:self.chunk_stride_bytes]
             del self.input_buffer[:self.chunk_stride_bytes]
             chunk_np = np.frombuffer(chunk_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-            self.total_sample_processed += self.vad_core.chunk_stride
             try:
                 self.chunk_queue.put_nowait(chunk_np)
             except asyncio.QueueFull:
@@ -54,8 +52,6 @@ class VADProcessor:
 
     def process_chunk(self):
         chunk = self.chunk_queue.get_nowait()
-        current_chunk_samples = chunk.shape[0]
-        self.total_sample_processed += current_chunk_samples
         self.vad_core.process_chunk(chunk, self.cache)
 
     def process_result(self, segments: list) -> list:
@@ -105,18 +101,18 @@ class VADProcessor:
     def _clean_buffer(self):
         if self.last_end_time is not None:
             # 移除已处理的音频数据
-            last_segment_end_buffer_index = int(self.last_end_time * self.sample_rate / 1000)
-            count_to_remove = last_segment_end_buffer_index - self.buffer_start_sample_num
+            buffer_end_index = int(self.last_end_time * self.sample_rate * self.bytes_per_sample / 1000)
+            count_to_remove = buffer_end_index - self.buffer_head_index
             if count_to_remove > 0:
                 print(
-                    f"[VAD] 移除已处理的音频数据: {self.buffer_start_sample_num}到{last_segment_end_buffer_index}的采样点, 当前缓存起始时间为: {last_segment_end_buffer_index / self.sample_rate:.2f}秒")
-                self.input_buffer = self.input_buffer[count_to_remove:]
-                self.buffer_start_sample_num = last_segment_end_buffer_index
+                    f"[VAD] 移除已处理的音频数据: {self.buffer_head_index}到{buffer_end_index}的采样点, 当前缓存起始时间为: {buffer_end_index / self.sample_rate:.2f}秒")
+                self.history_buffer = self.history_buffer[count_to_remove:]
+                self.buffer_head_index = buffer_end_index
 
     def _extract_audio(self, start, end):
-        buffer_start_index = int(start * self.sample_rate * self.bytes_per_sample / 1000) - self.buffer_start_sample_num
+        buffer_start_index = int(start * self.sample_rate * self.bytes_per_sample / 1000) - self.buffer_head_index
         buffer_start_index = max(0, buffer_start_index)
-        buffer_end_index = int(end * self.sample_rate / 1000) - self.buffer_start_sample_num
+        buffer_end_index = int(end * self.sample_rate / 1000) - self.buffer_head_index
 
         if buffer_end_index - buffer_start_index <= 0:
             print(f"[VAD警告] 检测到空的音频段: {start}ms - {end}ms")

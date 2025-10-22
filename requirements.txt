@@ -2,7 +2,6 @@ pyaudio
 numpy
 funasr
 torch
-# volcenginesdkarkruntime
 pandas
 openpyxl
 langchain
