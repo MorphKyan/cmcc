@@ -17,6 +17,7 @@ sys.path.insert(0, project_root)
 
 # 使用绝对导入而不是相对导入
 from src.module.rag.rag_processor import RAGProcessor
+from src.module.input.audio_input import AudioInputer
 from src.config import VIDEOS_DATA_PATH, CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS
 
 app = FastAPI(title="API Service", description="RESTful API for assistant", version="1.0.0")
@@ -33,6 +34,10 @@ app.add_middleware(
 # 全局变量存储RAG处理器实例
 rag_processor = None
 rag_lock = threading.Lock()  # 用于线程安全
+
+# 全局变量存储音频输入实例
+audio_inputer = None
+audio_lock = threading.Lock()  # 用于线程安全
 
 # Pydantic模型定义
 class HealthResponse(BaseModel):
@@ -64,6 +69,10 @@ class UploadResponse(BaseModel):
     status: str
     message: str
 
+class AudioControlResponse(BaseModel):
+    status: str
+    message: str
+
 def initialize_rag_processor():
     """初始化RAG处理器"""
     global rag_processor
@@ -77,6 +86,16 @@ def initialize_rag_processor():
         return True
     except Exception as e:
         print(f"初始化RAG处理器失败: {e}")
+        return False
+
+def initialize_audio_inputer():
+    """初始化音频输入处理器"""
+    global audio_inputer
+    try:
+        audio_inputer = AudioInputer()
+        return True
+    except Exception as e:
+        print(f"初始化音频输入处理器失败: {e}")
         return False
 
 def refresh_rag_database():
@@ -123,6 +142,10 @@ def validate_csv_structure(file_path):
 # 初始化RAG处理器
 if not initialize_rag_processor():
     print("警告: RAG处理器初始化失败")
+
+# 初始化音频输入处理器
+if not initialize_audio_inputer():
+    print("警告: 音频输入处理器初始化失败")
 
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check():
@@ -250,6 +273,41 @@ async def upload_videos_csv(file: UploadFile = File(...)):
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         raise HTTPException(status_code=500, detail=f"上传videos.csv文件时发生异常: {str(e)}")
+
+@app.post("/api/audio/start", response_model=AudioControlResponse)
+async def start_audio_input():
+    """启动音频输入流"""
+    global audio_inputer
+    try:
+        if audio_inputer is None:
+            # 尝试重新初始化
+            if not initialize_audio_inputer():
+                raise HTTPException(status_code=500, detail="音频输入处理器未初始化且初始化失败")
+        
+        # 启动音频流
+        audio_inputer.start()
+        return AudioControlResponse(status="success", message="音频输入流已启动")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"启动音频输入流时发生异常: {str(e)}")
+
+@app.post("/api/audio/stop", response_model=AudioControlResponse)
+async def stop_audio_input():
+    """停止音频输入流"""
+    global audio_inputer
+    try:
+        if audio_inputer is None:
+            raise HTTPException(status_code=500, detail="音频输入处理器未初始化")
+        
+        # 停止音频流
+        audio_inputer.stop()
+        
+        # 重新初始化音频输入处理器
+        if not initialize_audio_inputer():
+            raise HTTPException(status_code=500, detail="重新初始化音频输入处理器失败")
+        
+        return AudioControlResponse(status="success", message="音频输入流已停止")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"停止音频输入流时发生异常: {str(e)}")
 
 def run_api(host='0.0.0.0', port=5000):
     """运行API服务"""

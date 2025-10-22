@@ -11,7 +11,7 @@ import time
 # 将项目根目录添加到 Python 路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.module.input.audio_input import AudioInputHandler
+from src.module.input.audio_input import AudioInputer
 from src.config import FORMAT, CHANNELS, RATE
 
 
@@ -20,7 +20,7 @@ class TestAudioInputHandler(unittest.TestCase):
     
     def setUp(self):
         """测试前的准备工作"""
-        self.audio_handler = AudioInputHandler()
+        self.audio_handler = AudioInputer()
         
     def tearDown(self):
         """测试后的清理工作"""
@@ -30,7 +30,7 @@ class TestAudioInputHandler(unittest.TestCase):
     
     def test_initialization(self):
         """测试AudioInputHandler的初始化"""
-        self.assertIsInstance(self.audio_handler, AudioInputHandler)
+        self.assertIsInstance(self.audio_handler, AudioInputer)
         self.assertIsNotNone(self.audio_handler.audio_queue)
         # 注意：此时stream应该还是None，因为还没有调用init_audio_stream
         
@@ -47,7 +47,7 @@ class TestAudioInputHandler(unittest.TestCase):
     def test_audio_capture_and_save(self):
         """测试音频捕获并保存到文件"""
         # 启动音频流
-        self.audio_handler.start_stream()
+        self.audio_handler.start()
         
         # 等待一段时间以捕获音频数据（例如5秒）
         print("请在接下来的5秒内对着麦克风说话...")
@@ -105,7 +105,7 @@ class TestAudioInputHandler(unittest.TestCase):
     def test_get_audio_data(self):
         """测试获取音频数据"""
         # 启动音频流
-        self.audio_handler.start_stream()
+        self.audio_handler.start()
         
         # 等待一小段时间以确保音频流开始工作
         time.sleep(0.1)

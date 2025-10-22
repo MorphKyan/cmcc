@@ -3,13 +3,15 @@
 
 import pyaudio
 import queue
-from typing import Optional
-from config import FORMAT, CHANNELS, RATE, CHUNK
+from typing import Optional, Mapping
+from src.config import FORMAT, CHANNELS, RATE, CHUNK
 
-class AudioInputHandler:
+
+class AudioInputer:
     """
     处理麦克风音频输入的类
     """
+
     def __init__(self):
         """
         初始化音频输入处理器
@@ -24,18 +26,19 @@ class AudioInputHandler:
             frames_per_buffer=CHUNK,
             stream_callback=self._audio_callback
         )
-        
-    def _audio_callback(self, in_data: bytes, frame_count: int, time_info: dict, status: int) -> tuple[Optional[bytes], int]:
+
+    def _audio_callback(self, in_data: bytes | None, frame_count: int, time_info: Mapping[str, float], status: int) \
+            -> tuple[Optional[bytes], int] | None:
         """音频流回调函数，将数据放入队列。"""
         self.audio_queue.put(in_data)
-        return (None, pyaudio.paContinue)
-        
-    def start_stream(self):
+        return None, pyaudio.paContinue
+
+    def start(self) -> None:
         """启动音频流"""
         if self.stream:
             self.stream.start_stream()
-            
-    def stop(self):
+
+    def stop(self) -> None:
         """停止并清理音频资源"""
         if self.stream:
             try:
@@ -50,7 +53,7 @@ class AudioInputHandler:
                 # 流可能已经关闭，忽略错误
                 pass
         self.audio.terminate()
-        
+
     def get_audio_data(self, timeout=None):
         """
         从音频队列中获取数据

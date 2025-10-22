@@ -139,7 +139,7 @@ class VoiceAssistant:
         self.rag_thread.start()
         self.llm_thread.start()
 
-        self.audio_input_handler.start_stream()
+        self.audio_input_handler.start()
 
         try:
             # 保持主线程运行，直到接收到中断信号

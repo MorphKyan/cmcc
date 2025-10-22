@@ -19,18 +19,18 @@
 项目采用模块化设计，主要模块包括：
 
 1.  **配置 (`src/config.py`)**: 集中管理所有配置项，如API密钥、模型路径、Prompt模板、音频参数等。
-2.  **数据加载 (`src/core/data_loader.py`)**: 从CSV文件加载设备和视频信息，并格式化为文档。
-3.  **RAG处理 (`src/core/rag_processor.py`)**: 负责创建和查询本地ChromaDB向量数据库，为LLM提供上下文信息。
+2.  **数据加载 (`src/module/data_loader.py`)**: 从CSV文件加载设备和视频信息，并格式化为文档。
+3.  **RAG处理 (`src/module/rag/rag_processor.py`)**: 负责创建和查询本地ChromaDB向量数据库，为LLM提供上下文信息。
 4.  **LLM交互**:
-    -   Ollama (`src/core/ollama_llm_handler.py`): 与本地Ollama大模型交互。
-    -   火山引擎 (`src/core/ark_llm_handler.py`)**: 与火山引擎方舟大模型交互。
+    -   Ollama (`src/module/llm/ollama_llm_handler.py`): 与本地Ollama大模型交互。
+    -   火山引擎 (`src/module/llm/ark_llm_handler.py`): 与火山引擎方舟大模型交互。
 5.  **音频处理**:
-    -   音频输入 (`src/core/audio_input.py`): 处理麦克风音频输入。
-    -   VAD处理 (`src/core/vad_processor.py`): 检测语音活动。
-    -   ASR处理 (`src/core/asr_processor.py`): 将语音转换为文本。
+    -   音频输入 (`src/module/input/audio_input.py`): 处理麦克风音频输入。
+    -   VAD处理 (`src/module/vad/vad_processor.py`): 检测语音活动。
+    -   ASR处理 (`src/module/asr/asr_processor.py`): 将语音转换为文本。
 6.  **应用核心 (`src/app/voice_assistant.py`)**: 整合所有模块，实现核心业务逻辑。
-7.  **主入口 (`main.py`)**: 程序的启动点，处理命令行参数并初始化`VoiceAssistant`。
-8.  **Web API服务 (`src/api/fastapi_app.py`)**: 提供基于FastAPI的RESTful API服务，支持RAG查询、数据库刷新和文件上传等功能。
+7.  **主入口 (`src/main.py`)**: 程序的启动点，处理命令行参数并初始化`VoiceAssistant`。
+8.  **Web API服务 (`src/api/main.py`)**: 提供基于FastAPI的RESTful API服务，支持RAG查询、数据库刷新和文件上传等功能。
 
 ### 数据源
 
@@ -42,16 +42,7 @@
 
 ### 环境准备
 
-在启动项目之前，需要激活conda环境。
-
-1.  首先执行以下命令以激活conda：
-    ```bash
-    C:/ProgramData/miniconda3/Scripts/activate
-    ```
-2.  然后激活项目所需的conda环境（例如 `funasr12`）：
-    ```bash
-    conda activate funasr12
-    ```
+在启动项目之前，需要确保已安装所有依赖项。
 
 ### 安装依赖
 
@@ -75,7 +66,7 @@ pip install -r requirements.txt
 在项目根目录下执行以下命令启动程序：
 
 ```bash
-python main.py
+python src/main.py
 ```
 
 #### 2. 启动Web API服务
@@ -83,27 +74,34 @@ python main.py
 在项目根目录下执行以下命令启动FastAPI服务：
 
 ```bash
-python src/api/fastapi_app.py
+python src/api/main.py
 ```
 
 或者使用uvicorn命令启动：
 
 ```bash
-uvicorn src.api.fastapi_app:app --host 0.0.0.0 --port 8000
+uvicorn src.api.main:app --host 0.0.0.0 --port 5000
 ```
 
 ### 命令行选项
 
-#### 主程序 (`main.py`)
+#### 主程序 (`src/main.py`)
 
 -   `--device [auto|cpu|cuda:0]`: 选择用于推理的设备 (默认: `auto`)。
--   `--force-rag-reload`: 强制重新加载数据源并重建向量数据库。
 -   `--llm-provider [ark|ollama]`: 选择大语言模型提供商 (默认: `ollama`)。
 
-#### Web API服务 (`src/api/fastapi_app.py`)
+#### Web API服务 (`src/api/main.py`)
 
 -   `--host`: 指定绑定的主机地址 (默认: 0.0.0.0)
--   `--port`: 指定绑定的端口号 (默认: 8000)
+-   `--port`: 指定绑定的端口号 (默认: 5000)
+
+## API端点
+
+- `GET /api/health` - 健康检查端点
+- `POST /api/rag/refresh` - 刷新RAG数据库
+- `GET /api/rag/status` - 获取RAG状态
+- `POST /api/rag/query` - 查询RAG数据库
+- `POST /api/rag/upload-videos` - 上传videos.csv文件并更新RAG数据库
 
 ## 开发约定
 
