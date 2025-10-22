@@ -6,6 +6,11 @@
     
     <main>
       <div class="container">
+        <!-- 音频录制组件 -->
+        <section class="audio-section">
+          <AudioRecorder />
+        </section>
+        
         <!-- 健康检查和状态显示 -->
         <section class="status-section">
           <h2>系统状态</h2>
@@ -46,10 +51,14 @@
 </template>
 
 <script>
+import AudioRecorder from './components/AudioRecorder.vue'
 import { healthCheck, ragStatus, refreshRag, queryRag, uploadVideos } from './api'
 
 export default {
   name: 'App',
+  components: {
+    AudioRecorder
+  },
   data() {
     return {
       healthStatus: '未知',
