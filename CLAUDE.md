@@ -60,7 +60,6 @@ Options:
 ### Testing
 Tests are run individually as Python scripts:
 ```bash
-python tests/test_vad.py
 python tests/test_audio_input.py
 ```
 

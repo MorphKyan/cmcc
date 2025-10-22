@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
+from jinja2.utils import generate_lorem_ipsum
 
 # 使用相对导入
 from src.config import (
@@ -71,3 +72,23 @@ class ASRProcessor:
             recognized_text = rich_transcription_postprocess(res[0]["text"])
             return recognized_text
         return None
+
+    def process_audio(self, audio_data):
+        for data in audio_data:
+            if data.dtype == np.int16:
+                data = data.astype(np.float32) / 32768.0
+
+        model_results = self.model.generate(
+            input=audio_data, cache={}, language=FUNASR_LANGUAGE, use_itn=FUNASR_USE_ITN,
+            batch_size_s=BATCH_SIZE_S, merge_vad=MERGE_VAD,
+            merge_length_s=MERGE_LENGTH_S,
+            ban_emo_unk=True
+        )
+
+        results = []
+        if model_results:
+            for result in model_results:
+                recognized_text = rich_transcription_postprocess(result["text"])
+                results.append(recognized_text)
+
+        return results
