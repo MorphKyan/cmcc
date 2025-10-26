@@ -9,12 +9,13 @@ router = APIRouter(
     tags=["Audio Processing"]
 )
 
+
 @router.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await websocket.accept()
     print(f"客户端 {client_id} 已连接。")
 
-    context = Context(context_id=client_id)
+    context = Context(context_id=client_id, vad_core=dependencies.vad_core)
     dependencies.active_contexts[client_id] = context
 
     # 启动处理管道

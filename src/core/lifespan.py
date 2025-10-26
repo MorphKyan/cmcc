@@ -5,6 +5,7 @@ from src.module.rag.rag_processor import RAGProcessor
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.llm.ollama_llm_handler import OllamaLLMHandler
 from src.config import settings
+from src.module.vad.vad_core import VADCore
 
 
 @asynccontextmanager
@@ -12,13 +13,15 @@ async def lifespan(app: FastAPI):
     # --- 应用启动时执行 ---
     print("应用启动... 正在初始化处理器...")
 
-    funasr_config = settings.funasr
+    vad_config = settings.vad
+    asr_config = settings.asr
     rag_config = settings.rag
     llm_config = settings.llm
 
     try:
+        dependencies.vad_core = VADCore(vad_config)
         dependencies.rag_processor = RAGProcessor(rag_config)
-        dependencies.asr_processor = ASRProcessor(funasr_config, device="auto")
+        dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
         dependencies.llm_processor = OllamaLLMHandler(llm_config)
         print("所有处理器初始化成功。")
     except Exception as e:

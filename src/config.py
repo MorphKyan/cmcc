@@ -11,14 +11,22 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 from pydantic_settings import BaseSettings
 
 
+class VADSettings(BaseSettings):
+    class Config:
+        env_prefix = 'VAD_'
+
+    CHUNK_SIZE: int = 200
+    SAMPLE_RATE: int = 16000
+    MODEL: str = "fsmn-vad"
+    KWARGS: dict = {"max_single_segment_time": 20000}  # 最大切割音频时长(ms)
+
+
 class FunASRSettings(BaseSettings):
     # 为这组配置加上统一的前缀，便于从环境变量加载
     class Config:
         env_prefix = 'FUNASR_'
 
     MODEL: str = "iic/SenseVoiceSmall"
-    VAD_MODEL: str = "fsmn-vad"
-    VAD_KWARGS: dict = {"max_single_segment_time": 20000}  # 最大切割音频时长(ms)
     LANGUAGE: str = "auto"
     USE_ITN: bool = True
     BATCH_SIZE_S: float = 60  # 动态batch，batch中的音频总时长上限(秒)
@@ -48,8 +56,10 @@ class LLMSettings(BaseSettings):
 
 # 你也可以创建一个总的配置对象
 class AppSettings(BaseSettings):
-    funasr: FunASRSettings = FunASRSettings()
+    vad: VADSettings = VADSettings()
+    asr: FunASRSettings = FunASRSettings()
     rag: RAGSettings = RAGSettings()
+    llm: LLMSettings = LLMSettings()
 
 
 settings = AppSettings()
