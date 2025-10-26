@@ -32,11 +32,11 @@ async def rag_status():
 
     try:
         # 从单例实例中获取配置信息来构建响应
-        db_exists = os.path.exists(dependencies.rag_processor.chroma_db_path)
+        db_exists = os.path.exists(dependencies.rag_processor.chroma_db_dir)
         data = {
             "initialized": True,
             "database_exists": db_exists,
-            "database_path": dependencies.rag_processor.chroma_db_path,
+            "database_path": dependencies.rag_processor.chroma_db_dir,
             "embedding_model": dependencies.rag_processor.embedding_model,
             "top_k_results": dependencies.rag_processor.top_k_results
         }

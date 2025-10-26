@@ -5,84 +5,48 @@ import pyaudio
 import os
 import pandas as pd
 
-# 获取项目根目录（假设config.py在 src/ 下）
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 from pydantic_settings import BaseSettings
 
 
-class VADSettings(BaseSettings):
-    class Config:
-        env_prefix = 'VAD_'
-
-    CHUNK_SIZE: int = 200
-    SAMPLE_RATE: int = 16000
-    MODEL: str = "fsmn-vad"
-    KWARGS: dict = {"max_single_segment_time": 20000}  # 最大切割音频时长(ms)
-
-
-class FunASRSettings(BaseSettings):
-    # 为这组配置加上统一的前缀，便于从环境变量加载
-    class Config:
-        env_prefix = 'FUNASR_'
-
-    MODEL: str = "iic/SenseVoiceSmall"
-    LANGUAGE: str = "auto"
-    USE_ITN: bool = True
-    BATCH_SIZE_S: float = 60  # 动态batch，batch中的音频总时长上限(秒)
-    MERGE_VAD: bool = True
-    MERGE_LENGTH_S: float = 15
+def load_screens_data(path: str):
+    """加载屏幕数据并返回结构化列表"""
+    try:
+        df = pd.read_csv(path)
+        screens_info = []
+        for _, row in df.iterrows():
+            screen_info = {
+                "name": row['name'],
+                "aliases": [alias.strip() for alias in row['aliases'].split(',')] if pd.notna(row['aliases']) else []
+            }
+            screens_info.append(screen_info)
+        return screens_info
+    except Exception as e:
+        print(f"加载屏幕数据时出错: {e}")
+        return []
 
 
-class RAGSettings(BaseSettings):
-    class Config:
-        env_prefix = 'RAG_'
-
-    VIDEOS_DATA_PATH: str = "data/videos.csv"
-    CHROMA_DB_PATH: str = "data/chroma_db"
-    EMBEDDING_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
-    TOP_K_RESULTS: int = 3  # 检索返回的文档数
-
-
-class LLMSettings(BaseSettings):
-    class Config:
-        env_prefix = 'LLM_'
-
-    MODEL: str = "qwen3:8b"
-    SYSTEM_PROMPT_TEMPLATE: str = SYSTEM_PROMPT_TEMPLATE
-    SCREENS_INFO: str = SCREENS_INFO
-    DOORS_INFO: str = DOORS_INFO
+def load_doors_data(path: str):
+    """加载门数据并返回结构化列表"""
+    try:
+        df = pd.read_csv(path)
+        doors_info = []
+        for _, row in df.iterrows():
+            door_info = {
+                "name": row['name'],
+                "aliases": [alias.strip() for alias in row['aliases'].split(',')] if pd.notna(row['aliases']) else []
+            }
+            doors_info.append(door_info)
+        return doors_info
+    except Exception as e:
+        print(f"加载门数据时出错: {e}")
+        return []
 
 
-# 你也可以创建一个总的配置对象
-class AppSettings(BaseSettings):
-    vad: VADSettings = VADSettings()
-    asr: FunASRSettings = FunASRSettings()
-    rag: RAGSettings = RAGSettings()
-    llm: LLMSettings = LLMSettings()
-
-
-settings = AppSettings()
-
-# --- API Keys and Endpoints ---
-# 请从火山引擎官网获取您的API Key并替换
-# https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey
-ARK_API_KEY = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
-ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
-LLM_MODEL_NAME = "doubao-seed-1-6-flash-250715"
-
-# --- Audio Settings ---
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 16000  # FunASR的最佳采样率
-CHUNK = 1024
-
-# --- RAG and ChromaDB Settings ---
-# VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
-# CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
-
-
-# --- System Prompt ---
+# 加载并格式化 screens 和 doors 数据
+SCREENS_INFO = load_screens_data(os.path.join(project_dir, "data", "screens.csv"))
+DOORS_INFO = load_doors_data(os.path.join(project_dir, "data", "doors.csv"))
 SYSTEM_PROMPT_TEMPLATE = """
 # 角色与任务
 你是一个中国移动智慧展厅的中央控制AI助手。你的核心任务是根据用户的自然语言语音指令，识别一个或多个意图，并选择合适的函数来调用，以便后续程序执行。对于包含多个操作的指令，你需要生成一个包含多个函数调用的列表。你必须严格遵循以下知识库和行为准则。
@@ -167,46 +131,73 @@ SYSTEM_PROMPT_TEMPLATE = """
 """
 
 
-def load_screens_data():
-    """加载屏幕数据并返回结构化列表"""
-    screens_data_path = os.path.join(PROJECT_ROOT, "data", "screens.csv")
-    try:
-        df = pd.read_csv(screens_data_path)
-        screens_info = []
-        for _, row in df.iterrows():
-            screen_info = {
-                "name": row['name'],
-                "aliases": [alias.strip() for alias in row['aliases'].split(',')] if pd.notna(row['aliases']) else []
-            }
-            screens_info.append(screen_info)
-        return screens_info
-    except Exception as e:
-        print(f"加载屏幕数据时出错: {e}")
-        return []
+class VADSettings(BaseSettings):
+    class Config:
+        env_prefix = 'VAD_'
+
+    CHUNK_SIZE: int = 200
+    SAMPLE_RATE: int = 16000
+    MODEL: str = "fsmn-vad"
+    KWARGS: dict = {"max_single_segment_time": 20000}  # 最大切割音频时长(ms)
 
 
-def load_doors_data():
-    """加载门数据并返回结构化列表"""
-    doors_data_path = os.path.join(PROJECT_ROOT, "data", "doors.csv")
-    try:
-        df = pd.read_csv(doors_data_path)
-        doors_info = []
-        for _, row in df.iterrows():
-            door_info = {
-                "name": row['name'],
-                "aliases": [alias.strip() for alias in row['aliases'].split(',')] if pd.notna(row['aliases']) else []
-            }
-            doors_info.append(door_info)
-        return doors_info
-    except Exception as e:
-        print(f"加载门数据时出错: {e}")
-        return []
+class FunASRSettings(BaseSettings):
+    # 为这组配置加上统一的前缀，便于从环境变量加载
+    class Config:
+        env_prefix = 'FUNASR_'
+
+    MODEL: str = "iic/SenseVoiceSmall"
+    LANGUAGE: str = "auto"
+    USE_ITN: bool = True
+    BATCH_SIZE_S: float = 60  # 动态batch，batch中的音频总时长上限(秒)
+    MERGE_VAD: bool = True
+    MERGE_LENGTH_S: float = 15
 
 
-# 加载并格式化 screens 和 doors 数据
-SCREENS_INFO = load_screens_data()
-DOORS_INFO = load_doors_data()
+class RAGSettings(BaseSettings):
+    class Config:
+        env_prefix = 'RAG_'
 
+    VIDEOS_DATA_PATH: str = os.path.join(project_dir, "data", "videos.csv")
+    CHROMA_DB_DIR: str = os.path.join(project_dir, "chroma_db")
+    EMBEDDING_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    TOP_K_RESULTS: int = 3  # 检索返回的文档数
+
+
+class LLMSettings(BaseSettings):
+    class Config:
+        env_prefix = 'LLM_'
+
+    MODEL: str = "qwen3:8b"
+    SYSTEM_PROMPT_TEMPLATE: str = SYSTEM_PROMPT_TEMPLATE
+    SCREENS_INFO: list = SCREENS_INFO
+    DOORS_INFO: list = DOORS_INFO
+
+
+# 你也可以创建一个总的配置对象
+class AppSettings(BaseSettings):
+    vad: VADSettings = VADSettings()
+    asr: FunASRSettings = FunASRSettings()
+    rag: RAGSettings = RAGSettings()
+    llm: LLMSettings = LLMSettings()
+
+
+settings = AppSettings()
+
+# --- API Keys and Endpoints ---
+# 请从火山引擎官网获取您的API Key并替换
+# https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey
+ARK_API_KEY = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
+ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
+LLM_MODEL_NAME = "doubao-seed-1-6-flash-250715"
+
+# --- Audio Settings ---
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 16000  # FunASR的最佳采样率
+CHUNK = 1024
+
+# --- System Prompt ---
 SYSTEM_PROMPT_TEMPLATE_V1 = """
 # 角色与任务
 你是一个中国移动智慧展厅的中央控制AI助手。你的核心任务是将用户的自然语言语音指令，精确地转换为结构化的JSON指令，以便后续程序执行。你必须严格遵循以下知识库和行为准则。

@@ -20,16 +20,16 @@ class RAGProcessor:
             settings (RAGSettings): RAG配置
         """
         self.videos_data_path = settings.VIDEOS_DATA_PATH
-        self.chroma_db_path = settings.CHROMA_DB_PATH
+        self.chroma_db_dir = settings.CHROMA_DB_DIR
         self.top_k_results = settings.TOP_K_RESULTS
         self.embedding_model = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
-        if not os.path.exists(self.chroma_db_path):
+        if not os.path.exists(self.chroma_db_dir):
             print("未找到本地向量数据库，正在创建...")
             self._create_and_persist_db()
         else:
             print("正在从本地加载向量数据库...")
             self.vector_store = Chroma(
-                persist_directory=self.chroma_db_path,
+                persist_directory=self.chroma_db_dir,
                 embedding_function=self.embedding_model
             )
         self.retriever = self.vector_store.as_retriever(
@@ -51,9 +51,9 @@ class RAGProcessor:
             self.vector_store = Chroma.from_documents(
                 documents=documents,
                 embedding=self.embedding_model,
-                persist_directory=self.chroma_db_path
+                persist_directory=self.chroma_db_dir
             )
-            print(f"数据库已成功创建并保存在 '{self.chroma_db_path}'。")
+            print(f"数据库已成功创建并保存在 '{self.chroma_db_dir}'。")
         except (FileNotFoundError, IOError, ValueError) as e:
             print(f"[错误] 创建数据库失败: {e}")
             exit(1)
@@ -85,9 +85,9 @@ class RAGProcessor:
         print("正在刷新RAG数据库...")
         try:
             # 删除旧的数据库
-            if os.path.exists(self.chroma_db_path):
-                print(f"正在删除旧的数据库 '{self.chroma_db_path}'...")
-                shutil.rmtree(self.chroma_db_path)
+            if os.path.exists(self.chroma_db_dir):
+                print(f"正在删除旧的数据库 '{self.chroma_db_dir}'...")
+                shutil.rmtree(self.chroma_db_dir)
             # 重新创建数据库
             print("正在重新创建数据库...")
             self._create_and_persist_db()
