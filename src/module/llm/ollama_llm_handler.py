@@ -3,20 +3,21 @@
 
 import json
 import ollama
+
+from src.config import LLMSettings
 from src.module.data_loader import format_docs_for_prompt
-from config import SCREENS_INFO, DOORS_INFO
+
 
 class OllamaLLMHandler:
-    def __init__(self, system_prompt_template, model='qwen3:8b'):
+    def __init__(self, settings: LLMSettings):
         """
         初始化本地Ollama大语言模型处理器。
         
         Args:
-            system_prompt_template (str): 系统提示模板。
-            model (str): 要使用的Ollama模型名称。
+            settings (LLMSettings): LLM参数
         """
-        self.system_prompt_template = system_prompt_template
-        
+        self.system_prompt_template = settings.SYSTEM_PROMPT_TEMPLATE
+
         try:
             self.client = ollama.Client()
             # 检查与Ollama服务器的连接
@@ -25,10 +26,12 @@ class OllamaLLMHandler:
             print(f"[错误] 初始化Ollama客户端或连接Ollama服务器失败: {e}")
             # 如果客户端初始化失败，后续无法调用，直接退出
             exit(1)
-            
-        self.model = model
+
+        self.model = settings.MODEL
+        self.screens_info = settings.SCREENS_INFO
+        self.doors_info = settings.DOORS_INFO
         self.conversation_history = []
-        
+
         # 定义function schemas
         self.tools = [
             {
@@ -141,7 +144,7 @@ class OllamaLLMHandler:
                 }
             }
         ]
-        
+
         print(f"Ollama大语言模型处理器初始化完成，使用模型: {self.model}")
 
     def _construct_prompt(self, user_input, rag_docs):
@@ -150,9 +153,9 @@ class OllamaLLMHandler:
         """
         rag_context = format_docs_for_prompt(rag_docs)
 
-        screens_info_json = json.dumps(SCREENS_INFO, ensure_ascii=False, indent=2)
-        doors_info_json = json.dumps(DOORS_INFO, ensure_ascii=False, indent=2)
-        
+        screens_info_json = json.dumps(self.screens_info, ensure_ascii=False, indent=2)
+        doors_info_json = json.dumps(self.doors_info, ensure_ascii=False, indent=2)
+
         system_prompt = self.system_prompt_template.format(
             SCREENS_INFO=screens_info_json,
             DOORS_INFO=doors_info_json,
@@ -177,7 +180,7 @@ class OllamaLLMHandler:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input}
         ]
-        
+
         print(f"用户指令: {user_input}")
 
         try:
@@ -187,19 +190,19 @@ class OllamaLLMHandler:
                 tools=self.tools,
                 think=False
             )
-            
+
             # 检查是否有工具调用
             if response['message'].get('tool_calls'):
                 # 处理多个工具调用
                 tool_calls = response['message']['tool_calls']
                 results = []
-                
+
                 # 遍历所有工具调用
                 for tool_call in tool_calls:
                     function_call = tool_call['function']
                     function_name = function_call['name']
                     arguments = function_call['arguments']
-                    
+
                     # 根据函数名构建相应的JSON响应
                     if function_name == "play_video":
                         result = {
@@ -245,16 +248,16 @@ class OllamaLLMHandler:
                             "device": None,
                             "value": None
                         }
-                    
+
                     results.append(result)
-                
+
                 # 将结果添加到对话历史中
                 self.conversation_history.append({
                     "role": "assistant",
                     "content": "",
                     "tool_calls": tool_calls
                 })
-                
+
                 # 为每个工具调用添加工具响应到对话历史
                 for i, (tool_call, result) in enumerate(zip(tool_calls, results)):
                     function_name = tool_call['function']['name']
@@ -263,12 +266,12 @@ class OllamaLLMHandler:
                         "content": json.dumps(result, ensure_ascii=False),
                         "name": function_name
                     })
-                
+
                 return json.dumps(results, ensure_ascii=False)
             else:
                 # 没有工具调用，直接输出空数组
                 return '[]'
-            
+
         except Exception as api_error:
             error_message = f"[错误] 调用Ollama API出错: {api_error}"
             print(error_message)

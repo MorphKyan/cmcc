@@ -5,28 +5,26 @@ import numpy as np
 import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
-from jinja2.utils import generate_lorem_ipsum
 
-# 使用相对导入
-from src.config import (
-    FUNASR_MODEL, FUNASR_VAD_MODEL, FUNASR_VAD_KWARGS, FUNASR_LANGUAGE, FUNASR_USE_ITN,
-    BATCH_SIZE_S, MERGE_VAD, MERGE_LENGTH_S
-)
+from src.config import FunASRSettings
+
 
 class ASRProcessor:
     """
     实时语音识别(ASR)处理器
     """
-    def __init__(self, device: str = "auto"):
+
+    def __init__(self, settings: FunASRSettings, device: str = "auto"):
         """
         初始化ASR处理器。
         
         Args:
             device: 推理设备 ("auto", "cuda:0", or "cpu").
         """
+        self.settings = settings
         self._setup_device(device)
         self._init_model()
-        
+
     def _setup_device(self, device: str):
         """设置推理设备 (CPU/GPU)"""
         if device == "auto":
@@ -39,10 +37,10 @@ class ASRProcessor:
         """初始化FunASR语音识别模型"""
         print("ASR处理器正在加载语音识别模型...")
         self.model = AutoModel(
-            model=FUNASR_MODEL,
+            model=self.settings.MODEL,
             trust_remote_code=True,
-            # vad_model=FUNASR_VAD_MODEL,
-            # vad_kwargs=FUNASR_VAD_KWARGS,
+            # vad_model=self.settings.VAD_MODEL,
+            # vad_kwargs=self.settings.VAD_KWARGS,
             device=self.device,
         )
         print("ASR处理器语音识别模型加载完成。")
@@ -59,13 +57,13 @@ class ASRProcessor:
         """
         if audio_data.dtype == np.int16:
             audio_data = audio_data.astype(np.float32) / 32768.0
-        
+
         # 进行语音识别
         res = self.model.generate(
-            input=audio_data, cache={}, language=FUNASR_LANGUAGE, use_itn=FUNASR_USE_ITN,
-            batch_size_s=BATCH_SIZE_S, merge_vad=MERGE_VAD,
-            merge_length_s=MERGE_LENGTH_S,
-            ban_emo_unk=True # 禁止输出感情标签
+            input=audio_data, cache={}, language=self.settings.LANGUAGE, use_itn=self.settings.USE_ITN,
+            batch_size_s=self.settings.BATCH_SIZE_S, merge_vad=self.settings.MERGE_VAD,
+            merge_length_s=self.settings.MERGE_LENGTH_S,
+            ban_emo_unk=True  # 禁止输出感情标签
         )
 
         if res and res[0].get("text"):
@@ -79,9 +77,9 @@ class ASRProcessor:
                 data = data.astype(np.float32) / 32768.0
 
         model_results = self.model.generate(
-            input=audio_data, cache={}, language=FUNASR_LANGUAGE, use_itn=FUNASR_USE_ITN,
-            batch_size_s=BATCH_SIZE_S, merge_vad=MERGE_VAD,
-            merge_length_s=MERGE_LENGTH_S,
+            input=audio_data, cache={}, language=self.settings.LANGUAGE, use_itn=self.settings.USE_ITN,
+            batch_size_s=self.settings.BATCH_SIZE_S, merge_vad=self.settings.MERGE_VAD,
+            merge_length_s=self.settings.MERGE_LENGTH_S,
             ban_emo_unk=True
         )
 

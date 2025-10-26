@@ -8,23 +8,58 @@ import pandas as pd
 # 获取项目根目录（假设config.py在 src/ 下）
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+from pydantic_settings import BaseSettings
+
+
+class FunASRSettings(BaseSettings):
+    # 为这组配置加上统一的前缀，便于从环境变量加载
+    class Config:
+        env_prefix = 'FUNASR_'
+
+    MODEL: str = "iic/SenseVoiceSmall"
+    VAD_MODEL: str = "fsmn-vad"
+    VAD_KWARGS: dict = {"max_single_segment_time": 20000}  # 最大切割音频时长(ms)
+    LANGUAGE: str = "auto"
+    USE_ITN: bool = True
+    BATCH_SIZE_S: float = 60  # 动态batch，batch中的音频总时长上限(秒)
+    MERGE_VAD: bool = True
+    MERGE_LENGTH_S: float = 15
+
+
+class RAGSettings(BaseSettings):
+    class Config:
+        env_prefix = 'RAG_'
+
+    VIDEOS_DATA_PATH: str = "data/videos.csv"
+    CHROMA_DB_PATH: str = "data/chroma_db"
+    EMBEDDING_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    TOP_K_RESULTS: int = 3  # 检索返回的文档数
+
+
+class LLMSettings(BaseSettings):
+    class Config:
+        env_prefix = 'LLM_'
+
+    MODEL: str = "qwen3:8b"
+    SYSTEM_PROMPT_TEMPLATE: str = SYSTEM_PROMPT_TEMPLATE
+    SCREENS_INFO: str = SCREENS_INFO
+    DOORS_INFO: str = DOORS_INFO
+
+
+# 你也可以创建一个总的配置对象
+class AppSettings(BaseSettings):
+    funasr: FunASRSettings = FunASRSettings()
+    rag: RAGSettings = RAGSettings()
+
+
+settings = AppSettings()
 
 # --- API Keys and Endpoints ---
 # 请从火山引擎官网获取您的API Key并替换
 # https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey
-ARK_API_KEY = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d" 
+ARK_API_KEY = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
 ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 LLM_MODEL_NAME = "doubao-seed-1-6-flash-250715"
-
-# --- Speech Recognition Settings ---
-FUNASR_MODEL = "iic/SenseVoiceSmall"
-FUNASR_VAD_MODEL = "fsmn-vad"
-FUNASR_VAD_KWARGS = {"max_single_segment_time": 20000} # 最大切割音频时长(ms)
-FUNASR_LANGUAGE = "auto"
-FUNASR_USE_ITN = True
-BATCH_SIZE_S = 60 # 动态batch，batch中的音频总时长上限(秒)
-MERGE_VAD = True
-MERGE_LENGTH_S = 15
 
 # --- Audio Settings ---
 FORMAT = pyaudio.paInt16
@@ -33,11 +68,9 @@ RATE = 16000  # FunASR的最佳采样率
 CHUNK = 1024
 
 # --- RAG and ChromaDB Settings ---
-VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
-CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
-EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-0.6B"
-# RAG检索返回的文档数量
-TOP_K_RESULTS = 3 
+# VIDEOS_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "videos.csv")
+# CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
+
 
 # --- System Prompt ---
 SYSTEM_PROMPT_TEMPLATE = """
@@ -122,6 +155,7 @@ SYSTEM_PROMPT_TEMPLATE = """
         ]
         ```
 """
+
 
 def load_screens_data():
     """加载屏幕数据并返回结构化列表"""

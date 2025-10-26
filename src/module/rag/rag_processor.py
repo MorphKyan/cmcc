@@ -6,37 +6,34 @@ import os
 import shutil
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+
+from src.config import RAGSettings
 from src.module.data_loader import load_documents_from_csvs
 
 
 class RAGProcessor:
-    def __init__(self, videos_data_path, chroma_db_path, embedding_model, top_k_results):
+    def __init__(self, settings: RAGSettings):
         """
         初始化RAG处理器。
 
         Args:
-            videos_data_path (str): 视频数据CSV文件路径。
-            chroma_db_path (str): Chroma数据库存储路径。
-            embedding_model (str): 嵌入模型名称。
-            top_k_results (int): 检索返回的文档数量。
+            settings (RAGSettings): RAG配置
         """
-        self.videos_data_path = videos_data_path
-        self.chroma_db_path = chroma_db_path
-        self.embedding_model_name = embedding_model
-        self.top_k_results = top_k_results
-
-        self.embedding_model = HuggingFaceEmbeddings(model_name=embedding_model)
-        if not os.path.exists(chroma_db_path):
+        self.videos_data_path = settings.VIDEOS_DATA_PATH
+        self.chroma_db_path = settings.CHROMA_DB_PATH
+        self.top_k_results = settings.TOP_K_RESULTS
+        self.embedding_model = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
+        if not os.path.exists(self.chroma_db_path):
             print("未找到本地向量数据库，正在创建...")
             self._create_and_persist_db()
         else:
             print("正在从本地加载向量数据库...")
             self.vector_store = Chroma(
-                persist_directory=chroma_db_path,
+                persist_directory=self.chroma_db_path,
                 embedding_function=self.embedding_model
             )
         self.retriever = self.vector_store.as_retriever(
-            search_kwargs={"k": top_k_results}
+            search_kwargs={"k": self.top_k_results}
         )
         print("RAG处理器初始化完成。")
 
