@@ -50,9 +50,9 @@ class VADProcessor:
     #         result = self._extract_audio(self.last_start_time, end_ms)
     #         self.last_start_time = None
 
-    def process_chunk(self):
+    def process_chunk(self) -> list:
         chunk = self.chunk_queue.get_nowait()
-        self.vad_core.process_chunk(chunk, self.cache)
+        return self.vad_core.process_chunk(chunk, self.cache)
 
     def process_result(self, segments: list) -> list:
         completed_segments = []

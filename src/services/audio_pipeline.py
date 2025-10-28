@@ -1,4 +1,3 @@
-import asyncio
 import numpy as np
 from fastapi import WebSocket
 from src.api.context import Context
@@ -8,29 +7,33 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-async def run_vad_processor(context: Context):
+async def run_vad_putter(context: Context):
     """VAD处理逻辑代码"""
     logger.info(f"[{context.context_id}] VAD处理器已启动。")
     while True:
         try:
             # 从WebSocket接收音频数据
-            audio_chunk_bytes = await context.audio_input_queue.get()
-            audio_chunk = np.frombuffer(audio_chunk_bytes, dtype=np.int16)
-            
-            # 使用VAD检测语音活动
-            speech_segments = dependencies.vad_processor.process_audio_chunk(audio_chunk)
+            audio_bytes = await context.audio_input_queue.get()
 
-            # 将检测到的语音片段放入ASR队列
-            for segment in speech_segments:
-                start, end, audio_data = segment
-                logger.info(f"[{context.context_id}][VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {len(audio_data)/16000:.2f}s")
-                await context.vad_output_queue.put(audio_data)
-                
+            # 使用VAD检测语音活动
+            context.VADProcessor.append_audio(audio_bytes)
+
         except Exception as e:
             logger.error(f"[{context.context_id}][VAD错误] {e}")
             # 可以选择是否继续处理或退出
             # break
-            
+
+async def run_vad_processor(context: Context):
+    while True:
+        try:
+            result = context.VADProcessor.process_chunk()
+            speech_segments = context.VADProcessor.process_result(result)
+            for segment in speech_segments:
+                start, end, audio_data = segment
+                logger.info(f"[{context.context_id}][VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {len(audio_data)/16000:.2f}s")
+                await context.audio_segment_queue.put(audio_data)
+        except Exception as e:
+            logger.error(f"[{context.context_id}][VAD错误] {e}")
             
 async def run_asr_processor(context: Context):
     """ASR处理逻辑代码"""

@@ -2,7 +2,7 @@ import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from src.api.context import Context
 from src.core import dependencies
-from src.services.audio_pipeline import run_vad_processor, run_asr_processor, run_llm_rag_processor
+from src.services.audio_pipeline import run_vad_putter, run_asr_processor, run_llm_rag_processor
 
 router = APIRouter(
     prefix="/api/audio",
@@ -20,7 +20,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
     # 启动处理管道
     processing_tasks = [
-        asyncio.create_task(run_vad_processor(context)),
+        asyncio.create_task(run_vad_putter(context)),
         asyncio.create_task(run_asr_processor(context)),
         asyncio.create_task(run_llm_rag_processor(context, websocket))
     ]
