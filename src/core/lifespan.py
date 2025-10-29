@@ -20,9 +20,9 @@ async def lifespan(app: FastAPI):
 
     try:
         dependencies.vad_core = VADCore(vad_config)
-        dependencies.rag_processor = RAGProcessor(rag_config)
-        dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
-        dependencies.llm_processor = OllamaLLMHandler(llm_config)
+        # dependencies.rag_processor = RAGProcessor(rag_config)
+        # dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
+        # dependencies.llm_processor = OllamaLLMHandler(llm_config)
         print("所有处理器初始化成功。")
     except Exception as e:
         print(f"错误: 处理器初始化失败: {e}")

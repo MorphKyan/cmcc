@@ -35,22 +35,52 @@ export default {
   methods: {
     async startRecording() {
       if (this.isRecording) return;
-
+      // 定义音频参数约束
+      const audioConstraints = {
+        audio: {
+          sampleRate: 16000,   // 期望的采样率，例如 16kHz（语音识别常用）
+          sampleSize: 16,      // 期望的采样位数，例如 16-bit
+          channelCount: 1,     // 期望的声道数，例如单声道
+          echoCancellation: true, // 开启回声消除
+          noiseSuppression: true  // 开启噪声抑制
+        }
+      };
       try {
         // 1. 获取用户麦克风权限和音频流
-        this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
         this.status = '已获取麦克风权限';
+
+        // 打印实际应用的配置，用于调试
+        const audioTrack = this.audioStream.getAudioTracks()[0];
+        const settings = audioTrack.getSettings();
+        console.log('实际应用的音频配置:', settings);
 
         // 2. 建立 WebSocket 连接
         const wsUrl = `ws://localhost:5000/api/audio/ws/${this.clientId}`; // 确保主机和端口正确
         this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = () => {
+          // 定义并发送元数据
+          const metadata = {
+            type: 'config', // 消息类型
+            mimeType: 'audio/webm;codecs=opus', // 我们期望的格式
+            sampleRate: settings.sampleRate, // 发送浏览器实际使用的采样率
+            channelCount: settings.channelCount // 发送实际的声道数
+          };
+          this.socket.send(JSON.stringify(metadata));
+          console.log('已发送元数据:', metadata);
+
           this.status = 'WebSocket 已连接，正在录音...';
           this.isRecording = true;
           
           // 3. 创建 MediaRecorder 实例
-          this.mediaRecorder = new MediaRecorder(this.audioStream);
+          const mediaRecorderOptions = { mimeType: 'audio/webm;codecs=opus' };
+          try {
+              this.mediaRecorder = new MediaRecorder(this.audioStream, mediaRecorderOptions);
+          } catch (e) {
+              console.warn("无法使用指定的mimeType，回退到默认设置:", e);
+              this.mediaRecorder = new MediaRecorder(this.audioStream);
+          }
 
           // 4. 设置 ondataavailable 回调，当有音频数据时触发
           this.mediaRecorder.ondataavailable = (event) => {
@@ -61,8 +91,8 @@ export default {
             }
           };
 
-          // 6. 启动 MediaRecorder，timeslice 参数表示每 250ms 触发一次 ondataavailable
-          this.mediaRecorder.start(250);
+          // 6. 启动 MediaRecorder，timeslice 参数表示每 200ms 触发一次 ondataavailable
+          this.mediaRecorder.start(200);
         };
 
         // 接收后端通过WebSocket发送的处理结果
@@ -90,7 +120,7 @@ export default {
 
       } catch (error) {
         console.error('无法获取麦克风:', error);
-        this.status = '错误：无法获取麦克风权限';
+        this.status = '错误：'+error;
       }
     },
 

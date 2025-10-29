@@ -11,33 +11,33 @@ class VADProcessor:
     def __init__(self, vad_core: VADCore):
         self.vad_core = vad_core
         self.sample_rate = vad_core.sample_rate
-        self.bytes_per_sample = 2
         self.chunk_size_samples = int(self.vad_core.chunk_size * self.sample_rate / 1000)
-        self.chunk_stride_bytes = self.chunk_size_samples * self.bytes_per_sample
         self.cache = {}
-        self.input_buffer: bytearray = bytearray()
-        self.history_buffer_max_bytes = 30 * self.sample_rate * 2  # 时长*采样率*每sample byte数
-        self.history_buffer: bytearray = bytearray()
+        self.input_buffer: npt.NDArray[np.float32] = np.array([], dtype=np.float32)
+        self.history_buffer_max_samples = 30 * self.sample_rate  # 时长*采样率
+        self.history_buffer: npt.NDArray[np.float32] = np.array([], dtype=np.float32)
+        self.history_buffer_head_index = 0  # buffer头的偏移量
         self.last_start_time = None  # 上一segment的开始时间戳（累积）
         self.last_end_time = None  # 上一segment的结束时间戳（累积）
-        self.buffer_head_index = 0  # buffer头的偏移量
+        self.last_start_time_ms = None  # Start timestamp of the current speech segment in milliseconds
+        self.total_samples_processed = 0  # A running counter of all samples seen so far
         self.chunk_queue: asyncio.Queue[npt.NDArray] = asyncio.Queue()
 
-    def append_audio(self, data: bytes):
+    def append_audio(self, data: npt.NDArray[np.float32]) -> None:
         # 加入缓冲区
-        self.input_buffer.extend(data)
-        self.history_buffer.extend(data)
+        data_flat = data.flatten()
+        self.input_buffer = np.concatenate([self.input_buffer, data_flat])
+        self.history_buffer = np.concatenate([self.history_buffer, data_flat])
 
         # 维护history buffer的固定大小
-        # overflow = len(self.history_buffer) - self.history_buffer_max_bytes
+        # overflow = len(self.history_buffer) - self.history_buffer_max_samples
         # if overflow > 0:
-        #     del self.history_buffer[:overflow]
+        #     self.history_buffer = self.history_buffer[overflow:]
 
         # 处理为chunk
-        while len(self.input_buffer) >= self.chunk_stride_bytes:
-            chunk_bytes = self.input_buffer[:self.chunk_stride_bytes]
-            del self.input_buffer[:self.chunk_stride_bytes]
-            chunk_np = np.frombuffer(chunk_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+        while len(self.input_buffer) >= self.chunk_size_samples:
+            chunk_np = self.input_buffer[:self.chunk_size_samples]
+            self.input_buffer = self.input_buffer[self.chunk_size_samples:]
             try:
                 self.chunk_queue.put_nowait(chunk_np)
             except asyncio.QueueFull:
@@ -52,71 +52,65 @@ class VADProcessor:
 
     async def process_chunk(self) -> list:
         chunk = await self.chunk_queue.get()
-        return self.vad_core.process_chunk(chunk, self.cache)
+        segments = self.vad_core.process_chunk(chunk, self.cache)
+        self.total_samples_processed += len(chunk)
+        return segments
 
     def process_result(self, segments: list) -> list:
         completed_segments = []
-        for start, end in segments:
+        for start_ms, end_ms in segments:
             # 情况一：新的语音段开始
-            if start != -1 and end == -1:
+            if start_ms != -1 and end_ms == -1:
                 # 如果之前有一个未结束的段，先将其结束
                 if self.last_start_time is not None:
-                    print(f"[VAD警告] 检测到之前有未完结的音频段: {self.last_start_time}ms - {start}ms")
-                    result = self._extract_audio(self.last_start_time, start)
-                    if result is not None:
-                        completed_segments.append(result)
+                    print(f"[VAD警告] 检测到之前有未完结的音频段: {self.last_start_time}ms - {start_ms}ms")
+                    audio = self._extract_audio(self.last_start_time, start_ms)
+                    if audio is not None:
+                        completed_segments.append((self.last_start_time, start_ms, audio))
                     self.last_start_time = None
-                    self.last_end_time = start
-                self.last_start_time = start
+                    self.last_end_time = start_ms
+                self.last_start_time = start_ms
 
             # 情况二：语音段结束
-            elif start == -1 and end != -1:
+            elif start_ms == -1 and end_ms != -1:
                 if self.last_start_time is not None:
                     # 语音段已完整，提取音频
-                    result = self._extract_audio(self.last_start_time, end)
-                    if result is not None:
-                        completed_segments.append(result)
+                    audio = self._extract_audio(self.last_start_time, end_ms)
+                    if audio is not None:
+                        completed_segments.append((self.last_start_time, end_ms, audio))
                     self.last_start_time = None
-                    self.last_end_time = end
+                    self.last_end_time = end_ms
 
             # 情况三：短语音段（在单个块内开始和结束）
-            elif start != -1 and end != -1:
+            elif start_ms != -1 and end_ms != -1:
                 # 如果之前有一个未结束的段，先将其结束
                 if self.last_start_time is not None:
-                    print(f"[VAD警告] 检测到之前有未完结的音频段: {self.last_start_time}ms - {start}ms")
-                    result = self._extract_audio(self.last_start_time, start)
-                    if result is not None:
-                        completed_segments.append(result)
+                    print(f"[VAD警告] 检测到之前有未完结的音频段: {self.last_start_time}ms - {start_ms}ms")
+                    audio = self._extract_audio(self.last_start_time, start_ms)
+                    if audio is not None:
+                        completed_segments.append((self.last_start_time, start_ms, audio))
                     self.last_start_time = None
-                    self.last_end_time = start
+                    self.last_end_time = start_ms
 
-                result = self._extract_audio(start, end)
-                if result is not None:
-                    completed_segments.append(result)
+                audio = self._extract_audio(start_ms, end_ms)
+                if audio is not None:
+                    completed_segments.append((start_ms, end_ms, audio))
                 self.last_start_time = None
-                self.last_end_time = end
+                self.last_end_time = end_ms
 
         return completed_segments
 
-    def _clean_buffer(self):
-        if self.last_end_time is not None:
-            # 移除已处理的音频数据
-            buffer_end_index = int(self.last_end_time * self.sample_rate * self.bytes_per_sample / 1000)
-            count_to_remove = buffer_end_index - self.buffer_head_index
-            if count_to_remove > 0:
-                print(
-                    f"[VAD] 移除已处理的音频数据: {self.buffer_head_index}到{buffer_end_index}的采样点, 当前缓存起始时间为: {buffer_end_index / self.sample_rate:.2f}秒")
-                self.history_buffer = self.history_buffer[count_to_remove:]
-                self.buffer_head_index = buffer_end_index
+    def _extract_audio(self, start_ms, end_ms):
+        global_start_sample = int(start_ms * self.sample_rate / 1000)
+        global_end_sample = int(end_ms * self.sample_rate / 1000)
 
-    def _extract_audio(self, start, end):
-        buffer_start_index = int(start * self.sample_rate * self.bytes_per_sample / 1000) - self.buffer_head_index
-        buffer_start_index = max(0, buffer_start_index)
-        buffer_end_index = int(end * self.sample_rate / 1000) - self.buffer_head_index
+        start_index_in_buffer = global_start_sample - self.history_buffer_head_index
+        end_index_in_buffer = global_end_sample - self.history_buffer_head_index
 
-        if buffer_end_index - buffer_start_index <= 0:
-            print(f"[VAD警告] 检测到空的音频段: {start}ms - {end}ms")
+        if start_index_in_buffer < 0 or end_index_in_buffer > len(self.history_buffer):
+            print(f"[VAD警告] 无法提取音频段: {start_ms:.0f}ms-{end_ms:.0f}ms。所需数据超出历史缓冲区范围。")
             return None
-        else:
-            segment_audio = self.input_buffer[buffer_start_index:buffer_end_index]
-            return start, end, segment_audio
+        if start_index_in_buffer >= end_index_in_buffer:
+            print(f"[VAD警告] 检测到空的音频段: {start_ms}ms - {end_ms}ms")
+            return None
+        return self.history_buffer[start_index_in_buffer:end_index_in_buffer]

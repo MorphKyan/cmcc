@@ -39,5 +39,5 @@ class VADCore:
         )
 
         if segments and segments[0].get("value"):
-            return segments
+            return segments[0].get("value")
         return []

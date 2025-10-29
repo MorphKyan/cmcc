@@ -12,3 +12,4 @@ ollama
 fastapi
 uvicorn[standard]
 python-multipart
+av
