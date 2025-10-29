@@ -39,7 +39,8 @@ class VADProcessor:
             del self.input_buffer[:self.chunk_stride_bytes]
             chunk_np = np.frombuffer(chunk_bytes, dtype=np.int16).astype(np.float32) / 32768.0
             try:
-                self.chunk_queue.put_nowait(chunk_np)
+                chunk = self.chunk_queue.get_nowait()
+                return self.vad_core.process_chunk(chunk, self.cache)
             except asyncio.QueueFull:
                 print("[VAD警告] chunk_queue已满，处理速度跟不上输入速度。")
 
@@ -50,8 +51,8 @@ class VADProcessor:
     #         result = self._extract_audio(self.last_start_time, end_ms)
     #         self.last_start_time = None
 
-    def process_chunk(self) -> list:
-        chunk = self.chunk_queue.get_nowait()
+    async def process_chunk(self) -> list:
+        chunk = await self.chunk_queue.get()
         return self.vad_core.process_chunk(chunk, self.cache)
 
     def process_result(self, segments: list) -> list:

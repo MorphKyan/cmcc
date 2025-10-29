@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
@@ -45,7 +46,7 @@ class ASRProcessor:
         )
         print("ASR处理器语音识别模型加载完成。")
 
-    def process_audio_data(self, audio_data):
+    def process_audio_data(self, audio_data: npt.NDArray[np.float32]):
         """
         处理音频数据并返回识别结果。
         
