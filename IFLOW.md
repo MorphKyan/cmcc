@@ -31,6 +31,7 @@
 6.  **应用核心 (`src/app/voice_assistant.py`)**: 整合所有模块，实现核心业务逻辑。
 7.  **主入口 (`src/main.py`)**: 程序的启动点，处理命令行参数并初始化`VoiceAssistant`。
 8.  **Web API服务 (`src/api/main.py`)**: 提供基于FastAPI的RESTful API服务，支持RAG查询、数据库刷新和文件上传等功能。
+9.  **WebSocket音频处理 (`src/api/routers/audio.py`)**: 通过WebSocket接收实时音频流并进行处理。
 
 ### 数据源
 
@@ -97,11 +98,13 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 5000
 
 ## API端点
 
+- `GET /` - 健康检查端点
 - `GET /api/health` - 健康检查端点
 - `POST /api/rag/refresh` - 刷新RAG数据库
 - `GET /api/rag/status` - 获取RAG状态
 - `POST /api/rag/query` - 查询RAG数据库
 - `POST /api/rag/upload-videos` - 上传videos.csv文件并更新RAG数据库
+- `WebSocket /api/audio/ws/{client_id}` - WebSocket音频处理端点
 
 ## 开发约定
 

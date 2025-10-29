@@ -5,6 +5,10 @@
       <button @click="startRecording" :disabled="isRecording">开始录音</button>
       <button @click="stopRecording" :disabled="!isRecording">停止录音</button>
       <p>状态: {{ status }}</p>
+      <div v-if="websocketOutput" class="websocket-output">
+        <h3>处理结果:</h3>
+        <pre>{{ websocketOutput }}</pre>
+      </div>
     </div>
     <div v-else>
       <p>抱歉，您的浏览器不支持所需功能。</p>
@@ -25,6 +29,7 @@ export default {
       audioStream: null,
       // 为每个客户端生成一个唯一的ID
       clientId: `web-client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      websocketOutput: ''
     };
   },
   methods: {
@@ -58,6 +63,18 @@ export default {
 
           // 6. 启动 MediaRecorder，timeslice 参数表示每 250ms 触发一次 ondataavailable
           this.mediaRecorder.start(250);
+        };
+
+        // 接收后端通过WebSocket发送的处理结果
+        this.socket.onmessage = (event) => {
+          try {
+            // 尝试解析JSON数据
+            const data = JSON.parse(event.data);
+            this.websocketOutput = JSON.stringify(data, null, 2);
+          } catch (e) {
+            // 如果不是JSON，则直接显示文本
+            this.websocketOutput = event.data;
+          }
         };
 
         this.socket.onclose = () => {
@@ -121,5 +138,18 @@ export default {
 button {
   margin: 5px;
   padding: 10px 15px;
+}
+.websocket-output {
+  margin-top: 20px;
+  text-align: left;
+  background-color: #f5f5f5;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+.websocket-output pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 </style>

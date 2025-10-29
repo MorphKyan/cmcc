@@ -19,7 +19,7 @@ async def run_vad_appender(context: Context):
             context.VADProcessor.append_audio(audio_bytes)
 
         except Exception as e:
-            logger.error(f"[{context.context_id}][VAD错误] {e}")
+            logger.error(f"[{context.context_id}][VAD输入错误] {e}")
             # 可以选择是否继续处理或退出
             # break
 
@@ -34,7 +34,7 @@ async def run_vad_processor(context: Context):
                 logger.info(f"[{context.context_id}][VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {len(audio_data) / 16000:.2f}s")
                 await context.audio_segment_queue.put(audio_data)
         except Exception as e:
-            logger.error(f"[{context.context_id}][VAD错误] {e}")
+            logger.error(f"[{context.context_id}][VAD处理错误] {e}")
 
 
 async def run_asr_processor(context: Context):

@@ -38,6 +38,6 @@ class VADCore:
             **self.kwargs
         )
 
-        # if segments and segments[0].get("value"):
-        #     all_segments.extend(segments[0]["value"])
-        return segments
+        if segments and segments[0].get("value"):
+            return segments
+        return []
