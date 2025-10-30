@@ -4,7 +4,7 @@ from src.core import dependencies
 from src.module.rag.rag_processor import RAGProcessor
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.llm.ollama_llm_handler import OllamaLLMHandler
-from src.config import settings
+from src.config.config import settings
 from src.module.vad.vad_core import VADCore
 
 

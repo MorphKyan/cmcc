@@ -5,7 +5,7 @@ import pandas as pd
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
 from src.api.schemas import RefreshResponse, StatusResponse, QueryResponse, UploadResponse, QueryRequest
-from src.config import settings
+from src.config.config import settings
 from src.core import dependencies
 
 router = APIRouter(

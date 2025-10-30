@@ -4,7 +4,7 @@
 import json
 import ollama
 
-from src.config import LLMSettings
+from src.config.config import LLMSettings
 from src.module.data_loader import format_docs_for_prompt
 
 

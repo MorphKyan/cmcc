@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from src.component.ark_llm_handler import LLMHandler
 from src.component.rag_processor import RAGProcessor
-from src.config import (
+from src.config.config import (
     SCREENS_DATA_PATH, DOORS_DATA_PATH, VIDEOS_DATA_PATH,
     CHROMA_DB_PATH, EMBEDDING_MODEL, TOP_K_RESULTS,
     ARK_API_KEY, ARK_BASE_URL, LLM_MODEL_NAME, SYSTEM_PROMPT_TEMPLATE

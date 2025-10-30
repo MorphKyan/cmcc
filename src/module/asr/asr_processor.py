@@ -7,7 +7,7 @@ import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
-from src.config import FunASRSettings
+from src.config.config import FunASRSettings
 
 
 class ASRProcessor:

@@ -13,6 +13,7 @@
 - **RAG (检索增强生成)**: Langchain, ChromaDB, HuggingFace Embeddings
 - **数据处理**: Pandas
 - **Web API**: FastAPI, Uvicorn
+- **前端**: Vue.js (位于 `frontend/vue-project` 目录)
 
 ### 项目架构
 
@@ -26,12 +27,19 @@
     -   火山引擎 (`src/module/llm/ark_llm_handler.py`): 与火山引擎方舟大模型交互。
 5.  **音频处理**:
     -   音频输入 (`src/module/input/audio_input.py`): 处理麦克风音频输入。
+    -   WebSocket输入 (`src/module/input/websocket_input.py`): 处理来自前端的WebSocket音频流。
+    -   流解码器 (`src/module/input/stream_decoder.py`): 解码前端发送的音频流。
     -   VAD处理 (`src/module/vad/vad_processor.py`): 检测语音活动。
     -   ASR处理 (`src/module/asr/asr_processor.py`): 将语音转换为文本。
-6.  **应用核心 (`src/app/voice_assistant.py`)**: 整合所有模块，实现核心业务逻辑。
-7.  **主入口 (`src/main.py`)**: 程序的启动点，处理命令行参数并初始化`VoiceAssistant`。
-8.  **Web API服务 (`src/api/main.py`)**: 提供基于FastAPI的RESTful API服务，支持RAG查询、数据库刷新和文件上传等功能。
-9.  **WebSocket音频处理 (`src/api/routers/audio.py`)**: 通过WebSocket接收实时音频流并进行处理。
+6.  **应用核心**:
+    -   **语音助手 (`src/app/voice_assistant.py`)**: 整合所有模块，实现核心业务逻辑，支持本地麦克风输入。
+    -   **音频管道 (`src/services/audio_pipeline.py`)**: 定义了基于WebSocket的实时音频处理管道，用于Web API服务。
+7.  **API服务 (`src/api/main.py`)**: 提供基于FastAPI的RESTful API服务，支持RAG查询、数据库刷新和文件上传等功能。
+8.  **API路由器**:
+    -   **音频 (`src/api/routers/audio.py`)**: 通过WebSocket接收实时音频流并进行处理。
+    -   **RAG (`src/api/routers/rag.py`)**: 提供RAG相关的RESTful端点。
+9.  **上下文管理 (`src/api/context.py`)**: 管理WebSocket连接的上下文，包括队列和处理器实例。
+10. **核心依赖 (`src/core/dependencies.py`)**: 管理全局的处理器单例（如ASR、RAG、LLM处理器）和活动上下文。
 
 ### 数据源
 
@@ -62,13 +70,9 @@ pip install -r requirements.txt
 
 ### 启动程序
 
-#### 1. 启动主语音控制程序
+#### 1. 启动主语音控制程序 (本地麦克风)
 
-在项目根目录下执行以下命令启动程序：
-
-```bash
-python src/main.py
-```
+**注意**: 项目根目录下没有 `src/main.py` 文件。主程序逻辑位于 `src/app/voice_assistant.py` 中，需要自行创建入口脚本来启动。
 
 #### 2. 启动Web API服务
 
@@ -85,11 +89,6 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 5000
 ```
 
 ### 命令行选项
-
-#### 主程序 (`src/main.py`)
-
--   `--device [auto|cpu|cuda:0]`: 选择用于推理的设备 (默认: `auto`)。
--   `--llm-provider [ark|ollama]`: 选择大语言模型提供商 (默认: `ollama`)。
 
 #### Web API服务 (`src/api/main.py`)
 
@@ -111,7 +110,8 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 5000
 -   **模块化**: 代码严格遵循模块化设计，每个模块职责单一。
 -   **配置驱动**: 通过 `config.py` 集中管理配置，便于维护。
 -   **RAG增强**: 利用本地知识库和向量数据库提升LLM在特定领域的准确性。
--   **实时处理**: 采用多线程处理音频流、VAD、ASR、RAG和LLM调用，保证实时性。
+-   **实时处理**: 采用多线程（本地麦克风）或异步事件循环（WebSocket）处理音频流、VAD、ASR、RAG和LLM调用，保证实时性。
 -   **错误处理**: 各模块包含基本的错误处理逻辑，确保程序稳定性。
--   **Prompt Engineering**: 使用详细的系统提示模板指导LLM行为，支持Function Calling。
+-   **Prompt Engineering**: 使用详细的系统提示模板指导LLM行为，支持Function Calling，能够处理复合指令。
 -   **API设计**: 遵循RESTful API设计原则，提供清晰的接口文档和错误处理机制。
+-   **前端集成**: 项目包含一个Vue.js前端应用 (`frontend/vue-project`)，用于通过WebSocket与后端API服务进行交互。

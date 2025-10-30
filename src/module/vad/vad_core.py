@@ -4,7 +4,7 @@
 from funasr import AutoModel
 import numpy.typing as npt
 
-from src.config import VADSettings
+from src.config.config import VADSettings
 
 
 class VADCore:

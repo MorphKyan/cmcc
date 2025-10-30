@@ -4,7 +4,7 @@
 import pyaudio
 import queue
 from typing import Optional, Mapping
-from src.config import FORMAT, CHANNELS, RATE, CHUNK
+from src.config.config import FORMAT, CHANNELS, RATE, CHUNK
 
 
 class AudioInputer:

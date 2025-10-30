@@ -7,7 +7,7 @@ import shutil
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.config import RAGSettings
+from src.config.config import RAGSettings
 from src.module.data_loader import load_documents_from_csvs
 
 

@@ -1,10 +1,9 @@
 import numpy as np
+import numpy.typing as npt
 from fastapi import WebSocket
 from src.api.context import Context
 from src.core import dependencies  # 从中心依赖文件导入全局处理器
-import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 async def run_vad_appender(context: Context):
@@ -43,10 +42,9 @@ async def run_asr_processor(context: Context):
     while True:
         try:
             # 从VAD队列中获取分割好的语音片段
-            audio_data: bytearray = await context.audio_segment_queue.get()
-            audio_np = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
+            segment: npt[np.float32] = await context.audio_segment_queue.get()
             # 使用ASR处理器处理音频数据
-            recognized_text = dependencies.asr_processor.process_audio_data(audio_np)
+            recognized_text = dependencies.asr_processor.process_audio_data(segment)
 
             if recognized_text and recognized_text.strip():
                 logger.info(f"[{context.context_id}][识别结果] {recognized_text}")

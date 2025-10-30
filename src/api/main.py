@@ -10,10 +10,14 @@ from src.core.lifespan import lifespan
 from src.api.routers import audio
 from src.api.routers import rag
 from src.api.schemas import HealthResponse
+from src.config.logging_config import setup_logging
 
 # 添加项目根目录到Python路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_root)
+
+# 初始化日志配置
+setup_logging()
 
 app = FastAPI(title="API Service", description="RESTful API for assistant", version="1.0.0", lifespan=lifespan)
 
