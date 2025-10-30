@@ -36,3 +36,6 @@ class QueryResponse(BaseModel):
 class UploadResponse(BaseModel):
     status: str
     message: str
+
+class WebSocketConfig(BaseModel):
+    type: str

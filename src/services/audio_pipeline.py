@@ -1,9 +1,26 @@
 import numpy as np
 import numpy.typing as npt
 from fastapi import WebSocket
+from loguru import logger
+
 from src.api.context import Context
 from src.core import dependencies  # 从中心依赖文件导入全局处理器
-from loguru import logger
+from src.module.input.stream_decoder import StreamDecoder
+
+
+async def receive_and_decode_loop(websocket: WebSocket, context: Context, decoder: StreamDecoder):
+    """
+    一个独立的任务，专门负责接收、解码并放入队列。
+    """
+    while True:
+        audio_chunk = await websocket.receive_bytes()
+        decoder.feed_data(audio_chunk)
+        while True:
+            pcm_frame = decoder.get_decoded_frame()
+            if pcm_frame is None:
+                break
+            logger.trace("处理解码后的PCM数据，形状: {shape}, 类型: {dtype}", shape=pcm_frame.shape, dtype=pcm_frame.dtype)
+            await context.audio_input_queue.put(pcm_frame)
 
 
 async def run_vad_appender(context: Context):
