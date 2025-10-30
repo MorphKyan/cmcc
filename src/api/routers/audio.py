@@ -40,7 +40,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             if config.get("type") != "config":
                 raise ValueError("第一条消息必须是配置信息")
         except (json.JSONDecodeError, ValidationError, ValueError) as e:
-            logger.error("配置消息无效: {error}", error=e)
+            logger.exception("配置消息无效")
             await websocket.close(code=1008, reason=f"无效的配置消息: {e}")
             return
 
@@ -66,7 +66,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except WebSocketDisconnect:
         logger.info("客户端断开连接")
     except Exception as e:
-        logger.exception("WebSocket 处理过程中发生意外错误: {error}", error=e)
+        logger.exception("WebSocket 处理过程中发生意外错误")
     finally:
         # 清理资源
         logger.info("正在清理资源...")
