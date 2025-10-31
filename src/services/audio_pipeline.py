@@ -60,7 +60,7 @@ async def run_vad_processor(context: Context) -> None:
             speech_segments = context.VADProcessor.process_result(result)
             for segment in speech_segments:
                 start, end, audio_data = segment
-                logger.info(f"[VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {len(audio_data) / 16000:.2f}s")
+                logger.info("[VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {length:.2f}s", start=start, end=end, length=len(audio_data) / 16000)
                 await context.audio_segment_queue.put(audio_data)
         except Exception as e:
             logger.exception("VAD处理错误")

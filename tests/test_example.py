@@ -1,5 +1,6 @@
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
+from loguru import logger
 
 model_dir = "iic/SenseVoiceSmall"
 
@@ -21,4 +22,4 @@ res = model.generate(
     merge_length_s=15,
 )
 text = rich_transcription_postprocess(res[0]["text"])
-print(text)
+logger.info("识别结果: {text}", text=text)

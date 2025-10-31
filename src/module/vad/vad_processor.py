@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
+from loguru import logger
 from src.module.vad.vad_core import VADCore
 
 
@@ -42,7 +43,7 @@ class VADProcessor:
             try:
                 self.chunk_queue.put_nowait(chunk_np)
             except asyncio.QueueFull:
-                print("[VAD警告] chunk_queue已满，处理速度跟不上输入速度。")
+                logger.warning("chunk_queue已满，处理速度跟不上输入速度。")
 
     # def flush(self):
     #     # 音频流结束时调用
@@ -64,7 +65,7 @@ class VADProcessor:
             if start_ms != -1 and end_ms == -1:
                 # 如果之前有一个未结束的段，先将其结束
                 if self.last_start_time is not None:
-                    print(f"[VAD警告] 检测到之前有未完结的音频段: {self.last_start_time}ms - {start_ms}ms")
+                    logger.warning("检测到之前有未完结的音频段: {start}ms - {end}ms", start=self.last_start_time, end=start_ms)
                     audio = self._extract_audio(self.last_start_time, start_ms)
                     if audio is not None:
                         completed_segments.append((self.last_start_time, start_ms, audio))
@@ -86,7 +87,7 @@ class VADProcessor:
             elif start_ms != -1 and end_ms != -1:
                 # 如果之前有一个未结束的段，先将其结束
                 if self.last_start_time is not None:
-                    print(f"[VAD警告] 检测到之前有未完结的音频段: {self.last_start_time}ms - {start_ms}ms")
+                    logger.warning("检测到之前有未完结的音频段: {start}ms - {end}ms", start=self.last_start_time, end=start_ms)
                     audio = self._extract_audio(self.last_start_time, start_ms)
                     if audio is not None:
                         completed_segments.append((self.last_start_time, start_ms, audio))
@@ -109,9 +110,9 @@ class VADProcessor:
         end_index_in_buffer = global_end_sample - self.history_buffer_head_index
 
         if start_index_in_buffer < 0 or end_index_in_buffer > len(self.history_buffer):
-            print(f"[VAD警告] 无法提取音频段: {start_ms:.0f}ms-{end_ms:.0f}ms。所需数据超出历史缓冲区范围。")
+            logger.warning("无法提取音频段: {start:.0f}ms-{end:.0f}ms。所需数据超出历史缓冲区范围。", start=start_ms, end=end_ms)
             return None
         if start_index_in_buffer >= end_index_in_buffer:
-            print(f"[VAD警告] 检测到空的音频段: {start_ms}ms - {end_ms}ms")
+            logger.warning("检测到空的音频段: {start}ms - {end}ms", start=start_ms, end=end_ms)
             return None
         return self.history_buffer[start_index_in_buffer:end_index_in_buffer]

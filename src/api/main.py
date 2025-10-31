@@ -6,6 +6,7 @@ from typing import NoReturn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from loguru import logger
 
 from src.core.lifespan import lifespan
 from src.api.routers import audio
@@ -40,7 +41,7 @@ async def root() -> HealthResponse:
     return HealthResponse(status="healthy", service="Main API Service")
 
 
-def run_api(host: str = '0.0.0.0', port: int = 5000) -> NoReturn:
+def run_api(host: str = '0.0.0.0', port: int = 5000) -> None:
     """运行API服务"""
     import uvicorn
     uvicorn.run("src.api.main:app", host=host, port=port, reload=False)
@@ -54,5 +55,5 @@ if __name__ == '__main__':
     parser.add_argument('--port', type=int, default=5000, help='Port to bind to')
     args = parser.parse_args()
 
-    print(f"启动API服务: http://{args.host}:{args.port}")
+    logger.info("启动API服务: http://{host}:{port}", host=args.host, port=args.port)
     run_api(host=args.host, port=args.port)

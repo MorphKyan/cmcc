@@ -6,6 +6,7 @@ from typing import List
 
 import ollama
 from langchain_core.documents import Document
+from loguru import logger
 
 from src.config.config import LLMSettings
 from src.module.data_loader import format_docs_for_prompt
@@ -26,7 +27,7 @@ class OllamaLLMHandler:
             # 检查与Ollama服务器的连接
             self.client.list()
         except Exception as e:
-            print(f"[错误] 初始化Ollama客户端或连接Ollama服务器失败: {e}")
+            logger.exception("初始化Ollama客户端或连接Ollama服务器失败")
             # 如果客户端初始化失败，后续无法调用，直接退出
             exit(1)
 
@@ -148,7 +149,7 @@ class OllamaLLMHandler:
             }
         ]
 
-        print(f"Ollama大语言模型处理器初始化完成，使用模型: {self.model}")
+        logger.info("Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.model)
 
     def _construct_prompt(self, user_input: str, rag_docs: List[Document]) -> str:
         """
@@ -184,7 +185,7 @@ class OllamaLLMHandler:
             {"role": "user", "content": user_input}
         ]
 
-        print(f"用户指令: {user_input}")
+        logger.info("用户指令: {user_input}", user_input=user_input)
 
         try:
             response = self.client.chat(
@@ -276,6 +277,5 @@ class OllamaLLMHandler:
                 return '[]'
 
         except Exception as api_error:
-            error_message = f"[错误] 调用Ollama API出错: {api_error}"
-            print(error_message)
+            logger.exception("调用Ollama API出错: {error}", error=str(api_error))
             return '{"action": "error", "reason": "api_failure", "target": null, "device": null, "value": null}'

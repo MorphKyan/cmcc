@@ -6,6 +6,7 @@ from typing import List
 from config import SCREENS_INFO, DOORS_INFO
 from langchain_core.documents import Document
 from volcenginesdkarkruntime import Ark
+from loguru import logger
 
 from src.module.data_loader import format_docs_for_prompt
 
@@ -26,13 +27,13 @@ class LLMHandler:
         try:
             self.client = Ark(api_key=ark_api_key, base_url=ark_base_url)
         except Exception as e:
-            print(f"[错误] 初始化火山引擎客户端失败: {e}")
+            logger.exception("初始化火山引擎客户端失败")
             # 如果客户端初始化失败，后续无法调用，直接退出
             exit(1)
             
         self.llm_model_name = llm_model_name
         self.conversation_history = []
-        print("大语言模型处理器初始化完成。")
+        logger.info("大语言模型处理器初始化完成。")
 
     def _construct_prompt(self, user_input: str, rag_docs: List[Document]) -> str:
         """
@@ -66,10 +67,10 @@ class LLMHandler:
             {"role": "user", "content": user_input}
         ]
         
-        print("\n--- 发送给大模型的最终Prompt ---")
-        print(system_prompt.replace(user_input, f"{{{{USER_INPUT}}}}")) # 打印模板
-        print(f"用户指令: {user_input}")
-        print("--------------------------------\n")
+        logger.info("\n--- 发送给大模型的最终Prompt ---")
+        logger.info(system_prompt.replace(user_input, "{{{{USER_INPUT}}}}")) # 打印模板
+        logger.info("用户指令: {user_input}", user_input=user_input)
+        logger.info("--------------------------------\n")
 
         try:
             response = self.client.chat.completions.create(
@@ -96,15 +97,14 @@ class LLMHandler:
                     return json.dumps(parsed_response, ensure_ascii=False)
                 else:
                     # 如果解析后的对象不包含action字段，返回错误
-                    print(f"[警告] LLM输出格式不正确，缺少action字段: {assistant_message}")
+                    logger.warning("[警告] LLM输出格式不正确，缺少action字段: {assistant_message}", assistant_message=assistant_message)
                     return '{"action": "error", "reason": "invalid_format", "target": null, "device": null, "value": null}'
             except json.JSONDecodeError:
                 # 如果无法解析为JSON，返回错误
-                print(f"[警告] LLM输出不是有效的JSON格式: {assistant_message}")
+                logger.warning("[警告] LLM输出不是有效的JSON格式: {assistant_message}", assistant_message=assistant_message)
                 return '{"action": "error", "reason": "invalid_json", "target": null, "device": null, "value": null}'
             
         except Exception as api_error:
-            error_message = f"[错误] 调用大模型API出错: {api_error}"
-            print(error_message)
+            logger.exception("[错误] 调用大模型API出错: {error}", error=str(api_error))
             # 返回一个标准的错误JSON
             return '{"action": "error", "reason": "api_failure", "target": null, "device": null, "value": null}'

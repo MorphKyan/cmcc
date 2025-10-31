@@ -46,11 +46,12 @@ class TestAudioInputHandler(unittest.TestCase):
         
     def test_audio_capture_and_save(self):
         """测试音频捕获并保存到文件"""
+        from loguru import logger
         # 启动音频流
         self.audio_handler.start()
         
         # 等待一段时间以捕获音频数据（例如5秒）
-        print("请在接下来的5秒内对着麦克风说话...")
+        logger.info("请在接下来的5秒内对着麦克风说话...")
         capture_duration = 5  # 秒
         start_time = time.time()
         

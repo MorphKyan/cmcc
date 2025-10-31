@@ -8,6 +8,7 @@ import numpy.typing as npt
 import torch
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
+from loguru import logger
 
 from src.config.config import FunASRSettings
 
@@ -34,11 +35,11 @@ class ASRProcessor:
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         else:
             self.device = device
-        print(f"ASR处理器正在使用 {self.device} 进行推理...")
+        logger.info("ASR处理器正在使用 {device} 进行推理...", device=self.device)
 
     def _init_model(self) -> None:
         """初始化FunASR语音识别模型"""
-        print("ASR处理器正在加载语音识别模型...")
+        logger.info("ASR处理器正在加载语音识别模型...")
         self.model = AutoModel(
             model=self.settings.MODEL,
             trust_remote_code=False,
@@ -46,7 +47,7 @@ class ASRProcessor:
             # vad_kwargs=self.settings.VAD_KWARGS,
             device=self.device,
         )
-        print("ASR处理器语音识别模型加载完成。")
+        logger.info("ASR处理器语音识别模型加载完成。")
 
     def process_audio_data(self, audio_data: npt.NDArray[np.float32]) -> Optional[str]:
         """
