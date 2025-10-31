@@ -162,8 +162,8 @@ class RAGSettings(BaseSettings):
 
     VIDEOS_DATA_PATH: str = os.path.join(project_dir, "data", "videos.csv")
     CHROMA_DB_DIR: str = os.path.join(project_dir, "chroma_db")
-    BASE_URL: str = "http://127.0.0.1:11434"
-    EMBEDDING_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
+    OLLAMA_EMBEDDING_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
     TOP_K_RESULTS: int = 3  # 检索返回的文档数
 
 
