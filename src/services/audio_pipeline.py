@@ -1,12 +1,12 @@
+import asyncio
+
 import numpy as np
 import numpy.typing as npt
 from fastapi import WebSocket
 from loguru import logger
-from typing import Any
 
 from src.api.context import Context
 from src.core import dependencies  # 从中心依赖文件导入全局处理器
-from src.module.input.stream_decoder import StreamDecoder
 
 
 async def receive_loop(websocket: WebSocket, context: Context) -> None:
@@ -60,7 +60,8 @@ async def run_vad_processor(context: Context) -> None:
             speech_segments = context.VADProcessor.process_result(result)
             for segment in speech_segments:
                 start, end, audio_data = segment
-                logger.info("[VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {length:.2f}s", start=start, end=end, length=len(audio_data) / 16000)
+                logger.info("[VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {length:.2f}s", start=start, end=end,
+                            length=len(audio_data) / 16000)
                 await context.audio_segment_queue.put(audio_data)
         except Exception as e:
             logger.exception("VAD处理错误")
@@ -69,13 +70,13 @@ async def run_vad_processor(context: Context) -> None:
 async def run_asr_processor(context: Context) -> None:
     """ASR处理逻辑代码"""
     logger.info("ASR处理器已启动")
+    loop = asyncio.get_running_loop()
     while True:
         try:
             # 从VAD队列中获取分割好的语音片段
             segment: npt[np.float32] = await context.audio_segment_queue.get()
             # 使用ASR处理器处理音频数据
-            recognized_text = dependencies.asr_processor.process_audio_data(segment)
-
+            recognized_text = await loop.run_in_executor(None, dependencies.asr_processor.process_audio_data, segment)
             if recognized_text and recognized_text.strip():
                 logger.info("[识别结果] {recognized_text}", recognized_text=recognized_text)
                 await context.asr_output_queue.put(recognized_text)
@@ -89,11 +90,12 @@ async def run_asr_processor(context: Context) -> None:
 async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     """LLM/RAG处理逻辑代码"""
     logger.info("LLM/RAG处理器已启动")
+    loop = asyncio.get_running_loop()
     while True:
         try:
             recognized_text = await context.asr_output_queue.get()
-            retrieved_docs = dependencies.rag_processor.retrieve_context(recognized_text)
-            llm_response = dependencies.llm_processor.get_response(recognized_text, retrieved_docs)
+            retrieved_docs = await loop.run_in_executor(None, dependencies.rag_processor.retrieve_context, recognized_text)
+            llm_response = await loop.run_in_executor(None, dependencies.llm_processor.get_response, recognized_text, retrieved_docs)
             logger.info("[大模型响应] {llm_response}", llm_response=llm_response)
             await context.function_calling_queue.put(llm_response)
 
