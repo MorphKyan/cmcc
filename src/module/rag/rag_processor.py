@@ -6,13 +6,15 @@ import os
 import shutil
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+from typing import List
 
 from src.config.config import RAGSettings
 from src.module.data_loader import load_documents_from_csvs
+from langchain_core.documents import Document
 
 
 class RAGProcessor:
-    def __init__(self, settings: RAGSettings):
+    def __init__(self, settings: RAGSettings) -> None:
         """
         初始化RAG处理器。
 
@@ -37,7 +39,7 @@ class RAGProcessor:
         )
         print("RAG处理器初始化完成。")
 
-    def _create_and_persist_db(self):
+    def _create_and_persist_db(self) -> None:
         """
         从CSV加载文档，创建向量数据库并持久化到磁盘。
         """
@@ -58,7 +60,7 @@ class RAGProcessor:
             print(f"[错误] 创建数据库失败: {e}")
             exit(1)
 
-    def retrieve_context(self, query):
+    def retrieve_context(self, query: str) -> List[Document]:
         """
         根据用户查询检索相关上下文。
         
@@ -78,7 +80,7 @@ class RAGProcessor:
         #     print(f"  元数据: {doc.metadata}")
         return docs
 
-    def refresh_database(self):
+    def refresh_database(self) -> bool:
         """
         刷新数据库，重新加载CSV数据并重建向量数据库。
         """

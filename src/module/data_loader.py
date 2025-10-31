@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pandas as pd
-from langchain.docstore.document import Document
-import os
 import json
+import os
+from typing import List
 
-def load_documents_from_csvs(file_paths):
+import pandas as pd
+from langchain_core.documents import Document
+
+
+def load_documents_from_csvs(file_paths: List[str]) -> List[Document]:
     """
     从多个CSV文件加载数据并转换为LangChain的Document对象。
 
@@ -55,7 +58,7 @@ def load_documents_from_csvs(file_paths):
         
     return documents
 
-def format_docs_for_prompt(docs):
+def format_docs_for_prompt(docs: List[Document]) -> str:
     """
     将检索到的Document对象格式化为可以插入到Prompt中的字符串。
 

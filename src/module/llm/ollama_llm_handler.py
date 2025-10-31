@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import json
+from typing import List
+
 import ollama
+from langchain_core.documents import Document
 
 from src.config.config import LLMSettings
 from src.module.data_loader import format_docs_for_prompt
 
 
 class OllamaLLMHandler:
-    def __init__(self, settings: LLMSettings):
+    def __init__(self, settings: LLMSettings) -> None:
         """
         初始化本地Ollama大语言模型处理器。
         
@@ -147,7 +150,7 @@ class OllamaLLMHandler:
 
         print(f"Ollama大语言模型处理器初始化完成，使用模型: {self.model}")
 
-    def _construct_prompt(self, user_input, rag_docs):
+    def _construct_prompt(self, user_input: str, rag_docs: List[Document]) -> str:
         """
         构建包含RAG上下文的系统提示，并嵌入screens和doors信息。
         """
@@ -164,7 +167,7 @@ class OllamaLLMHandler:
         )
         return system_prompt
 
-    def get_response(self, user_input, rag_docs):
+    def get_response(self, user_input: str, rag_docs: List[Document]) -> str:
         """
         结合RAG上下文，获取大模型的响应。
         

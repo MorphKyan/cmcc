@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pyaudio
 import queue
 from typing import Optional, Mapping
+
+import pyaudio
+
 from src.config.config import FORMAT, CHANNELS, RATE, CHUNK
 
 
@@ -12,7 +14,7 @@ class AudioInputer:
     处理麦克风音频输入的类
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         初始化音频输入处理器
         """
@@ -54,7 +56,7 @@ class AudioInputer:
                 pass
         self.audio.terminate()
 
-    def get_audio_data(self, timeout=None):
+    def get_audio_data(self, timeout: Optional[float] = None) -> bytes:
         """
         从音频队列中获取数据
         

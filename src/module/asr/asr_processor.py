@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from typing import List, Optional
+
 import numpy as np
 import numpy.typing as npt
 import torch
@@ -15,7 +17,7 @@ class ASRProcessor:
     实时语音识别(ASR)处理器
     """
 
-    def __init__(self, settings: FunASRSettings, device: str = "auto"):
+    def __init__(self, settings: FunASRSettings, device: str = "auto") -> None:
         """
         初始化ASR处理器。
         
@@ -26,7 +28,7 @@ class ASRProcessor:
         self._setup_device(device)
         self._init_model()
 
-    def _setup_device(self, device: str):
+    def _setup_device(self, device: str) -> None:
         """设置推理设备 (CPU/GPU)"""
         if device == "auto":
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -34,7 +36,7 @@ class ASRProcessor:
             self.device = device
         print(f"ASR处理器正在使用 {self.device} 进行推理...")
 
-    def _init_model(self):
+    def _init_model(self) -> None:
         """初始化FunASR语音识别模型"""
         print("ASR处理器正在加载语音识别模型...")
         self.model = AutoModel(
@@ -46,7 +48,7 @@ class ASRProcessor:
         )
         print("ASR处理器语音识别模型加载完成。")
 
-    def process_audio_data(self, audio_data: npt.NDArray[np.float32]):
+    def process_audio_data(self, audio_data: npt.NDArray[np.float32]) -> Optional[str]:
         """
         处理音频数据并返回识别结果。
         
@@ -72,7 +74,7 @@ class ASRProcessor:
             return recognized_text
         return None
 
-    def process_audio(self, audio_data):
+    def process_audio(self, audio_data: List[npt.NDArray[np.float32]]) -> List[str]:
         for data in audio_data:
             if data.dtype == np.int16:
                 data = data.astype(np.float32) / 32768.0

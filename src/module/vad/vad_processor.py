@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import asyncio
+from typing import List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -8,7 +9,7 @@ from src.module.vad.vad_core import VADCore
 
 
 class VADProcessor:
-    def __init__(self, vad_core: VADCore):
+    def __init__(self, vad_core: VADCore) -> None:
         self.vad_core = vad_core
         self.sample_rate = vad_core.sample_rate
         self.chunk_size_samples = int(self.vad_core.chunk_size * self.sample_rate / 1000)
@@ -50,13 +51,13 @@ class VADProcessor:
     #         result = self._extract_audio(self.last_start_time, end_ms)
     #         self.last_start_time = None
 
-    async def process_chunk(self) -> list:
+    async def process_chunk(self) -> List[Tuple[int, int]]:
         chunk = await self.chunk_queue.get()
         segments = self.vad_core.process_chunk(chunk, self.cache)
         self.total_samples_processed += len(chunk)
         return segments
 
-    def process_result(self, segments: list) -> list:
+    def process_result(self, segments: List[Tuple[int, int]]) -> List[Tuple[int, int, npt.NDArray[np.float32]]]:
         completed_segments = []
         for start_ms, end_ms in segments:
             # 情况一：新的语音段开始
@@ -100,7 +101,7 @@ class VADProcessor:
 
         return completed_segments
 
-    def _extract_audio(self, start_ms, end_ms):
+    def _extract_audio(self, start_ms: int, end_ms: int) -> Optional[npt.NDArray[np.float32]]:
         global_start_sample = int(start_ms * self.sample_rate / 1000)
         global_end_sample = int(end_ms * self.sample_rate / 1000)
 

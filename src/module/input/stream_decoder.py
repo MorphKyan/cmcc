@@ -14,7 +14,7 @@ class StreamDecoder:
     编码后的音频数据块，并将解码后的 PCM 数据放入一个线程安全的队列中。
     """
 
-    def __init__(self, target_sample_rate: int = 16000, target_layout: str = "mono", target_format: str = "fltp"):
+    def __init__(self, target_sample_rate: int = 16000, target_layout: str = "mono", target_format: str = "fltp") -> None:
         """
         初始化解码器。
 
@@ -41,7 +41,7 @@ class StreamDecoder:
         self._decoder_thread = threading.Thread(target=self._run_decoder, daemon=True)
         self._decoder_thread.start()
 
-    def _run_decoder(self):
+    def _run_decoder(self) -> None:
         """
         解码器线程的主循环。该方法不应被外部直接调用。
         """
@@ -82,7 +82,7 @@ class StreamDecoder:
         finally:
             self._r_pipe_file.close()
 
-    def feed_data(self, data: bytes):
+    def feed_data(self, data: bytes) -> None:
         """
         向解码器输送编码后的音频数据。
 
@@ -109,7 +109,7 @@ class StreamDecoder:
         except queue.Empty:
             return None
 
-    def close(self):
+    def close(self) -> None:
         """
         优雅地关闭解码器，停止线程并清理资源。
         """

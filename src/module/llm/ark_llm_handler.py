@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from volcenginesdkarkruntime import Ark
-from src.module.data_loader import format_docs_for_prompt
+from typing import List
+
 from config import SCREENS_INFO, DOORS_INFO
+from langchain_core.documents import Document
+from volcenginesdkarkruntime import Ark
+
+from src.module.data_loader import format_docs_for_prompt
+
 
 class LLMHandler:
-    def __init__(self, ark_api_key, ark_base_url, llm_model_name, system_prompt_template):
+    def __init__(self, ark_api_key: str, ark_base_url: str, llm_model_name: str, system_prompt_template: str) -> None:
         """
         初始化大语言模型处理器。
         
@@ -29,7 +34,7 @@ class LLMHandler:
         self.conversation_history = []
         print("大语言模型处理器初始化完成。")
 
-    def _construct_prompt(self, user_input, rag_docs):
+    def _construct_prompt(self, user_input: str, rag_docs: List[Document]) -> str:
         """
         构建包含RAG上下文的系统提示，并嵌入screens和doors信息。
         """
@@ -42,7 +47,7 @@ class LLMHandler:
         )
         return system_prompt
 
-    def get_response(self, user_input, rag_docs):
+    def get_response(self, user_input: str, rag_docs: List[Document]) -> str:
         """
         结合RAG上下文，获取大模型的响应。
         

@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pyaudio
 import os
+from typing import Any, Dict, List
+
 import pandas as pd
+import pyaudio
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 from pydantic_settings import BaseSettings
 
 
-def load_screens_data(path: str):
+def load_screens_data(path: str) -> List[Dict[str, Any]]:
     """加载屏幕数据并返回结构化列表"""
     try:
         df = pd.read_csv(path)
-        screens_info = []
+        screens_info: List[Dict[str, Any]] = []
         for _, row in df.iterrows():
             screen_info = {
                 "name": row['name'],
@@ -27,11 +29,11 @@ def load_screens_data(path: str):
         return []
 
 
-def load_doors_data(path: str):
+def load_doors_data(path: str) -> List[Dict[str, Any]]:
     """加载门数据并返回结构化列表"""
     try:
         df = pd.read_csv(path)
-        doors_info = []
+        doors_info: List[Dict[str, Any]] = []
         for _, row in df.iterrows():
             door_info = {
                 "name": row['name'],

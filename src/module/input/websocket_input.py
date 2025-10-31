@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import websockets
+import json
 import queue
 import threading
-import json
+from typing import Any, Optional
+
+import websockets
 
 
 class WebSocketInput:
@@ -13,7 +15,7 @@ class WebSocketInput:
     通过WebSocket接收音频输入的类
     """
 
-    def __init__(self, host="localhost", port=8765):
+    def __init__(self, host: str = "localhost", port: int = 8765) -> None:
         """
         初始化WebSocket音频输入处理器
         
@@ -29,7 +31,7 @@ class WebSocketInput:
         self.running = False
         self.clients = set()
 
-    async def _handle_client(self, websocket, path):
+    async def _handle_client(self, websocket: Any, path: str) -> None:
         """
         处理客户端连接
         
@@ -61,7 +63,7 @@ class WebSocketInput:
             # 从集合中移除客户端
             self.clients.remove(websocket)
 
-    async def _start_server(self):
+    async def _start_server(self) -> None:
         """启动WebSocket服务器"""
         self.server = await websockets.serve(self._handle_client, self.host, self.port)
         print(f"WebSocket服务器启动: {self.host}:{self.port}")
@@ -69,7 +71,7 @@ class WebSocketInput:
         # 保持服务器运行
         await self.server.wait_closed()
 
-    def start(self):
+    def start(self) -> None:
         """启动WebSocket服务器"""
         if not self.running:
             self.running = True
@@ -77,7 +79,7 @@ class WebSocketInput:
             self.thread = threading.Thread(target=self._run_event_loop, daemon=True)
             self.thread.start()
 
-    def _run_event_loop(self):
+    def _run_event_loop(self) -> None:
         """在新线程中运行事件循环"""
         # 创建新的事件循环
         loop = asyncio.new_event_loop()
@@ -86,14 +88,14 @@ class WebSocketInput:
         # 运行服务器
         loop.run_until_complete(self._start_server())
 
-    def stop(self):
+    def stop(self) -> None:
         """停止WebSocket服务器"""
         if self.running:
             self.running = False
             if self.server:
                 self.server.close()
 
-    def get_audio_data(self, timeout=None):
+    def get_audio_data(self, timeout: Optional[float] = None) -> bytes:
         """
         从音频队列中获取数据
         
@@ -108,6 +110,6 @@ class WebSocketInput:
         """
         return self.audio_queue.get(timeout=timeout)
 
-    def is_running(self):
+    def is_running(self) -> bool:
         """检查服务器是否正在运行"""
         return self.running
