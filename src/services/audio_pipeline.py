@@ -8,23 +8,31 @@ from src.core import dependencies  # 从中心依赖文件导入全局处理器
 from src.module.input.stream_decoder import StreamDecoder
 
 
-async def receive_and_decode_loop(websocket: WebSocket, context: Context, decoder: StreamDecoder):
-    """
-    一个独立的任务，专门负责接收、解码并放入队列。
-    """
-    logger.info("WebSocket输入和解码已启动")
+async def receive_loop(websocket: WebSocket, context: Context):
+    logger.info("WebSocket接收已启动")
     while True:
         try:
-            audio_chunk = await websocket.receive_bytes()
-            decoder.feed_data(audio_chunk)
+            data_bytes = await websocket.receive_bytes()
+            await context.audio_input_queue.put(data_bytes)
+        except Exception as e:
+            logger.exception("WebSocket接收错误")
+
+
+async def decode_loop(context: Context):
+    """负责解码并放入队列"""
+    logger.info("解码已启动")
+    while True:
+        try:
+            data_bytes = await context.audio_input_queue.get()
+            context.decoder.feed_data(data_bytes)
             while True:
-                pcm_frame = decoder.get_decoded_frame()
+                pcm_frame = context.decoder.get_decoded_frame()
                 if pcm_frame is None:
                     break
                 logger.trace("处理解码后的PCM数据，形状: {shape}, 类型: {dtype}", shape=pcm_frame.shape, dtype=pcm_frame.dtype)
-                await context.audio_input_queue.put(pcm_frame)
+                await context.audio_np_queue.put(pcm_frame)
         except Exception as e:
-            logger.exception("WebSocket输入和解码错误")
+            logger.exception("解码错误")
 
 
 async def run_vad_appender(context: Context):
@@ -33,10 +41,10 @@ async def run_vad_appender(context: Context):
     while True:
         try:
             # 从WebSocket接收音频数据
-            audio_bytes = await context.audio_input_queue.get()
+            audio = await context.audio_np_queue.get()
 
             # 使用VAD检测语音活动
-            context.VADProcessor.append_audio(audio_bytes)
+            context.VADProcessor.append_audio(audio)
 
         except Exception as e:
             logger.exception("VAD输入错误")

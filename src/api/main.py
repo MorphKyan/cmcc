@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+from typing import NoReturn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,11 +36,11 @@ app.include_router(rag.router)
 
 
 @app.get("/", tags=["Health"], response_model=HealthResponse)
-async def root():
+async def root() -> HealthResponse:
     return HealthResponse(status="healthy", service="Main API Service")
 
 
-def run_api(host='0.0.0.0', port=5000):
+def run_api(host: str = '0.0.0.0', port: int = 5000) -> NoReturn:
     """运行API服务"""
     import uvicorn
     uvicorn.run("src.api.main:app", host=host, port=port, reload=False)

@@ -1,5 +1,6 @@
 import os
 import shutil
+from typing import Tuple
 
 import pandas as pd
 from fastapi import APIRouter, UploadFile, File, HTTPException
@@ -15,7 +16,7 @@ router = APIRouter(
 
 
 @router.post("/refresh", response_model=RefreshResponse)
-async def refresh_rag():
+async def refresh_rag() -> RefreshResponse:
     """刷新RAG数据库端点。"""
     success, message = refresh_rag_database()
     if not success:
@@ -25,7 +26,7 @@ async def refresh_rag():
 
 
 @router.get("/status", response_model=StatusResponse)
-async def rag_status():
+async def rag_status() -> StatusResponse:
     """获取RAG状态。"""
     if dependencies.rag_processor is None:
         raise HTTPException(status_code=503, detail="RAG服务当前不可用，尚未初始化")
@@ -46,7 +47,7 @@ async def rag_status():
 
 
 @router.post("/query", response_model=QueryResponse)
-async def query_rag(request: QueryRequest):
+async def query_rag(request: QueryRequest) -> QueryResponse:
     """查询RAG数据库。"""
     # 1. 安全检查
     if dependencies.rag_processor is None:
@@ -70,11 +71,11 @@ async def query_rag(request: QueryRequest):
 
 
 @router.post("/upload-videos", response_model=UploadResponse)
-async def upload_videos_csv(file: UploadFile = File(...)):
+async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
     """上传videos.csv文件并更新RAG数据库"""
     try:
         # 检查文件类型
-        if not file.filename.endswith('.csv'):
+        if not file.filename or not file.filename.endswith('.csv'):
             raise HTTPException(status_code=400, detail="只支持上传CSV文件")
 
         # 保存上传的文件到临时位置
@@ -124,7 +125,7 @@ async def upload_videos_csv(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"上传videos.csv文件时发生异常: {str(e)}")
 
 
-def refresh_rag_database():
+def refresh_rag_database() -> Tuple[bool, str]:
     """刷新RAG数据库"""
     try:
         if dependencies.rag_processor is None:
@@ -139,7 +140,7 @@ def refresh_rag_database():
         return False, f"刷新RAG数据库时发生异常: {str(e)}"
 
 
-def validate_csv_structure(file_path):
+def validate_csv_structure(file_path: str) -> Tuple[bool, str]:
     """验证CSV文件结构是否正确"""
     try:
         df = pd.read_csv(file_path)

@@ -1,5 +1,6 @@
 import asyncio
 import json
+from typing import List, Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
@@ -10,7 +11,7 @@ from src.api.schemas import WebSocketConfig
 from src.config.logging_config import request_id_var
 from src.core import dependencies
 from src.module.input.stream_decoder import StreamDecoder
-from src.services.audio_pipeline import run_vad_appender, run_vad_processor, receive_and_decode_loop, run_asr_processor, run_llm_rag_processor
+from src.services.audio_pipeline import run_vad_appender, run_vad_processor, decode_loop, run_asr_processor, run_llm_rag_processor, receive_loop
 
 router = APIRouter(
     prefix="/api/audio",
@@ -19,25 +20,20 @@ router = APIRouter(
 
 
 @router.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
+async def websocket_endpoint(websocket: WebSocket, client_id: str) -> None:
     await websocket.accept()
     token = request_id_var.set(client_id)
     logger.info("客户端已连接")
 
-    decoder = None
-    context = None
-    all_tasks = []
+    context: Optional[Context] = None
+    all_tasks: List[asyncio.Task] = []
     try:
-        # 初始化与配置
-        context = Context(context_id=client_id, vad_core=dependencies.vad_core)
-        dependencies.active_contexts[client_id] = context
-
         # 等待第一条元数据消息
         config_message = await websocket.receive_text()
         try:
             config_data = json.loads(config_message)
             config = WebSocketConfig(**config_data)
-            if config.get("type") != "config":
+            if config.type != "config":
                 raise ValueError("第一条消息必须是配置信息")
         except (json.JSONDecodeError, ValidationError, ValueError) as e:
             logger.exception("配置消息无效")
@@ -48,10 +44,14 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
         # 根据前端配置初始化解码器
         decoder = StreamDecoder()
+        # 初始化与配置
+        context = Context(context_id=client_id, decoder=decoder, vad_core=dependencies.vad_core)
+        dependencies.active_contexts[client_id] = context
 
         # 启动处理管道
         all_tasks = [
-            asyncio.create_task(receive_and_decode_loop(websocket, context, decoder)),
+            asyncio.create_task(receive_loop(websocket, context)),
+            asyncio.create_task(decode_loop(context)),
             asyncio.create_task(run_vad_appender(context)),
             asyncio.create_task(run_vad_processor(context)),
             asyncio.create_task(run_asr_processor(context)),
@@ -79,8 +79,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
         if all_tasks:
             await asyncio.gather(*all_tasks, return_exceptions=True)
 
-        if decoder:
-            decoder.close()
+        if context:
+            if context.decoder:
+                context.decoder.close()
 
         if client_id in dependencies.active_contexts:
             del dependencies.active_contexts[client_id]
