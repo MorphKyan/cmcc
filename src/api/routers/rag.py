@@ -47,7 +47,7 @@ async def refresh_rag() -> RefreshResponse:
     success, message = refresh_rag_database()
     if not success:
         # 将内部错误转换为对客户端友好的HTTP错误
-        raise HTTPException(status_code=500, detail=message)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
     return RefreshResponse(status="success", message=message)
 
 
@@ -79,7 +79,7 @@ async def rag_status() -> StatusResponse:
         }
         return StatusResponse(status="success", data=data)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"获取RAG状态时发生异常: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"获取RAG状态时发生异常: {str(e)}")
 
 
 @router.post("/query", response_model=QueryResponse)
@@ -103,7 +103,7 @@ async def query_rag(request: QueryRequest) -> QueryResponse:
 
         return QueryResponse(status="success", data=data)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"查询RAG数据库时发生异常: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"查询RAG数据库时发生异常: {str(e)}")
 
 
 @router.post("/upload-videos", response_model=UploadResponse)
@@ -112,7 +112,7 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
     try:
         # 检查文件类型
         if not file.filename or not file.filename.endswith('.csv'):
-            raise HTTPException(status_code=400, detail="只支持上传CSV文件")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="只支持上传CSV文件")
 
         # 保存上传的文件到临时位置
         temp_file_path = os.path.join(os.path.dirname(settings.rag.VIDEOS_DATA_PATH), 'temp_videos.csv')
@@ -128,7 +128,7 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
             # 删除临时文件
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
-            raise HTTPException(status_code=400, detail=message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
         # 备份原文件
         backup_path = settings.rag.VIDEOS_DATA_PATH + '.backup'
@@ -145,7 +145,7 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
             # 如果刷新失败，恢复备份文件
             if os.path.exists(backup_path):
                 shutil.move(backup_path, settings.rag.VIDEOS_DATA_PATH)
-            raise HTTPException(status_code=500, detail="上传成功但刷新RAG数据库失败，已恢复原文件")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="上传成功但刷新RAG数据库失败，已恢复原文件")
 
         # 删除备份文件
         if os.path.exists(backup_path):
@@ -158,7 +158,7 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
         temp_file_path = os.path.join(os.path.dirname(settings.rag.VIDEOS_DATA_PATH), 'temp_videos.csv')
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-        raise HTTPException(status_code=500, detail=f"上传videos.csv文件时发生异常: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"上传videos.csv文件时发生异常: {str(e)}")
 
 
 def refresh_rag_database() -> Tuple[bool, str]:
