@@ -1,10 +1,13 @@
+import asyncio
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
+from src.config.config import settings
 from src.core import dependencies
-from src.module.rag.rag_processor import RAGProcessor
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.llm.ollama_llm_handler import OllamaLLMHandler
-from src.config.config import settings
+from src.module.rag.rag_processor import RAGProcessor
 from src.module.vad.vad_core import VADCore
 
 
@@ -20,10 +23,13 @@ async def lifespan(app: FastAPI):
 
     try:
         dependencies.vad_core = VADCore(vad_config)
-        # dependencies.rag_processor = RAGProcessor(rag_config)
-        # dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
-        # dependencies.llm_processor = OllamaLLMHandler(llm_config)
-        print("所有处理器初始化成功。")
+        dependencies.rag_processor = RAGProcessor(rag_config)
+        dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
+        dependencies.llm_processor = OllamaLLMHandler(llm_config)
+
+        asyncio.create_task(initialize_rag_processor_task())
+
+        print("应用启动序列已开始，RAG正在后台初始化。")
     except Exception as e:
         print(f"错误: 处理器初始化失败: {e}")
         # 在这里可以选择是否要阻止应用启动
@@ -34,3 +40,12 @@ async def lifespan(app: FastAPI):
     print("应用关闭... 正在清理资源...")
     dependencies.active_contexts.clear()
     print("资源清理完毕。")
+
+
+async def initialize_rag_processor_task():
+    """后台任务，用于初始化RAG处理器。"""
+    try:
+        await dependencies.rag_processor.initialize()
+    except Exception as e:
+        # 初始化失败，状态已在 RAGProcessor 内部更新
+        print(f"后台RAG初始化任务失败: {e}")
