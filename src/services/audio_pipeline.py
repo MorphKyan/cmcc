@@ -9,7 +9,7 @@ from src.core import dependencies  # 从中心依赖文件导入全局处理器
 from src.module.input.stream_decoder import StreamDecoder
 
 
-async def receive_loop(websocket: WebSocket, context: Context):
+async def receive_loop(websocket: WebSocket, context: Context) -> None:
     logger.info("WebSocket接收已启动")
     while True:
         try:
@@ -19,7 +19,7 @@ async def receive_loop(websocket: WebSocket, context: Context):
             logger.exception("WebSocket接收错误")
 
 
-async def decode_loop(context: Context):
+async def decode_loop(context: Context) -> None:
     """负责解码并放入队列"""
     logger.info("解码已启动")
     while True:
@@ -36,7 +36,7 @@ async def decode_loop(context: Context):
             logger.exception("解码错误")
 
 
-async def run_vad_appender(context: Context):
+async def run_vad_appender(context: Context) -> None:
     """VAD处理逻辑代码"""
     logger.info("VAD处理器已启动")
     while True:
@@ -53,7 +53,7 @@ async def run_vad_appender(context: Context):
             # break
 
 
-async def run_vad_processor(context: Context):
+async def run_vad_processor(context: Context) -> None:
     while True:
         try:
             result = await context.VADProcessor.process_chunk()
@@ -66,7 +66,7 @@ async def run_vad_processor(context: Context):
             logger.exception("VAD处理错误")
 
 
-async def run_asr_processor(context: Context):
+async def run_asr_processor(context: Context) -> None:
     """ASR处理逻辑代码"""
     logger.info("ASR处理器已启动")
     while True:
@@ -86,7 +86,7 @@ async def run_asr_processor(context: Context):
             # break
 
 
-async def run_llm_rag_processor(context: Context, websocket: WebSocket):
+async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     """LLM/RAG处理逻辑代码"""
     logger.info("LLM/RAG处理器已启动")
     while True:
