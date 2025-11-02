@@ -3,6 +3,7 @@
 
 from funasr import AutoModel
 import numpy.typing as npt
+from loguru import logger
 
 from src.config.config import VADSettings
 
@@ -25,9 +26,9 @@ class VADCore:
         self.chunk_stride = int(self.chunk_size * self.sample_rate / 1000)
 
         # 初始化VAD模型
-        print("正在加载VAD模型...")
+        logger.info("正在加载VAD模型...")
         self.model = AutoModel(model=settings.MODEL, model_revision="v2.0.4")
-        print("VAD模型加载完成。")
+        logger.info("VAD模型加载完成。")
 
     def process_chunk(self, chunk: npt.NDArray, cache) -> list:
         segments = self.model.generate(

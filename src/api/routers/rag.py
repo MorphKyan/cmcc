@@ -4,6 +4,7 @@ from typing import Tuple
 
 import pandas as pd
 from fastapi import APIRouter, UploadFile, File, HTTPException, status, BackgroundTasks
+from loguru import logger
 
 from src.api.schemas import RefreshResponse, StatusResponse, QueryResponse, UploadResponse, QueryRequest
 from src.config.config import settings
@@ -21,7 +22,7 @@ async def reinitialize_task():
     try:
         await rag_processor.initialize()
     except Exception as e:
-        print(f"后台RAG重新初始化任务失败: {e}")
+        logger.exception("后台RAG重新初始化任务失败")
 
 
 @router.post("/reinitialize", status_code=status.HTTP_202_ACCEPTED, summary="触发RAG处理器的重新初始化")

@@ -40,7 +40,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str) -> None:
             await websocket.close(code=1008, reason=f"无效的配置消息: {e}")
             return
 
-        logger.info("收到配置: {config}", config=config)
+        logger.info("收到配置: {config}", config=config_data)
 
         # 根据前端配置初始化解码器
         decoder = StreamDecoder()

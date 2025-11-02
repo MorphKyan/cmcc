@@ -6,8 +6,10 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import pyaudio
+from loguru import logger
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+data_dir = os.path.join(os.path.dirname(project_dir), "data")
 
 from pydantic_settings import BaseSettings
 
@@ -25,7 +27,7 @@ def load_screens_data(path: str) -> List[Dict[str, Any]]:
             screens_info.append(screen_info)
         return screens_info
     except Exception as e:
-        print(f"加载屏幕数据时出错: {e}")
+        logger.exception("加载屏幕数据时出错")
         return []
 
 
@@ -42,13 +44,13 @@ def load_doors_data(path: str) -> List[Dict[str, Any]]:
             doors_info.append(door_info)
         return doors_info
     except Exception as e:
-        print(f"加载门数据时出错: {e}")
+        logger.exception("加载门数据时出错")
         return []
 
 
 # 加载并格式化 screens 和 doors 数据
-SCREENS_INFO = load_screens_data(os.path.join(project_dir, "data", "screens.csv"))
-DOORS_INFO = load_doors_data(os.path.join(project_dir, "data", "doors.csv"))
+SCREENS_INFO = load_screens_data(os.path.join(data_dir, "screens.csv"))
+DOORS_INFO = load_doors_data(os.path.join(data_dir, "doors.csv"))
 SYSTEM_PROMPT_TEMPLATE = """
 # 角色与任务
 你是一个中国移动智慧展厅的中央控制AI助手。你的核心任务是根据用户的自然语言语音指令，识别一个或多个意图，并选择合适的函数来调用，以便后续程序执行。对于包含多个操作的指令，你需要生成一个包含多个函数调用的列表。你必须严格遵循以下知识库和行为准则。
@@ -160,10 +162,10 @@ class RAGSettings(BaseSettings):
     class Config:
         env_prefix = 'RAG_'
 
-    VIDEOS_DATA_PATH: str = os.path.join(project_dir, "data", "videos.csv")
+    VIDEOS_DATA_PATH: str = os.path.join(data_dir, "videos.csv")
     CHROMA_DB_DIR: str = os.path.join(project_dir, "chroma_db")
     OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
-    OLLAMA_EMBEDDING_MODEL: str = "Qwen/Qwen3-Embedding-0.6B"
+    OLLAMA_EMBEDDING_MODEL: str = "qwen3-embedding:0.6b"
     TOP_K_RESULTS: int = 3  # 检索返回的文档数
 
 

@@ -7,6 +7,7 @@ from typing import List
 
 import pandas as pd
 from langchain_core.documents import Document
+from loguru import logger
 
 
 def load_documents_from_csvs(file_paths: List[str]) -> List[Document]:
@@ -28,6 +29,7 @@ def load_documents_from_csvs(file_paths: List[str]) -> List[Document]:
             if not df.empty:
                 dfs.append(df)
         except Exception as e:
+            logger.exception(f"读取CSV文件 '{file_path}' 失败")
             raise IOError(f"读取CSV文件 '{file_path}' 失败: {e}")
     
     if not dfs:

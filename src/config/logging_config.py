@@ -4,7 +4,7 @@ from loguru import logger
 
 # 创建一个 ContextVar 用于在异步任务中传递 request_id
 # 这是在 asyncio 环境下传递上下文的正确方式
-request_id_var: ContextVar[str] = ContextVar("request_id", default="<no_request>")
+request_id_var: ContextVar[str] = ContextVar("request_id", default="SYSTEM")
 
 
 def setup_logging(log_level: str = "INFO"):
@@ -19,7 +19,6 @@ def setup_logging(log_level: str = "INFO"):
         level=log_level.upper(),
         format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
                "<level>{level: <8}</level> | "
-               "<cyan>{extra[request_id]}</cyan> | "
                "<bold>{name}</bold>:<bold>{function}</bold>:<bold>{line}</bold> - "
                "<level>{message}</level>",
         colorize=True,
@@ -30,7 +29,7 @@ def setup_logging(log_level: str = "INFO"):
     logger.add(
         "logs/app.log",
         level=log_level.upper(),
-        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {extra[request_id]} | {name}:{function}:{line} - {message}",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
         rotation="100 MB",  # 当文件达到 100MB 时进行轮转
         retention="7 days",  # 保留7天的日志
         compression="zip",  # 压缩旧日志

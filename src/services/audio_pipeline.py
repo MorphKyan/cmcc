@@ -14,9 +14,12 @@ async def receive_loop(websocket: WebSocket, context: Context) -> None:
     while True:
         try:
             data_bytes = await websocket.receive_bytes()
+            logger.info("WebSocket receive bytes size {size}", size=len(data_bytes))
             await context.audio_input_queue.put(data_bytes)
+            logger.info("WebSocket put audio_input_queue size {size}", size=len(data_bytes))
         except Exception as e:
-            logger.exception("WebSocket接收错误")
+            logger.error("WebSocket接收错误，{e}", e=e)
+            break
 
 
 async def decode_loop(context: Context) -> None:
@@ -27,6 +30,7 @@ async def decode_loop(context: Context) -> None:
             data_bytes = await context.audio_input_queue.get()
             context.decoder.feed_data(data_bytes)
             while True:
+                logger.info("try get decoded data")
                 pcm_frame = context.decoder.get_decoded_frame()
                 if pcm_frame is None:
                     break

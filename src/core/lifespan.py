@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from loguru import logger
 
 from src.config.config import settings
 from src.core import dependencies
@@ -14,7 +15,7 @@ from src.module.vad.vad_core import VADCore
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- 应用启动时执行 ---
-    print("应用启动... 正在初始化处理器...")
+    logger.info("应用启动... 正在初始化处理器...")
 
     vad_config = settings.vad
     asr_config = settings.asr
@@ -29,17 +30,17 @@ async def lifespan(app: FastAPI):
 
         asyncio.create_task(initialize_rag_processor_task())
 
-        print("应用启动序列已开始，RAG正在后台初始化。")
+        logger.info("应用启动序列已开始，RAG正在后台初始化。")
     except Exception as e:
-        print(f"错误: 处理器初始化失败: {e}")
+        logger.exception(f"错误: 处理器初始化失败: {e}")
         # 在这里可以选择是否要阻止应用启动
 
     yield  # lifespan的核心，yield之前是启动逻辑，之后是关闭逻辑
 
     # --- 应用关闭时执行 ---
-    print("应用关闭... 正在清理资源...")
+    logger.info("应用关闭... 正在清理资源...")
     dependencies.active_contexts.clear()
-    print("资源清理完毕。")
+    logger.info("资源清理完毕.")
 
 
 async def initialize_rag_processor_task():
@@ -48,4 +49,4 @@ async def initialize_rag_processor_task():
         await dependencies.rag_processor.initialize()
     except Exception as e:
         # 初始化失败，状态已在 RAGProcessor 内部更新
-        print(f"后台RAG初始化任务失败: {e}")
+        logger.exception("后台RAG初始化任务失败")

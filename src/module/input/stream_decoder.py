@@ -6,6 +6,7 @@ from typing import Optional
 import av
 import numpy as np
 from av.audio.resampler import AudioResampler
+from loguru import logger
 
 
 class StreamDecoder:
@@ -25,7 +26,7 @@ class StreamDecoder:
         self.target_sample_rate = target_sample_rate
         self.target_layout = target_layout
         self.target_format = target_format
-
+        self._bytes_since_last_event = 0
         # 1. 创建内存管道用于线程间通信
         r_pipe, w_pipe = os.pipe()
         self._r_pipe_file = os.fdopen(r_pipe, 'rb')
@@ -35,6 +36,7 @@ class StreamDecoder:
         self.output_queue = queue.Queue()
 
         # 3. 线程控制信号
+        self._data_ready_event = threading.Event()
         self._stop_event = threading.Event()
 
         # 4. 初始化并启动解码线程
@@ -47,6 +49,9 @@ class StreamDecoder:
         """
         resampler = None
         try:
+            if not self._data_ready_event.wait(timeout=10.0):
+                logger.error("解码器启动超时：未在10秒内收到初始数据。")
+                return
             with av.open(self._r_pipe_file, mode='r') as container:
                 audio_stream = container.streams.audio[0]
 
@@ -68,7 +73,7 @@ class StreamDecoder:
                         # 流结束，正常退出
                         break
                     except Exception as e:
-                        print(f"解码循环中发生错误: {e}")
+                        logger.exception("解码循环中发生错误")
                         break
 
                 # 冲洗重采样器的内部缓冲区
@@ -78,7 +83,7 @@ class StreamDecoder:
                         self.output_queue.put(frame.to_ndarray())
 
         except Exception as e:
-            print(f"解码器线程启动失败: {e}")
+            logger.exception("解码器线程启动失败")
         finally:
             self._r_pipe_file.close()
 
@@ -92,6 +97,10 @@ class StreamDecoder:
             try:
                 self._w_pipe_file.write(data)
                 self._w_pipe_file.flush()
+
+                if not self._data_ready_event.is_set():
+                    logger.info("data ready")
+                    self._data_ready_event.set()
             except Exception:
                 # 管道可能在另一端被关闭，这是正常关闭流程的一部分
                 pass
@@ -116,10 +125,15 @@ class StreamDecoder:
         if not self._stop_event.is_set():
             self._stop_event.set()
 
-        if not self._w_pipe_file.closed:
-            self._w_pipe_file.close()
+        self._data_ready_event.set()
+
+        if self._w_pipe_file and not self._w_pipe_file.closed:
+            try:
+                self._w_pipe_file.close()
+            except OSError as e:
+                logger.warning(f"关闭解码器输入管道时出错（可能已关闭）: {e}")
 
         # 等待解码线程结束
         self._decoder_thread.join(timeout=2.0)
         if self._decoder_thread.is_alive():
-            print("警告: 解码器线程在超时后仍未结束。")
+            logger.warning("解码器线程在超时后仍未结束。")
