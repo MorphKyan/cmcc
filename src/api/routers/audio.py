@@ -79,10 +79,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str) -> None:
         if all_tasks:
             await asyncio.gather(*all_tasks, return_exceptions=True)
 
-        if context:
-            if context.decoder:
-                context.decoder.close()
-
         if client_id in dependencies.active_contexts:
             del dependencies.active_contexts[client_id]
 

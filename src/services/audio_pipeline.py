@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -25,15 +26,26 @@ async def receive_loop(websocket: WebSocket, context: Context) -> None:
 async def decode_loop(context: Context) -> None:
     """负责解码并放入队列"""
     logger.info("解码已启动")
+    chunk_counter = 0
+    header_chunk: Optional[bytes] = None
     while True:
         try:
             data_bytes = await context.audio_input_queue.get()
-            context.decoder.feed_data(data_bytes)
-            while True:
-                logger.info("try get decoded data")
-                pcm_frame = context.decoder.get_decoded_frame()
-                if pcm_frame is None:
-                    break
+            logger.info("try decoded data")
+            # first_8_bytes_hex = binascii.hexlify(data_bytes[:8]).decode('ascii')
+            # logger.info(f"Chunk #{chunk_counter}: Received {len(data_bytes)} bytes. First 8 bytes: {first_8_bytes_hex}")
+            # if data_bytes.startswith(b'\x1a\x45\xdf\xa3'):
+            #     logger.success(f"Chunk #{chunk_counter}: Found WebM EBML header (magic number)!")
+            # else:
+            #     logger.warning(f"Chunk #{chunk_counter}: Does NOT start with WebM header.")
+            if header_chunk is None:
+                header_chunk = data_bytes
+                data_to_decode = header_chunk
+            else:
+                data_to_decode = header_chunk + data_bytes
+            chunk_counter += 1
+            pcm_frame = await context.decoder.decode_chunk(data_to_decode)
+            if pcm_frame is not None:
                 logger.trace("处理解码后的PCM数据，形状: {shape}, 类型: {dtype}", shape=pcm_frame.shape, dtype=pcm_frame.dtype)
                 await context.audio_np_queue.put(pcm_frame)
         except Exception as e:
@@ -64,7 +76,7 @@ async def run_vad_processor(context: Context) -> None:
             speech_segments = context.VADProcessor.process_result(result)
             for segment in speech_segments:
                 start, end, audio_data = segment
-                logger.info("[VAD] 检测到语音段: {start:.2f}ms - {end:.2f}ms, 长度: {length:.2f}s", start=start, end=end,
+                logger.info("[VAD] 检测到语音段: {start:.2f}s - {end:.2f}s, 长度: {length:.2f}s", start=start / 1000, end=end / 1000,
                             length=len(audio_data) / 16000)
                 await context.audio_segment_queue.put(audio_data)
         except Exception as e:
@@ -98,7 +110,7 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     while True:
         try:
             recognized_text = await context.asr_output_queue.get()
-            retrieved_docs = await loop.run_in_executor(None, dependencies.rag_processor.retrieve_context, recognized_text)
+            retrieved_docs = await dependencies.rag_processor.retrieve_context(recognized_text)
             llm_response = await loop.run_in_executor(None, dependencies.llm_processor.get_response, recognized_text, retrieved_docs)
             logger.info("[大模型响应] {llm_response}", llm_response=llm_response)
             await context.function_calling_queue.put(llm_response)

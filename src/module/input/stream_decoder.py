@@ -1,7 +1,6 @@
-import os
-import queue
-import threading
-from typing import Optional
+import asyncio
+import io
+from typing import List, Optional
 
 import av
 import numpy as np
@@ -10,130 +9,52 @@ from loguru import logger
 
 
 class StreamDecoder:
-    """
-    它在一个单独的线程中运行 PyAV 解码器，通过 os.pipe 从主线程接收
-    编码后的音频数据块，并将解码后的 PCM 数据放入一个线程安全的队列中。
-    """
-
     def __init__(self, target_sample_rate: int = 16000, target_layout: str = "mono", target_format: str = "fltp") -> None:
         """
-        初始化解码器。
+        初始化解码器和重采样器。
 
-        :param target_sample_rate: 目标输出采样率。
+        :param target_sample_rate: 目标输出采样率 (Hz)。
         :param target_layout: 目标输出声道布局 (例如, "mono", "stereo")。
-        :param target_format: 目标输出样本格式 (例如, "s16", "fltp")。
+        :param target_format: 目标输出样本格式 (例如, "s16" for int16, "fltp" for float32)。
+                               'fltp' (planar float) 通常是音频处理的首选。
         """
-        self.target_sample_rate = target_sample_rate
-        self.target_layout = target_layout
-        self.target_format = target_format
-        self._bytes_since_last_event = 0
-        # 1. 创建内存管道用于线程间通信
-        r_pipe, w_pipe = os.pipe()
-        self._r_pipe_file = os.fdopen(r_pipe, 'rb')
-        self._w_pipe_file = os.fdopen(w_pipe, 'wb')
+        self.resampler = AudioResampler(
+            format=target_format,
+            layout=target_layout,
+            rate=target_sample_rate
+        )
 
-        # 2. 存放解码后 PCM 数据的队列
-        self.output_queue = queue.Queue()
-
-        # 3. 线程控制信号
-        self._data_ready_event = threading.Event()
-        self._stop_event = threading.Event()
-
-        # 4. 初始化并启动解码线程
-        self._decoder_thread = threading.Thread(target=self._run_decoder, daemon=True)
-        self._decoder_thread.start()
-
-    def _run_decoder(self) -> None:
+    def _decode_and_resample_sync(self, encoded_chunk: bytes) -> List[np.ndarray]:
         """
-        解码器线程的主循环。该方法不应被外部直接调用。
+        【同步方法】在一个数据块上执行实际的解码和重采样。
+        这个方法会被 `asyncio.to_thread` 在一个独立的线程中运行。
         """
-        resampler = None
+        decoded_frames = []
         try:
-            if not self._data_ready_event.wait(timeout=10.0):
-                logger.error("解码器启动超时：未在10秒内收到初始数据。")
-                return
-            with av.open(self._r_pipe_file, mode='r') as container:
+            # 使用 BytesIO 将内存中的 bytes 数据模拟成一个文件
+            with av.open(io.BytesIO(encoded_chunk), mode='r') as container:
                 audio_stream = container.streams.audio[0]
 
-                resampler = AudioResampler(
-                    format=self.target_format,
-                    layout=self.target_layout,
-                    rate=self.target_sample_rate
-                )
+                for frame in container.decode(audio_stream):
+                    # 重采样帧以匹配目标格式
+                    resampled_frames = self.resampler.resample(frame)
+                    for resampled_frame in resampled_frames:
+                        # 将 AudioFrame 转换为 NumPy 数组并添加到列表中
+                        decoded_frames.append(resampled_frame.to_ndarray())
 
-                # 当 stop_event 被设置或流结束时，循环终止
-                while not self._stop_event.is_set():
-                    try:
-                        # container.decode 是一个生成器，会阻塞直到有足够的数据解码一帧
-                        frame = next(container.decode(audio_stream))
-                        resampled_frames = resampler.resample(frame)
-                        for resampled_frame in resampled_frames:
-                            self.output_queue.put(resampled_frame.to_ndarray())
-                    except StopIteration:
-                        # 流结束，正常退出
-                        break
-                    except Exception as e:
-                        logger.exception("解码循环中发生错误")
-                        break
+        except Exception:
+            # 使用 logger.exception 可以自动记录堆栈信息
+            logger.exception("解码或重采样音频块时发生错误")
+            return []  # 发生错误时返回空列表
 
-                # 冲洗重采样器的内部缓冲区
-                if resampler:
-                    flushed_frames = resampler.resample(None)
-                    for frame in flushed_frames:
-                        self.output_queue.put(frame.to_ndarray())
+        return decoded_frames
 
-        except Exception as e:
-            logger.exception("解码器线程启动失败")
-        finally:
-            self._r_pipe_file.close()
+    async def decode_chunk(self, encoded_chunk: bytes) -> Optional[np.ndarray]:
+        frames = await asyncio.to_thread(self._decode_and_resample_sync, encoded_chunk)
 
-    def feed_data(self, data: bytes) -> None:
-        """
-        向解码器输送编码后的音频数据。
-
-        :param data: 从 WebSocket 接收到的二进制音频块。
-        """
-        if not self._w_pipe_file.closed:
-            try:
-                self._w_pipe_file.write(data)
-                self._w_pipe_file.flush()
-
-                if not self._data_ready_event.is_set():
-                    logger.info("data ready")
-                    self._data_ready_event.set()
-            except Exception:
-                # 管道可能在另一端被关闭，这是正常关闭流程的一部分
-                pass
-
-    def get_decoded_frame(self, block: bool = False, timeout: Optional[float] = None) -> Optional[np.ndarray]:
-        """
-        从输出队列中获取一个解码后的 PCM 数据帧。
-
-        :param block: 是否阻塞等待，直到有可用的帧。
-        :param timeout: 阻塞等待的超时时间（秒）。
-        :return: 一个包含 PCM 数据的 NumPy 数组，或在队列为空时返回 None。
-        """
-        try:
-            return self.output_queue.get(block=block, timeout=timeout)
-        except queue.Empty:
+        if not frames:
             return None
 
-    def close(self) -> None:
-        """
-        优雅地关闭解码器，停止线程并清理资源。
-        """
-        if not self._stop_event.is_set():
-            self._stop_event.set()
-
-        self._data_ready_event.set()
-
-        if self._w_pipe_file and not self._w_pipe_file.closed:
-            try:
-                self._w_pipe_file.close()
-            except OSError as e:
-                logger.warning(f"关闭解码器输入管道时出错（可能已关闭）: {e}")
-
-        # 等待解码线程结束
-        self._decoder_thread.join(timeout=2.0)
-        if self._decoder_thread.is_alive():
-            logger.warning("解码器线程在超时后仍未结束。")
+        # 将从一个块解码出的所有帧拼接成一个大的 NumPy 数组
+        # axis=1 表示沿着样本维度拼接
+        return np.concatenate(frames, axis=1)
