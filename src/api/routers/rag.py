@@ -8,7 +8,7 @@ from loguru import logger
 
 from src.api.schemas import RefreshResponse, StatusResponse, QueryResponse, UploadResponse, QueryRequest
 from src.config.config import settings
-from src.core.dependencies import rag_processor
+from src.core import dependencies
 from src.module.rag.rag_processor import RAGStatus
 
 router = APIRouter(
@@ -20,7 +20,7 @@ router = APIRouter(
 async def reinitialize_task():
     """后台任务，用于重新初始化。"""
     try:
-        await rag_processor.initialize()
+        await dependencies.rag_processor.initialize()
     except Exception as e:
         logger.exception("后台RAG重新初始化任务失败")
 
@@ -32,7 +32,7 @@ async def reinitialize_rag(background_tasks: BackgroundTasks):
     这在解决外部依赖（如Ollama服务或数据文件）问题后非常有用。
     立即返回202 Accepted，初始化在后台进行。
     """
-    if rag_processor.status == RAGStatus.INITIALIZING:
+    if dependencies.rag_processor.status == RAGStatus.INITIALIZING:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Reinitialization is already in progress."
@@ -61,22 +61,22 @@ async def rag_status() -> StatusResponse:
     - READY: 服务正常，可以接受请求。
     - ERROR: 初始化失败，附带错误信息。
     """
-    if rag_processor is None:
+    if dependencies.rag_processor is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="RAG服务当前不可用，尚未初始化")
-    if rag_processor.status == RAGStatus.ERROR:
+    if dependencies.rag_processor.status == RAGStatus.ERROR:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={"status": rag_processor.status.value, "message": rag_processor.error_message}
+            detail={"status": dependencies.rag_processor.status.value, "message": dependencies.rag_processor.error_message}
         )
     try:
         # 从单例实例中获取配置信息来构建响应
-        db_exists = os.path.exists(rag_processor.chroma_db_dir)
+        db_exists = os.path.exists(dependencies.rag_processor.chroma_db_dir)
         data = {
             "initialized": True,
             "database_exists": db_exists,
-            "database_path": rag_processor.chroma_db_dir,
-            "embedding_model": rag_processor.embedding_model,
-            "top_k_results": rag_processor.top_k_results
+            "database_path": dependencies.rag_processor.chroma_db_dir,
+            "embedding_model": dependencies.rag_processor.embedding_model,
+            "top_k_results": dependencies.rag_processor.top_k_results
         }
         return StatusResponse(status="success", data=data)
     except Exception as e:
@@ -87,8 +87,8 @@ async def rag_status() -> StatusResponse:
 async def query_rag(request: QueryRequest) -> QueryResponse:
     """查询RAG数据库。"""
     # 1. 安全检查
-    if rag_processor is None or rag_processor.status != RAGStatus.READY:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"RAG服务当前不可用，当前状态{rag_processor.status.value}")
+    if dependencies.rag_processor is None or dependencies.rag_processor.status != RAGStatus.READY:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"RAG服务当前不可用，当前状态{dependencies.rag_processor.status.value}")
 
     query_text = request.query
     if not query_text:
@@ -96,7 +96,7 @@ async def query_rag(request: QueryRequest) -> QueryResponse:
 
     try:
         # 2. 将核心任务委托给单例处理器
-        retrieved_docs = rag_processor.retrieve_context(query_text)
+        retrieved_docs = dependencies.rag_processor.retrieve_context(query_text)
 
         # 3. 格式化响应
         results = [{"content": doc.page_content, "metadata": doc.metadata} for doc in retrieved_docs]
@@ -165,9 +165,9 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
 def refresh_rag_database() -> Tuple[bool, str]:
     """刷新RAG数据库"""
     try:
-        if rag_processor is None:
+        if dependencies.rag_processor is None:
             return False, "RAG处理器未初始化"
-        success = rag_processor.refresh_database()
+        success = dependencies.rag_processor.refresh_database()
         if success:
             return True, "RAG数据库已成功刷新"
         else:

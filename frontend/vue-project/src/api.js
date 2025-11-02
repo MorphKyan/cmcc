@@ -3,7 +3,7 @@ import axios from 'axios'
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // FastAPI 服务的地址
+  baseURL: 'http://localhost:5000', // FastAPI 服务的地址
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -12,7 +12,7 @@ const api = axios.create({
 
 // 健康检查
 export const healthCheck = () => {
-  return api.get('/health')
+  return api.get('/')
 }
 
 // 刷新 RAG 数据库
