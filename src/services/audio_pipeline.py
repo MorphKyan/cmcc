@@ -86,13 +86,12 @@ async def run_vad_processor(context: Context) -> None:
 async def run_asr_processor(context: Context) -> None:
     """ASR处理逻辑代码"""
     logger.info("ASR处理器已启动")
-    loop = asyncio.get_running_loop()
     while True:
         try:
             # 从VAD队列中获取分割好的语音片段
             segment: npt[np.float32] = await context.audio_segment_queue.get()
             # 使用ASR处理器处理音频数据
-            recognized_text = await loop.run_in_executor(None, dependencies.asr_processor.process_audio_data, segment)
+            recognized_text = await asyncio.to_thread(dependencies.asr_processor.process_audio_data, segment)
             if recognized_text and recognized_text.strip():
                 logger.info("[识别结果] {recognized_text}", recognized_text=recognized_text)
                 await context.asr_output_queue.put(recognized_text)

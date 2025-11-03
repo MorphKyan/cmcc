@@ -129,9 +129,7 @@ class RAGProcessor:
         """
         try:
             # 只加载videos数据
-            documents = await asyncio.to_thread(
-                load_documents_from_csvs, [self.settings.VIDEOS_DATA_PATH]
-            )
+            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.VIDEOS_DATA_PATH])
 
             if not documents:
                 raise ValueError("从CSV加载的文档为空，无法创建数据库。")
