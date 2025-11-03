@@ -1,6 +1,8 @@
 import asyncio
 import io
 import subprocess
+import threading
+import queue
 from typing import List, Optional
 
 import av
@@ -85,6 +87,8 @@ class FFmpegStreamDecoder:
         # 流式处理相关的属性
         self._ffmpeg_process: Optional[subprocess.Popen] = None
         self._is_initialized = False
+        self._stdout_queue: Optional[queue.Queue] = None
+        self._stdout_thread: Optional[threading.Thread] = None
 
     def _initialize_ffmpeg_process(self) -> bool:
         """初始化FFmpeg进程用于流式处理"""
@@ -120,6 +124,11 @@ class FFmpegStreamDecoder:
                 bufsize=0  # 无缓冲
             )
             
+            # 初始化队列和读取线程
+            self._stdout_queue = queue.Queue()
+            self._stdout_thread = threading.Thread(target=self._read_stdout, daemon=True)
+            self._stdout_thread.start()
+            
             self._is_initialized = True
             logger.info("FFmpeg流式解码器已初始化")
             return True
@@ -128,6 +137,28 @@ class FFmpegStreamDecoder:
             logger.exception(f"初始化FFmpeg进程失败: {e}")
             self._cleanup_process()
             return False
+
+    def _read_stdout(self):
+        """从FFmpeg stdout读取数据并放入队列"""
+        try:
+            if self._ffmpeg_process and self._ffmpeg_process.stdout:
+                while True:
+                    # 检查进程是否还在运行
+                    if self._ffmpeg_process.poll() is not None:
+                        break
+                    chunk = self._ffmpeg_process.stdout.read(4096)
+                    if not chunk:
+                        break
+                    if self._stdout_queue:
+                        self._stdout_queue.put(chunk)
+        except Exception as e:
+            # 检查是否是因为进程已经结束
+            if self._ffmpeg_process and self._ffmpeg_process.poll() is None:
+                logger.warning(f"读取FFmpeg stdout时发生错误: {e}")
+        finally:
+            # 确保队列中有结束标记
+            if self._stdout_queue:
+                self._stdout_queue.put(None)
 
     def _cleanup_process(self):
         """清理FFmpeg进程"""
@@ -150,6 +181,15 @@ class FFmpegStreamDecoder:
             finally:
                 self._ffmpeg_process = None
                 self._is_initialized = False
+                # 清空队列
+                if self._stdout_queue:
+                    while not self._stdout_queue.empty():
+                        try:
+                            self._stdout_queue.get_nowait()
+                        except queue.Empty:
+                            break
+                self._stdout_queue = None
+                self._stdout_thread = None
 
     def _decode_stream_sync(self, encoded_chunk: bytes) -> Optional[np.ndarray]:
         """
@@ -168,41 +208,23 @@ class FFmpegStreamDecoder:
                 self._ffmpeg_process.stdin.write(encoded_chunk)
                 self._ffmpeg_process.stdin.flush()
             
-            # 尝试读取输出 - 设置超时避免阻塞
-            import select
-            import sys
-            
-            if sys.platform == "win32":
-                # Windows不支持select，使用简单的读取方式
-                # 读取可用的数据（非阻塞方式比较复杂，这里简化处理）
-                output_data = b''
-                if self._ffmpeg_process.stdout is not None:
-                    # 尝试读取，但不保证读取所有数据
-                    try:
-                        # 使用非阻塞读取（在Windows上有限制）
-                        import msvcrt
-                        while msvcrt.kbhit():
-                            byte = self._ffmpeg_process.stdout.read(1)
-                            if not byte:
+            # 从队列中读取可用的数据（非阻塞）
+            output_data = b''
+            if self._stdout_queue is not None:
+                try:
+                    # 尝试从队列中获取数据，设置短超时
+                    while True:
+                        try:
+                            chunk = self._stdout_queue.get(timeout=0.01)  # 10ms超时
+                            if chunk is None:
+                                # FFmpeg进程已结束
                                 break
-                            output_data += byte
-                    except:
-                        # 如果无法非阻塞读取，就尝试读取一些数据
-                        pass
-            else:
-                # Unix/Linux系统使用select
-                output_data = b''
-                if self._ffmpeg_process.stdout is not None:
-                    ready, _, _ = select.select([self._ffmpeg_process.stdout], [], [], 0.1)  # 100ms超时
-                    if ready:
-                        # 读取可用的数据
-                        chunk = self._ffmpeg_process.stdout.read(4096)
-                        while chunk:
                             output_data += chunk
-                            ready, _, _ = select.select([self._ffmpeg_process.stdout], [], [], 0.01)
-                            if not ready:
-                                break
-                            chunk = self._ffmpeg_process.stdout.read(4096)
+                        except queue.Empty:
+                            # 队列为空，没有更多数据
+                            break
+                except Exception as e:
+                    logger.warning(f"从stdout队列读取数据时发生错误: {e}")
             
             if not output_data:
                 # 可能还没有输出数据，这是正常的
