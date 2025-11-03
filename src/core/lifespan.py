@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
         dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
         dependencies.llm_processor = OllamaLLMHandler(llm_config)
 
-        asyncio.create_task(initialize_rag_processor_task())
+        asyncio.create_task(dependencies.rag_processor.initialize())
 
         logger.info("应用启动序列已开始，RAG正在后台初始化。")
     except Exception as e:
@@ -41,12 +41,3 @@ async def lifespan(app: FastAPI):
     logger.info("应用关闭... 正在清理资源...")
     dependencies.active_contexts.clear()
     logger.info("资源清理完毕.")
-
-
-async def initialize_rag_processor_task():
-    """后台任务，用于初始化RAG处理器。"""
-    try:
-        await dependencies.rag_processor.initialize()
-    except Exception as e:
-        # 初始化失败，状态已在 RAGProcessor 内部更新
-        logger.exception("后台RAG初始化任务失败")

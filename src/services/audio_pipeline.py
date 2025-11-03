@@ -7,7 +7,7 @@ from fastapi import WebSocket
 from loguru import logger
 
 from src.api.context import Context
-from src.core import dependencies  # 从中心依赖文件导入全局处理器
+from src.core import dependencies
 
 
 async def receive_loop(websocket: WebSocket, context: Context) -> None:
@@ -106,12 +106,11 @@ async def run_asr_processor(context: Context) -> None:
 async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     """LLM/RAG处理逻辑代码"""
     logger.info("LLM/RAG处理器已启动")
-    loop = asyncio.get_running_loop()
     while True:
         try:
             recognized_text = await context.asr_output_queue.get()
             retrieved_docs = await dependencies.rag_processor.retrieve_context(recognized_text)
-            llm_response = await loop.run_in_executor(None, dependencies.llm_processor.get_response, recognized_text, retrieved_docs)
+            llm_response = await dependencies.llm_processor.get_response(recognized_text, retrieved_docs)
             logger.info("[大模型响应] {llm_response}", llm_response=llm_response)
             await context.function_calling_queue.put(llm_response)
 

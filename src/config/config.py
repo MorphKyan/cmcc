@@ -174,6 +174,7 @@ class LLMSettings(BaseSettings):
         env_prefix = 'LLM_'
 
     MODEL: str = "qwen3:8b"
+    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
     SYSTEM_PROMPT_TEMPLATE: str = SYSTEM_PROMPT_TEMPLATE
     SCREENS_INFO: list = SCREENS_INFO
     DOORS_INFO: list = DOORS_INFO

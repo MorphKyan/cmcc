@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import json
-from typing import List
+from typing import List, Dict, Any
 
-import ollama
 from langchain_core.documents import Document
+from langchain_core.output_parsers import JsonOutputToolsParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import ChatOllama
 from loguru import logger
 
 from src.config.config import LLMSettings
@@ -15,28 +17,24 @@ from src.module.data_loader import format_docs_for_prompt
 class OllamaLLMHandler:
     def __init__(self, settings: LLMSettings) -> None:
         """
-        初始化本地Ollama大语言模型处理器。
-        
+        初始化使用LangChain的异步Ollama大语言模型处理器。
+
         Args:
             settings (LLMSettings): LLM参数
         """
-        self.system_prompt_template = settings.SYSTEM_PROMPT_TEMPLATE
-
-        try:
-            self.client = ollama.Client()
-            # 检查与Ollama服务器的连接
-            self.client.list()
-        except Exception as e:
-            logger.exception("初始化Ollama客户端或连接Ollama服务器失败")
-            # 如果客户端初始化失败，后续无法调用，直接退出
-            exit(1)
-
-        self.model = settings.MODEL
+        self.settings = settings
         self.screens_info = settings.SCREENS_INFO
         self.doors_info = settings.DOORS_INFO
-        self.conversation_history = []
 
-        # 定义function schemas
+        # 1. 初始化ChatOllama模型
+        # ChatOllama原生支持异步操作
+        try:
+            self.model = ChatOllama(model=settings.MODEL)
+        except Exception as e:
+            logger.exception("初始化ChatOllama客户端失败，请确保Ollama服务正在运行。")
+            exit(1)
+
+        # 2. 定义tools
         self.tools = [
             {
                 "type": "function",
@@ -46,14 +44,8 @@ class OllamaLLMHandler:
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "target": {
-                                "type": "string",
-                                "description": "要播放的视频文件名"
-                            },
-                            "device": {
-                                "type": "string",
-                                "description": "要在其上播放视频的屏幕名称"
-                            }
+                            "target": {"type": "string", "description": "要播放的视频文件名"},
+                            "device": {"type": "string", "description": "要在其上播放视频的屏幕名称"}
                         },
                         "required": ["target", "device"]
                     }
@@ -67,15 +59,8 @@ class OllamaLLMHandler:
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "target": {
-                                "type": "string",
-                                "description": "门的全称"
-                            },
-                            "action": {
-                                "type": "string",
-                                "enum": ["open", "close"],
-                                "description": "要执行的操作：open（打开）或close（关闭）"
-                            }
+                            "target": {"type": "string", "description": "门的全称"},
+                            "action": {"type": "string", "enum": ["open", "close"], "description": "要执行的操作：open（打开）或close（关闭）"}
                         },
                         "required": ["target", "action"]
                     }
@@ -89,14 +74,8 @@ class OllamaLLMHandler:
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "device": {
-                                "type": "string",
-                                "description": "要跳转进度的屏幕名称"
-                            },
-                            "value": {
-                                "type": "integer",
-                                "description": "跳转到的秒数"
-                            }
+                            "device": {"type": "string", "description": "要跳转进度的屏幕名称"},
+                            "value": {"type": "integer", "description": "跳转到的秒数"}
                         },
                         "required": ["device", "value"]
                     }
@@ -110,16 +89,8 @@ class OllamaLLMHandler:
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "device": {
-                                "type": "string",
-                                "description": "要设置音量的屏幕名称"
-                            },
-                            "value": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "maximum": 100,
-                                "description": "音量值（0-100）"
-                            }
+                            "device": {"type": "string", "description": "要设置音量的屏幕名称"},
+                            "value": {"type": "integer", "minimum": 0, "maximum": 100, "description": "音量值（0-100）"}
                         },
                         "required": ["device", "value"]
                     }
@@ -133,15 +104,8 @@ class OllamaLLMHandler:
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "device": {
-                                "type": "string",
-                                "description": "要调整音量的屏幕名称"
-                            },
-                            "value": {
-                                "type": "string",
-                                "enum": ["up", "down"],
-                                "description": "音量调整方向：up（提高）或down（降低）"
-                            }
+                            "device": {"type": "string", "description": "要调整音量的屏幕名称"},
+                            "value": {"type": "string", "enum": ["up", "down"], "description": "音量调整方向：up（提高）或down（降低）"}
                         },
                         "required": ["device", "value"]
                     }
@@ -149,133 +113,125 @@ class OllamaLLMHandler:
             }
         ]
 
-        logger.info("Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.model)
+        # 3. 将工具绑定到模型
+        self.model_with_tools = self.model.bind_tools(self.tools)
 
-    def _construct_prompt(self, user_input: str, rag_docs: List[Document]) -> str:
+        # 4. 使用ChatPromptTemplate构建提示词，取代_construct_prompt方法
+        self.prompt_template = ChatPromptTemplate.from_messages([
+            ("system", settings.SYSTEM_PROMPT_TEMPLATE),
+            ("user", "{USER_INPUT}")
+        ])
+
+        # 5. 定义输出解析器
+        self.output_parser = JsonOutputToolsParser()
+
+        # 6. 构建处理链 (Chain)
+        self.chain = self.prompt_template | self.model_with_tools | self.output_parser
+
+        logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.MODEL)
+
+    def _map_tool_calls_to_response(self, tool_calls: List[Dict[str, Any]]) -> str:
         """
-        构建包含RAG上下文的系统提示，并嵌入screens和doors信息。
+        将LangChain解析出的工具调用列表映射到项目所需的最终JSON格式。
+        这部分是你的核心业务逻辑，保持不变。
         """
-        rag_context = format_docs_for_prompt(rag_docs)
+        if not tool_calls:
+            return '[]'
 
-        screens_info_json = json.dumps(self.screens_info, ensure_ascii=False, indent=2)
-        doors_info_json = json.dumps(self.doors_info, ensure_ascii=False, indent=2)
+        results = []
+        for tool_call in tool_calls:
+            function_name = tool_call['name']
+            arguments = tool_call['args']
+            result = {}
 
-        system_prompt = self.system_prompt_template.format(
-            SCREENS_INFO=screens_info_json,
-            DOORS_INFO=doors_info_json,
-            rag_context=rag_context,
-            USER_INPUT=user_input
-        )
-        return system_prompt
+            if function_name == "play_video":
+                result = {
+                    "action": "play",
+                    "target": arguments.get("target"),
+                    "device": arguments.get("device"),
+                    "value": None
+                }
+            elif function_name == "control_door":
+                result = {
+                    "action": arguments.get("action"),
+                    "target": arguments.get("target"),
+                    "device": None,
+                    "value": None
+                }
+            elif function_name == "seek_video":
+                result = {
+                    "action": "seek",
+                    "target": None,
+                    "device": arguments.get("device"),
+                    "value": arguments.get("value")
+                }
+            elif function_name == "set_volume":
+                result = {
+                    "action": "set_volume",
+                    "target": None,
+                    "device": arguments.get("device"),
+                    "value": arguments.get("value")
+                }
+            elif function_name == "adjust_volume":
+                result = {
+                    "action": "adjust_volume",
+                    "target": None,
+                    "device": arguments.get("device"),
+                    "value": arguments.get("value")
+                }
+            else:
+                result = {
+                    "action": "error",
+                    "reason": "unknown_function",
+                    "target": None,
+                    "device": None,
+                    "value": None
+                }
+            results.append(result)
 
-    def get_response(self, user_input: str, rag_docs: List[Document]) -> str:
+        return json.dumps(results, ensure_ascii=False)
+
+    async def get_response(self, user_input: str, rag_docs: List[Document]) -> str:
         """
-        结合RAG上下文，获取大模型的响应。
-        
+        结合RAG上下文，异步获取大模型的响应。
+
         Args:
             user_input (str): 用户的原始输入文本。
             rag_docs (list[Document]): RAG检索器返回的文档列表。
-            
+
         Returns:
             str: 大模型返回的JSON格式指令或错误信息。
         """
-        system_prompt = self._construct_prompt(user_input, rag_docs)
-        self.conversation_history = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input}
-        ]
-
         logger.info("用户指令: {user_input}", user_input=user_input)
 
         try:
-            response = self.client.chat(
-                model=self.model,
-                messages=self.conversation_history,
-                tools=self.tools,
-                think=False
-            )
+            # 准备Prompt的输入变量
+            rag_context = format_docs_for_prompt(rag_docs)
+            screens_info_json = json.dumps(self.screens_info, ensure_ascii=False, indent=2)
+            doors_info_json = json.dumps(self.doors_info, ensure_ascii=False, indent=2)
 
-            # 检查是否有工具调用
-            if response['message'].get('tool_calls'):
-                # 处理多个工具调用
-                tool_calls = response['message']['tool_calls']
-                results = []
+            chain_input = {
+                "SCREENS_INFO": screens_info_json,
+                "DOORS_INFO": doors_info_json,
+                "rag_context": rag_context,
+                "USER_INPUT": user_input
+            }
 
-                # 遍历所有工具调用
-                for tool_call in tool_calls:
-                    function_call = tool_call['function']
-                    function_name = function_call['name']
-                    arguments = function_call['arguments']
+            # 异步调用链
+            tool_calls = await self.chain.ainvoke(chain_input)
 
-                    # 根据函数名构建相应的JSON响应
-                    if function_name == "play_video":
-                        result = {
-                            "action": "play",
-                            "target": arguments["target"],
-                            "device": arguments["device"],
-                            "value": None
-                        }
-                    elif function_name == "control_door":
-                        result = {
-                            "action": arguments["action"],
-                            "target": arguments["target"],
-                            "device": None,
-                            "value": None
-                        }
-                    elif function_name == "seek_video":
-                        result = {
-                            "action": "seek",
-                            "target": None,
-                            "device": arguments["device"],
-                            "value": arguments["value"]
-                        }
-                    elif function_name == "set_volume":
-                        result = {
-                            "action": "set_volume",
-                            "target": None,
-                            "device": arguments["device"],
-                            "value": arguments["value"]
-                        }
-                    elif function_name == "adjust_volume":
-                        result = {
-                            "action": "adjust_volume",
-                            "target": None,
-                            "device": arguments["device"],
-                            "value": arguments["value"]
-                        }
-                    else:
-                        # 未知函数调用
-                        result = {
-                            "action": "error",
-                            "reason": "unknown_function",
-                            "target": None,
-                            "device": None,
-                            "value": None
-                        }
-
-                    results.append(result)
-
-                # 将结果添加到对话历史中
-                self.conversation_history.append({
-                    "role": "assistant",
-                    "content": "",
-                    "tool_calls": tool_calls
-                })
-
-                # 为每个工具调用添加工具响应到对话历史
-                for i, (tool_call, result) in enumerate(zip(tool_calls, results)):
-                    function_name = tool_call['function']['name']
-                    self.conversation_history.append({
-                        "role": "tool",
-                        "content": json.dumps(result, ensure_ascii=False),
-                        "name": function_name
-                    })
-
-                return json.dumps(results, ensure_ascii=False)
-            else:
-                # 没有工具调用，直接输出空数组
-                return '[]'
+            # 将解析后的工具调用映射到最终的输出格式
+            return self._map_tool_calls_to_response(tool_calls)
 
         except Exception as api_error:
-            logger.exception("调用Ollama API出错: {error}", error=str(api_error))
-            return '{"action": "error", "reason": "api_failure", "target": null, "device": null, "value": null}'
+            logger.exception("调用Ollama API或处理链时出错: {error}", error=str(api_error))
+            # 保持错误返回格式的一致性
+            error_response = {
+                "action": "error",
+                "reason": "api_failure",
+                "target": None,
+                "device": None,
+                "value": None
+            }
+            # 返回一个包含单个错误对象的JSON数组字符串
+            return json.dumps(error_response)
