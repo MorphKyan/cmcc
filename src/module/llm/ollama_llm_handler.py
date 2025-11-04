@@ -140,7 +140,7 @@ class OllamaLLMHandler:
 
         results = []
         for tool_call in tool_calls:
-            function_name = tool_call['name']
+            function_name = tool_call['type']
             arguments = tool_call['args']
             result = {}
 

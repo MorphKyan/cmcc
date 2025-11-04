@@ -15,9 +15,9 @@ async def receive_loop(websocket: WebSocket, context: Context) -> None:
     while True:
         try:
             data_bytes = await websocket.receive_bytes()
-            logger.info("WebSocket receive bytes size {size}", size=len(data_bytes))
+            logger.trace("WebSocket receive bytes size {size}", size=len(data_bytes))
             await context.audio_input_queue.put(data_bytes)
-            logger.info("WebSocket put audio_input_queue size {size}", size=len(data_bytes))
+            logger.trace("WebSocket put audio_input_queue size {size}", size=len(data_bytes))
         except Exception as e:
             logger.error("WebSocket接收错误，{e}", e=e)
             break
@@ -29,21 +29,11 @@ async def decode_loop(context: Context) -> None:
     while True:
         try:
             data_bytes = await context.audio_input_queue.get()
-            logger.info("Processing PCM data, size: {size} bytes", size=len(data_bytes))
-            
-            # 直接处理PCM原始数据（16kHz, 16bit, 单声道）
-            if len(data_bytes) == 0:
-                continue
-                
             # 将bytes转换为int16数组，然后归一化到-1.0到1.0的float32范围
             int16_array = np.frombuffer(data_bytes, dtype=np.int16)
-            float32_array = int16_array.astype(np.float32) / 32768.0
-            
-            # 重塑为(1, N)的形状，表示单声道
-            pcm_frame = float32_array.reshape(1, -1)
-            
-            logger.trace("处理PCM数据，形状: {shape}, 类型: {dtype}", shape=pcm_frame.shape, dtype=pcm_frame.dtype)
-            await context.audio_np_queue.put(pcm_frame)
+            float32_array = int16_array.astype(np.float32) / 32768
+            logger.trace("处理PCM数据，形状: {shape}, 类型: {dtype}", shape=float32_array.shape, dtype=float32_array.dtype)
+            await context.audio_np_queue.put(float32_array)
         except Exception as e:
             logger.exception("解码错误")
 
