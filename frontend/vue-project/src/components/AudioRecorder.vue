@@ -5,6 +5,15 @@
       <button @click="startRecording" :disabled="isRecording">开始录音</button>
       <button @click="stopRecording" :disabled="!isRecording">停止录音</button>
       <p>状态: {{ status }}</p>
+      <div v-if="actualAudioConfig" class="audio-config">
+        <h3>实际音频配置:</h3>
+        <ul>
+          <li>采样率: {{ actualAudioConfig.sampleRate }} Hz</li>
+          <li>声道数: {{ actualAudioConfig.channelCount }}</li>
+          <li>采样位数: {{ actualAudioConfig.sampleSize }} bit</li>
+          <li>音频上下文采样率: {{ audioContextSampleRate }} Hz</li>
+        </ul>
+      </div>
       <div v-if="websocketOutput" class="websocket-output">
         <h3>处理结果:</h3>
         <pre>{{ websocketOutput }}</pre>
@@ -27,6 +36,8 @@ export default {
       socket: null,
       audioContext: null,
       audioStream: null,
+      actualAudioConfig: null,
+      audioContextSampleRate: null,
       // 为每个客户端生成一个唯一的ID
       clientId: `web-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       websocketOutput: '',
@@ -55,11 +66,19 @@ export default {
         const audioTrack = this.audioStream.getAudioTracks()[0];
         const settings = audioTrack.getSettings();
         console.log('实际应用的音频配置:', settings);
+        
+        // 保存实际配置到组件数据
+        this.actualAudioConfig = {
+          sampleRate: settings.sampleRate,
+          channelCount: settings.channelCount,
+          sampleSize: settings.sampleSize || 16 // 如果未提供sampleSize，默认为16
+        };
 
         // 2. 创建 AudioContext
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
           sampleRate: 16000
         });
+        this.audioContextSampleRate = this.audioContext.sampleRate;
         
         // 3. 加载 AudioWorklet
         await this.audioContext.audioWorklet.addModule('/audio-processor.js');
@@ -75,13 +94,13 @@ export default {
         this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = async () => {
-          // 发送元数据
+          // 发送元数据 - 使用实际获取的音频配置
           const metadata = {
             type: 'config',
             format: 'pcm',
-            sampleRate: 16000,
-            sampleSize: 16,
-            channelCount: 1
+            sampleRate: this.actualAudioConfig.sampleRate,
+            sampleSize: this.actualAudioConfig.sampleSize,
+            channelCount: this.actualAudioConfig.channelCount
           };
           this.socket.send(JSON.stringify(metadata));
           console.log('已发送元数据:', metadata);
