@@ -3,7 +3,7 @@ import axios from 'axios'
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: 'http://localhost:5000', // FastAPI 服务的地址
+  baseURL: '/api', // 使用相对路径，通过 Vite 代理转发
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

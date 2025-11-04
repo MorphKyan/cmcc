@@ -15,8 +15,7 @@ from src.api.schemas import HealthResponse
 from src.config.logging_config import setup_logging
 
 # 添加项目根目录到Python路径
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.dirname(__file__))
 
 # 初始化日志配置
 setup_logging()
@@ -44,7 +43,7 @@ async def root() -> HealthResponse:
 def run_api(host: str = '0.0.0.0', port: int = 5000) -> None:
     """运行API服务"""
     import uvicorn
-    uvicorn.run("src.api.main:app", host=host, port=port, reload=False)
+    uvicorn.run(app, host=host, port=port, reload=False)
 
 
 if __name__ == '__main__':

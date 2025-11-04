@@ -21,6 +21,7 @@
     </div>
     <div v-else>
       <p>抱歉，您的浏览器不支持所需功能。</p>
+      <p>请确保使用现代浏览器并允许麦克风访问。</p>
     </div>
   </div>
 </template>
@@ -32,7 +33,7 @@ export default {
     return {
       isRecording: false,
       status: '未开始',
-      isSupported: 'mediaDevices' in navigator && 'WebSocket' in window && 'AudioWorklet' in window,
+      isSupported: 'mediaDevices' in navigator && 'WebSocket' in window,
       socket: null,
       audioContext: null,
       audioStream: null,
@@ -41,23 +42,25 @@ export default {
       // 为每个客户端生成一个唯一的ID
       clientId: `web-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       websocketOutput: '',
-      audioWorkletNode: null
+      audioWorkletNode: null,
+      scriptProcessorNode: null,
+      usesAudioWorklet: false
     };
   },
   methods: {
     async startRecording() {
       if (this.isRecording) return;
-      // 定义音频参数约束
-      const audioConstraints = {
-        audio: {
-          sampleRate: 16000,   // 期望的采样率，例如 16kHz（语音识别常用）
-          sampleSize: 16,      // 期望的采样位数，例如 16-bit
-          channelCount: 1,     // 期望的声道数，例如单声道
-          echoCancellation: true, // 开启回声消除
-          noiseSuppression: true  // 开启噪声抑制
-        }
-      };
+      
       try {
+        // 先尝试获取麦克风权限，使用更宽松的约束
+        const audioConstraints = {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        };
+        
         // 1. 获取用户麦克风权限和音频流
         this.audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
         this.status = '已获取麦克风权限';
@@ -69,28 +72,26 @@ export default {
         
         // 保存实际配置到组件数据
         this.actualAudioConfig = {
-          sampleRate: settings.sampleRate,
-          channelCount: settings.channelCount,
-          sampleSize: settings.sampleSize || 16 // 如果未提供sampleSize，默认为16
+          sampleRate: settings.sampleRate || 16000,
+          channelCount: settings.channelCount || 1,
+          sampleSize: settings.sampleSize || 16
         };
 
         // 2. 创建 AudioContext
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-          sampleRate: 16000
-        });
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+          throw new Error('AudioContext not supported');
+        }
+        
+        this.audioContext = new AudioContext();
         this.audioContextSampleRate = this.audioContext.sampleRate;
         
-        // 3. 加载 AudioWorklet
-        await this.audioContext.audioWorklet.addModule('/audio-processor.js');
-        
-        // 4. 创建 MediaStreamAudioSourceNode
+        // 3. 创建 MediaStreamAudioSourceNode
         const source = this.audioContext.createMediaStreamSource(this.audioStream);
         
-        // 5. 创建 AudioWorkletNode
-        this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
-        
-        // 6. 建立 WebSocket 连接
-        const wsUrl = `ws://localhost:5000/api/audio/ws/${this.clientId}`;
+        // 4. 建立 WebSocket 连接 - 使用相对URL支持局域网访问
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/api/audio/ws/${this.clientId}`;
         this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = async () => {
@@ -108,19 +109,8 @@ export default {
           this.status = 'WebSocket 已连接，正在录音...';
           this.isRecording = true;
           
-          // 连接音频节点
-          source.connect(this.audioWorkletNode);
-          this.audioWorkletNode.connect(this.audioContext.destination);
-          
-          // 监听来自 AudioWorklet 的 PCM 数据
-          this.audioWorkletNode.port.onmessage = (event) => {
-            if (!this.isRecording || this.socket.readyState !== WebSocket.OPEN) {
-              return;
-            }
-            
-            // 发送原始PCM数据
-            this.socket.send(event.data);
-          };
+          // 5. 设置音频处理节点（优先使用 AudioWorklet，降级到 ScriptProcessorNode）
+          await this.setupAudioProcessing(source);
           
           // 开始音频上下文
           if (this.audioContext.state === 'suspended') {
@@ -153,8 +143,58 @@ export default {
 
       } catch (error) {
         console.error('无法获取麦克风:', error);
-        this.status = '错误：'+error;
+        this.status = '错误：' + (error.message || error);
       }
+    },
+
+    async setupAudioProcessing(source) {
+      // 尝试使用 AudioWorklet（现代浏览器）
+      if ('AudioWorklet' in window) {
+        try {
+          await this.audioContext.audioWorklet.addModule('/audio-processor.js');
+          this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
+          source.connect(this.audioWorkletNode);
+          this.audioWorkletNode.connect(this.audioContext.destination);
+          
+          this.audioWorkletNode.port.onmessage = (event) => {
+            if (!this.isRecording || this.socket.readyState !== WebSocket.OPEN) {
+              return;
+            }
+            this.socket.send(event.data);
+          };
+          
+          this.usesAudioWorklet = true;
+          console.log('使用 AudioWorklet 处理音频');
+          return;
+        } catch (workletError) {
+          console.warn('AudioWorklet 不可用，降级到 ScriptProcessorNode:', workletError);
+        }
+      }
+      
+      // 降级到 ScriptProcessorNode（兼容性更好）
+      this.scriptProcessorNode = this.audioContext.createScriptProcessor(4096, 1, 1);
+      source.connect(this.scriptProcessorNode);
+      this.scriptProcessorNode.connect(this.audioContext.destination);
+      
+      this.scriptProcessorNode.onaudioprocess = (event) => {
+        if (!this.isRecording || this.socket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+        
+        const inputBuffer = event.inputBuffer;
+        const channelData = inputBuffer.getChannelData(0);
+        
+        // 将Float32Array转换为Int16Array (16-bit PCM)
+        const int16Array = new Int16Array(channelData.length);
+        for (let i = 0; i < channelData.length; i++) {
+          int16Array[i] = Math.max(-32768, Math.min(32767, Math.floor(channelData[i] * 32768)));
+        }
+        
+        this.socket.send(int16Array.buffer);
+      };
+      
+      this.usesAudioWorklet = false;
+      console.log('使用 ScriptProcessorNode 处理音频');
     },
 
     stopRecording() {
@@ -173,13 +213,23 @@ export default {
         this.audioStream = null;
       }
       
+      // 断开音频节点连接
+      if (this.audioWorkletNode) {
+        this.audioWorkletNode.disconnect();
+        this.audioWorkletNode = null;
+      }
+      
+      if (this.scriptProcessorNode) {
+        this.scriptProcessorNode.disconnect();
+        this.scriptProcessorNode = null;
+      }
+      
       // 关闭AudioContext
       if (this.audioContext) {
         this.audioContext.close();
         this.audioContext = null;
       }
       
-      this.audioWorkletNode = null;
       this.socket = null;
       this.isRecording = false;
       if (this.status !== 'WebSocket 连接已关闭') {
@@ -201,11 +251,51 @@ export default {
   border-radius: 8px;
   max-width: 400px;
   margin: 20px auto;
+  width: 90%;
+  box-sizing: border-box;
 }
+
+@media (max-width: 480px) {
+  .audio-recorder {
+    padding: 15px;
+    margin: 10px;
+    width: 95%;
+  }
+  
+  h2 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+  }
+  
+  .audio-config h3,
+  .websocket-output h3 {
+    font-size: 1em;
+  }
+  
+  .audio-config ul {
+    padding-left: 20px;
+    font-size: 0.9em;
+  }
+}
+
 button {
   margin: 5px;
-  padding: 10px 15px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  font-size: 16px; /* 防止iOS Safari缩放 */
+  width: 100%;
+  max-width: 200px;
 }
+
+button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
 .websocket-output {
   margin-top: 20px;
   text-align: left;
@@ -213,10 +303,14 @@ button {
   padding: 10px;
   border-radius: 4px;
   overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
 }
+
 .websocket-output pre {
   margin: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
+  font-size: 14px;
 }
 </style>
