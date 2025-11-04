@@ -39,3 +39,8 @@ class UploadResponse(BaseModel):
 
 class WebSocketConfig(BaseModel):
     type: str
+    format: Optional[str] = None
+    sampleRate: Optional[int] = None
+    sampleSize: Optional[int] = None
+    channelCount: Optional[int] = None
+    mimeType: Optional[str] = None

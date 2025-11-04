@@ -23,13 +23,14 @@ export default {
     return {
       isRecording: false,
       status: '未开始',
-      isSupported: 'mediaDevices' in navigator && 'WebSocket' in window,
+      isSupported: 'mediaDevices' in navigator && 'WebSocket' in window && 'AudioWorklet' in window,
       socket: null,
-      mediaRecorder: null,
+      audioContext: null,
       audioStream: null,
       // 为每个客户端生成一个唯一的ID
-      clientId: `web-client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      websocketOutput: ''
+      clientId: `web-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      websocketOutput: '',
+      audioWorkletNode: null
     };
   },
   methods: {
@@ -55,17 +56,32 @@ export default {
         const settings = audioTrack.getSettings();
         console.log('实际应用的音频配置:', settings);
 
-        // 2. 建立 WebSocket 连接
-        const wsUrl = `ws://localhost:5000/api/audio/ws/${this.clientId}`; // 确保主机和端口正确
+        // 2. 创建 AudioContext
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+          sampleRate: 16000
+        });
+        
+        // 3. 加载 AudioWorklet
+        await this.audioContext.audioWorklet.addModule('/audio-processor.js');
+        
+        // 4. 创建 MediaStreamAudioSourceNode
+        const source = this.audioContext.createMediaStreamSource(this.audioStream);
+        
+        // 5. 创建 AudioWorkletNode
+        this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
+        
+        // 6. 建立 WebSocket 连接
+        const wsUrl = `ws://localhost:5000/api/audio/ws/${this.clientId}`;
         this.socket = new WebSocket(wsUrl);
 
-        this.socket.onopen = () => {
-          // 定义并发送元数据
+        this.socket.onopen = async () => {
+          // 发送元数据
           const metadata = {
-            type: 'config', // 消息类型
-            mimeType: 'audio/webm;codecs=opus', // 我们期望的格式
-            sampleRate: settings.sampleRate, // 发送浏览器实际使用的采样率
-            channelCount: settings.channelCount // 发送实际的声道数
+            type: 'config',
+            format: 'pcm',
+            sampleRate: 16000,
+            sampleSize: 16,
+            channelCount: 1
           };
           this.socket.send(JSON.stringify(metadata));
           console.log('已发送元数据:', metadata);
@@ -73,26 +89,24 @@ export default {
           this.status = 'WebSocket 已连接，正在录音...';
           this.isRecording = true;
           
-          // 3. 创建 MediaRecorder 实例
-          const mediaRecorderOptions = { mimeType: 'audio/webm;codecs=opus' };
-          try {
-              this.mediaRecorder = new MediaRecorder(this.audioStream, mediaRecorderOptions);
-          } catch (e) {
-              console.warn("无法使用指定的mimeType，回退到默认设置:", e);
-              this.mediaRecorder = new MediaRecorder(this.audioStream);
-          }
-
-          // 4. 设置 ondataavailable 回调，当有音频数据时触发
-          this.mediaRecorder.ondataavailable = (event) => {
-            // 确保有数据并且WebSocket处于连接状态
-            if (event.data.size > 0 && this.socket.readyState === WebSocket.OPEN) {
-              // 5. 通过 WebSocket 发送音频数据块
-              this.socket.send(event.data);
+          // 连接音频节点
+          source.connect(this.audioWorkletNode);
+          this.audioWorkletNode.connect(this.audioContext.destination);
+          
+          // 监听来自 AudioWorklet 的 PCM 数据
+          this.audioWorkletNode.port.onmessage = (event) => {
+            if (!this.isRecording || this.socket.readyState !== WebSocket.OPEN) {
+              return;
             }
+            
+            // 发送原始PCM数据
+            this.socket.send(event.data);
           };
-
-          // 6. 启动 MediaRecorder，timeslice 参数表示每 200ms 触发一次 ondataavailable
-          this.mediaRecorder.start(200);
+          
+          // 开始音频上下文
+          if (this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+          }
         };
 
         // 接收后端通过WebSocket发送的处理结果
@@ -127,9 +141,6 @@ export default {
     stopRecording() {
       if (!this.isRecording) return;
       this.status = '正在停止...';
-      if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-        this.mediaRecorder.stop();
-      }
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         this.socket.close();
       }
@@ -142,7 +153,14 @@ export default {
         this.audioStream.getTracks().forEach(track => track.stop());
         this.audioStream = null;
       }
-      this.mediaRecorder = null;
+      
+      // 关闭AudioContext
+      if (this.audioContext) {
+        this.audioContext.close();
+        this.audioContext = null;
+      }
+      
+      this.audioWorkletNode = null;
       this.socket = null;
       this.isRecording = false;
       if (this.status !== 'WebSocket 连接已关闭') {

@@ -26,28 +26,24 @@ async def receive_loop(websocket: WebSocket, context: Context) -> None:
 async def decode_loop(context: Context) -> None:
     """负责解码并放入队列"""
     logger.info("解码已启动")
-    chunk_counter = 0
-    header_chunk: Optional[bytes] = None
     while True:
         try:
             data_bytes = await context.audio_input_queue.get()
-            logger.info("try decoded data")
-            # first_8_bytes_hex = binascii.hexlify(data_bytes[:8]).decode('ascii')
-            # logger.info(f"Chunk #{chunk_counter}: Received {len(data_bytes)} bytes. First 8 bytes: {first_8_bytes_hex}")
-            # if data_bytes.startswith(b'\x1a\x45\xdf\xa3'):
-            #     logger.success(f"Chunk #{chunk_counter}: Found WebM EBML header (magic number)!")
-            # else:
-            #     logger.warning(f"Chunk #{chunk_counter}: Does NOT start with WebM header.")
-            if header_chunk is None:
-                header_chunk = data_bytes
-                data_to_decode = header_chunk
-            else:
-                data_to_decode = header_chunk + data_bytes
-            chunk_counter += 1
-            pcm_frame = await context.decoder.decode_chunk(data_to_decode)
-            if pcm_frame is not None:
-                logger.trace("处理解码后的PCM数据，形状: {shape}, 类型: {dtype}", shape=pcm_frame.shape, dtype=pcm_frame.dtype)
-                await context.audio_np_queue.put(pcm_frame)
+            logger.info("Processing PCM data, size: {size} bytes", size=len(data_bytes))
+            
+            # 直接处理PCM原始数据（16kHz, 16bit, 单声道）
+            if len(data_bytes) == 0:
+                continue
+                
+            # 将bytes转换为int16数组，然后归一化到-1.0到1.0的float32范围
+            int16_array = np.frombuffer(data_bytes, dtype=np.int16)
+            float32_array = int16_array.astype(np.float32) / 32768.0
+            
+            # 重塑为(1, N)的形状，表示单声道
+            pcm_frame = float32_array.reshape(1, -1)
+            
+            logger.trace("处理PCM数据，形状: {shape}, 类型: {dtype}", shape=pcm_frame.shape, dtype=pcm_frame.dtype)
+            await context.audio_np_queue.put(pcm_frame)
         except Exception as e:
             logger.exception("解码错误")
 
