@@ -1,29 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 from loguru import logger
 
 from src.config.config import LLMSettings
 from src.module.llm.base_llm_handler import BaseLLMHandler
 
 
-class OllamaLLMHandler(BaseLLMHandler):
+class ModelScopeLLMHandler(BaseLLMHandler):
     def __init__(self, settings: LLMSettings) -> None:
         """
-        初始化使用LangChain的异步Ollama大语言模型处理器。
+        初始化使用LangChain的ModelScope大语言模型处理器。
 
         Args:
             settings (LLMSettings): LLM参数
         """
         super().__init__(settings)
 
-        # 1. 初始化ChatOllama模型
-        # ChatOllama原生支持异步操作
+        # 1. 初始化ChatOpenAI模型 for ModelScope
+        # ModelScope API is compatible with OpenAI API
         try:
-            self.model = ChatOllama(model=settings.MODEL)
+            # 处理 SecretStr 类型的 API key
+            self.model = ChatOpenAI(
+                model=settings.MODEL,
+                base_url=settings.MODELSCOPE_BASE_URL,
+                api_key=settings.MODELSCOPE_API_KEY,
+                temperature=0.1,
+                max_tokens=1024
+            )
         except Exception as e:
-            logger.exception("初始化ChatOllama客户端失败，请确保Ollama服务正在运行。")
+            logger.exception("初始化ModelScope客户端失败，请检查API配置。")
             exit(1)
 
         # 2. 将工具绑定到模型
@@ -32,9 +39,9 @@ class OllamaLLMHandler(BaseLLMHandler):
         # 3. 构建处理链 (Chain)
         self.chain = self.prompt_template | self.model_with_tools | self.output_parser
 
-        logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.MODEL)
+        logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.MODEL)
 
-    async def get_response(self, user_input: str, rag_docs: List) -> str:
+    async def get_response(self, user_input: str, rag_docs: list) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
 
@@ -58,7 +65,7 @@ class OllamaLLMHandler(BaseLLMHandler):
             return self._map_tool_calls_to_response(tool_calls)
 
         except Exception as api_error:
-            logger.exception("调用Ollama API或处理链时出错: {error}", error=str(api_error))
+            logger.exception("调用ModelScope API或处理链时出错: {error}", error=str(api_error))
             # 保持错误返回格式的一致性
             error_response = {
                 "action": "error",

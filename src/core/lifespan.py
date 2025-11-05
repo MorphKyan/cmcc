@@ -8,6 +8,7 @@ from src.config.config import settings
 from src.core import dependencies
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.llm.ollama_llm_handler import OllamaLLMHandler
+from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
 from src.module.rag.rag_processor import RAGProcessor
 from src.module.vad.vad_core import VADCore
 
@@ -26,7 +27,14 @@ async def lifespan(app: FastAPI):
         dependencies.vad_core = VADCore(vad_config)
         dependencies.rag_processor = RAGProcessor(rag_config)
         dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
-        dependencies.llm_processor = OllamaLLMHandler(llm_config)
+        
+        # Initialize LLM processor based on provider configuration
+        if llm_config.PROVIDER.lower() == "modelscope":
+            dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
+            logger.info("使用ModelScope LLM处理器")
+        else:
+            dependencies.llm_processor = OllamaLLMHandler(llm_config)
+            logger.info("使用Ollama LLM处理器")
 
         asyncio.create_task(dependencies.rag_processor.initialize())
 

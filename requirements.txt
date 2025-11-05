@@ -10,6 +10,7 @@ langchain
 chromadb
 sentence-transformers
 langchain-community
+langchain-openai
 ollama
 fastapi
 uvicorn[standard]

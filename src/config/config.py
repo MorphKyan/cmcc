@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 import pandas as pd
 import pyaudio
 from loguru import logger
+from pydantic import SecretStr
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data_dir = os.path.join(os.path.dirname(project_dir), "data")
@@ -178,6 +179,11 @@ class LLMSettings(BaseSettings):
     SYSTEM_PROMPT_TEMPLATE: str = SYSTEM_PROMPT_TEMPLATE
     SCREENS_INFO: list = SCREENS_INFO
     DOORS_INFO: list = DOORS_INFO
+    # LLM Provider selection: "ollama" or "modelscope"
+    PROVIDER: str = "ollama"
+    # ModelScope specific settings
+    MODELSCOPE_BASE_URL: str = "https://api-inference.modelscope.cn/v1"
+    MODELSCOPE_API_KEY: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
 
 
 # 你也可以创建一个总的配置对象
