@@ -2,17 +2,44 @@
 # -*- coding: utf-8 -*-
 
 import os
+import tomllib
 from typing import Any, Dict, List
 
 import pandas as pd
 import pyaudio
 from loguru import logger
 from pydantic import SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# 项目目录配置
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data_dir = os.path.join(os.path.dirname(project_dir), "data")
+config_dir = os.path.join(os.path.dirname(project_dir), "config")
 
-from pydantic_settings import BaseSettings
+
+def load_config_from_toml(config_path: str = None) -> dict:
+    """
+    从 TOML 文件加载配置
+    
+    Args:
+        config_path: 配置文件路径，如果为 None 则使用默认路径
+        
+    Returns:
+        dict: 配置字典
+    """
+    if config_path is None:
+        config_path = os.path.join(config_dir, "config.toml")
+
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "rb") as f:
+                return tomllib.load(f)
+        except Exception as e:
+            logger.warning(f"加载 TOML 配置文件失败: {e}，使用默认配置")
+            return {}
+    else:
+        logger.warning(f"TOML 配置文件不存在: {config_path}，使用默认配置")
+        return {}
 
 
 def load_screens_data(path: str) -> List[Dict[str, Any]]:
@@ -137,71 +164,104 @@ SYSTEM_PROMPT_TEMPLATE = """
 
 
 class VADSettings(BaseSettings):
-    class Config:
-        env_prefix = 'VAD_'
+    model_config = SettingsConfigDict(env_prefix="VAD_")
 
-    CHUNK_SIZE: int = 200
-    SAMPLE_RATE: int = 16000
-    MODEL: str = "fsmn-vad"
-    KWARGS: dict = {"max_single_segment_time": 20000}  # 最大切割音频时长(ms)
+    chunk_size: int = 200
+    sample_rate: int = 16000
+    model: str = "fsmn-vad"
+    max_single_segment_time: int = 20000  # 最大切割音频时长(ms)
 
 
 class FunASRSettings(BaseSettings):
-    # 为这组配置加上统一的前缀，便于从环境变量加载
-    class Config:
-        env_prefix = 'FUNASR_'
+    model_config = SettingsConfigDict(env_prefix="FUNASR_")
 
-    MODEL: str = "iic/SenseVoiceSmall"
-    LANGUAGE: str = "auto"
-    USE_ITN: bool = True
-    BATCH_SIZE_S: float = 60  # 动态batch，batch中的音频总时长上限(秒)
-    MERGE_VAD: bool = True
-    MERGE_LENGTH_S: float = 15
+    model: str = "iic/SenseVoiceSmall"
+    language: str = "auto"
+    use_itn: bool = True
+    batch_size_s: float = 60.0  # 动态batch，batch中的音频总时长上限(秒)
+    merge_vad: bool = True
+    merge_length_s: float = 15.0
 
 
 class RAGSettings(BaseSettings):
-    class Config:
-        env_prefix = 'RAG_'
+    model_config = SettingsConfigDict(env_prefix="RAG_")
 
-    VIDEOS_DATA_PATH: str = os.path.join(data_dir, "videos.csv")
-    CHROMA_DB_DIR: str = os.path.join(project_dir, "chroma_db")
-    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
-    OLLAMA_EMBEDDING_MODEL: str = "qwen3-embedding:0.6b"
-    TOP_K_RESULTS: int = 3  # 检索返回的文档数
+    videos_data_path: str = os.path.join(data_dir, "videos.csv")
+    chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_embedding_model: str = "qwen3-embedding:0.6b"
+    top_k_results: int = 3  # 检索返回的文档数
 
 
 class LLMSettings(BaseSettings):
-    class Config:
-        env_prefix = 'LLM_'
+    model_config = SettingsConfigDict(env_prefix="LLM_")
 
-    MODEL: str = "qwen3:8b"
-    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
-    SYSTEM_PROMPT_TEMPLATE: str = SYSTEM_PROMPT_TEMPLATE
-    SCREENS_INFO: list = SCREENS_INFO
-    DOORS_INFO: list = DOORS_INFO
+    model: str = "qwen3:8b"
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    system_prompt_template: str = SYSTEM_PROMPT_TEMPLATE
+    screens_info: list = SCREENS_INFO
+    doors_info: list = DOORS_INFO
     # LLM Provider selection: "ollama" or "modelscope"
-    PROVIDER: str = "ollama"
+    provider: str = "ollama"
     # ModelScope specific settings
-    MODELSCOPE_BASE_URL: str = "https://api-inference.modelscope.cn/v1"
-    MODELSCOPE_API_KEY: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
+    modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
+    modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
 
 
-# 你也可以创建一个总的配置对象
+class VolcEngineSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="VOLCENGINE_")
+
+    ark_api_key: str = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
+    ark_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
+    llm_model_name: str = "doubao-seed-1-6-flash-250715"
+
+
 class AppSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_nested_delimiter='__',
+        env_file=None,
+        extra='allow'
+    )
+
     vad: VADSettings = VADSettings()
     asr: FunASRSettings = FunASRSettings()
     rag: RAGSettings = RAGSettings()
     llm: LLMSettings = LLMSettings()
+    volcengine: VolcEngineSettings = VolcEngineSettings()
+
+    def __init__(self, **kwargs):
+        # 加载 TOML 配置
+        toml_config = load_config_from_toml()
+        
+        # 合并配置：kwargs > TOML 配置
+        # Pydantic 会自动处理环境变量（环境变量 > 所有其他配置）
+        combined_config = {**toml_config, **kwargs}
+        
+        super().__init__(**combined_config)
 
 
-settings = AppSettings()
+# 延迟初始化配置实例
+_settings = None
 
-# --- API Keys and Endpoints ---
-# 请从火山引擎官网获取您的API Key并替换
-# https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey
-ARK_API_KEY = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
-ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
-LLM_MODEL_NAME = "doubao-seed-1-6-flash-250715"
+
+def get_settings():
+    global _settings
+    if _settings is None:
+        _settings = AppSettings()
+    return _settings
+
+
+# 为了向后兼容，仍然提供 settings 属性
+# 但建议使用 get_settings() 函数
+class SettingsProxy:
+    def __getattr__(self, name):
+        return getattr(get_settings(), name)
+
+    def __setattr__(self, name, value):
+        setattr(get_settings(), name, value)
+
+
+settings = SettingsProxy()
 
 # --- Audio Settings ---
 FORMAT = pyaudio.paInt16
@@ -209,7 +269,7 @@ CHANNELS = 1
 RATE = 16000  # FunASR的最佳采样率
 CHUNK = 1024
 
-# --- System Prompt ---
+# --- System Prompt (V1版本，保持兼容) ---
 SYSTEM_PROMPT_TEMPLATE_V1 = """
 # 角色与任务
 你是一个中国移动智慧展厅的中央控制AI助手。你的核心任务是将用户的自然语言语音指令，精确地转换为结构化的JSON指令，以便后续程序执行。你必须严格遵循以下知识库和行为准则。

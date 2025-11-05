@@ -1,0 +1,40 @@
+# 语音活动检测 (VAD) 配置
+[vad]
+chunk_size = 200
+sample_rate = 16000
+model = "fsmn-vad"
+# VAD 最大切割音频时长(ms)
+max_single_segment_time = 20000
+
+# FunASR 语音识别配置
+[asr]
+model = "iic/SenseVoiceSmall"
+language = "auto"
+use_itn = true
+batch_size_s = 60.0
+merge_vad = true
+merge_length_s = 15.0
+
+# RAG (检索增强生成) 配置
+[rag]
+videos_data_path = "../data/videos.csv"
+chroma_db_dir = "../chroma_db"
+ollama_base_url = "http://127.0.0.1:11434"
+ollama_embedding_model = "qwen3-embedding:0.6b"
+top_k_results = 3
+
+# 大语言模型 (LLM) 配置
+[llm]
+model = "qwen3:8b"
+ollama_base_url = "http://127.0.0.1:11434"
+# LLM 提供商选择: "ollama" 或 "modelscope"
+provider = "ollama"
+# ModelScope 配置
+modelscope_base_url = "https://api-inference.modelscope.cn/v1"
+modelscope_api_key = "ms-b5d21340-4551-4343-86e8-e1c1430ae1f9"
+
+# 火山引擎配置 (备用)
+[volcengine]
+ark_api_key = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
+ark_base_url = "https://ark.cn-beijing.volces.com/api/v3"
+llm_model_name = "doubao-seed-1-6-flash-250715"

@@ -1,6 +1,7 @@
 /.conda
 /__pycache__
 /chroma_db
+/config/config.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
