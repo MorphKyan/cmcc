@@ -1,9 +1,23 @@
 <template>
   <div class="audio-recorder">
     <h2>网页麦克风输入</h2>
-    <button @click="startRecording" :disabled="isRecording">开始录音</button>
-    <button @click="stopRecording" :disabled="!isRecording">停止录音</button>
-    <p>状态: {{ status }}</p>
+    
+    <!-- 原有的 AudioWorklet 录音控件 -->
+    <div class="recorder-section">
+      <h3>AudioWorklet 录音</h3>
+      <button @click="startRecording" :disabled="isRecording">开始录音</button>
+      <button @click="stopRecording" :disabled="!isRecording">停止录音</button>
+      <p>状态: {{ status }}</p>
+    </div>
+    
+    <!-- 新的 Recorder.js 录音控件 -->
+    <div class="recorder-section">
+      <h3>Recorder.js 录音</h3>
+      <button @click="startRecorderRecording" :disabled="isRecorderRecording">开始录音 (Recorder)</button>
+      <button @click="stopRecorderRecording" :disabled="!isRecorderRecording">停止录音 (Recorder)</button>
+      <p>Recorder 状态: {{ recorderStatus }}</p>
+    </div>
+    
     <div v-if="actualAudioConfig" class="audio-config">
       <h3>实际音频配置:</h3>
       <ul>
@@ -35,7 +49,12 @@ export default {
       // 为每个客户端生成一个唯一的ID
       clientId: `web-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       websocketOutput: '',
-      audioWorkletNode: null
+      audioWorkletNode: null,
+      // Recorder.js 相关
+      isRecorderRecording: false,
+      recorderStatus: '未开始',
+      recorder: null,
+      recorderSocket: null
     };
   },
   methods: {
@@ -187,11 +206,138 @@ export default {
       if (this.status !== 'WebSocket 连接已关闭') {
         this.status = '已停止';
       }
+    },
+
+    // Recorder.js 相关方法
+    startRecorderRecording() {
+      if (this.isRecorderRecording) return;
+
+      try {
+        // 创建唯一的客户端ID用于Recorder
+        const recorderClientId = `recorder-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        
+        // 建立 WebSocket 连接
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/api/audio/ws/${recorderClientId}`;
+        this.recorderSocket = new WebSocket(wsUrl);
+
+        this.recorderSocket.onopen = () => {
+          // 发送元数据
+          const metadata = {
+            type: 'config',
+            format: 'pcm',
+            sampleRate: 16000,
+            sampleSize: 16,
+            channelCount: 1
+          };
+          this.recorderSocket.send(JSON.stringify(metadata));
+          console.log('Recorder: 已发送元数据:', metadata);
+
+          // 初始化Recorder
+          this.recorder = Recorder({
+            type: "pcm",
+            sampleRate: 16000,
+            bitRate: 16,
+            onProcess: (buffers, powerLevel, bufferDuration, bufferSampleRate, newBufferIdx, asyncEnd) => {
+              // 实时处理PCM数据
+              if (!this.isRecorderRecording || this.recorderSocket.readyState !== WebSocket.OPEN) {
+                return;
+              }
+              
+              // 获取最新的PCM数据块
+              const latestBuffer = buffers[buffers.length - 1];
+              if (latestBuffer && latestBuffer.length > 0) {
+                // 直接发送ArrayBuffer到WebSocket
+                this.recorderSocket.send(latestBuffer.buffer);
+              }
+            }
+          });
+
+          this.recorder.open(
+            () => {
+              // 麦克风权限获取成功
+              this.recorder.start();
+              this.isRecorderRecording = true;
+              this.recorderStatus = 'Recorder 正在录音...';
+              console.log('Recorder: 开始录音');
+            },
+            (msg, isUserNotAllow) => {
+              console.error('Recorder: 无法录音:', msg, isUserNotAllow ? '用户拒绝授权' : '');
+              this.recorderStatus = 'Recorder 错误：' + msg;
+              this.recorderSocket.close();
+            }
+          );
+        };
+
+        this.recorderSocket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            this.websocketOutput = JSON.stringify(data, null, 2);
+          } catch (e) {
+            this.websocketOutput = event.data;
+          }
+        };
+
+        this.recorderSocket.onclose = () => {
+          this.recorderStatus = 'Recorder WebSocket 连接已关闭';
+          this.cleanupRecorder();
+        };
+
+        this.recorderSocket.onerror = (error) => {
+          console.error('Recorder WebSocket Error:', error);
+          this.recorderStatus = 'Recorder WebSocket 连接出错';
+          this.cleanupRecorder();
+        };
+
+      } catch (error) {
+        console.error('Recorder: 无法初始化:', error);
+        this.recorderStatus = 'Recorder 错误：' + (error.message || error);
+      }
+    },
+
+    stopRecorderRecording() {
+      if (!this.isRecorderRecording) return;
+      this.recorderStatus = 'Recorder 正在停止...';
+      
+      if (this.recorder) {
+        this.recorder.stop(
+          (blob, duration) => {
+            console.log('Recorder: 录音完成', blob, duration);
+            this.cleanupRecorder();
+          },
+          (msg) => {
+            console.error('Recorder: 录音失败', msg);
+            this.cleanupRecorder();
+          }
+        );
+      } else {
+        this.cleanupRecorder();
+      }
+    },
+
+    cleanupRecorder() {
+      // 清理Recorder资源
+      if (this.recorder) {
+        this.recorder.close();
+        this.recorder = null;
+      }
+
+      // 关闭WebSocket
+      if (this.recorderSocket) {
+        this.recorderSocket.close();
+        this.recorderSocket = null;
+      }
+
+      this.isRecorderRecording = false;
+      if (this.recorderStatus !== 'Recorder WebSocket 连接已关闭') {
+        this.recorderStatus = 'Recorder 已停止';
+      }
     }
   },
   beforeUnmount() {
     // 组件销毁前确保资源被清理
     this.stopRecording();
+    this.stopRecorderRecording();
   }
 };
 </script>
@@ -207,6 +353,21 @@ export default {
   box-sizing: border-box;
 }
 
+.recorder-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+}
+
+.recorder-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 1.1em;
+}
+
 @media (max-width: 480px) {
   .audio-recorder {
     padding: 15px;
@@ -217,6 +378,16 @@ export default {
   h2 {
     font-size: 1.2em;
     margin-bottom: 15px;
+  }
+
+  .recorder-section {
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+
+  .recorder-section h3 {
+    font-size: 1em;
+    margin-bottom: 10px;
   }
 
   .audio-config h3,
