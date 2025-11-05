@@ -116,7 +116,7 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="只支持上传CSV文件")
 
         # 保存上传的文件到临时位置
-        temp_file_path = os.path.join(os.path.dirname(settings.rag.VIDEOS_DATA_PATH), 'temp_videos.csv')
+        temp_file_path = os.path.join(os.path.dirname(settings.rag.videos_data_path), 'temp_videos.csv')
 
         # 读取上传的文件内容
         contents = await file.read()
@@ -132,12 +132,12 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
         # 备份原文件
-        backup_path = settings.rag.VIDEOS_DATA_PATH + '.backup'
-        if os.path.exists(settings.rag.VIDEOS_DATA_PATH):
-            shutil.copy2(settings.rag.VIDEOS_DATA_PATH, backup_path)
+        backup_path = settings.rag.videos_data_path + '.backup'
+        if os.path.exists(settings.rag.videos_data_path):
+            shutil.copy2(settings.rag.videos_data_path, backup_path)
 
         # 替换原文件
-        shutil.move(temp_file_path, settings.rag.VIDEOS_DATA_PATH)
+        shutil.move(temp_file_path, settings.rag.videos_data_path)
 
         # 刷新RAG数据库
         success, _ = refresh_rag_database()
@@ -145,7 +145,7 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
         if not success:
             # 如果刷新失败，恢复备份文件
             if os.path.exists(backup_path):
-                shutil.move(backup_path, settings.rag.VIDEOS_DATA_PATH)
+                shutil.move(backup_path, settings.rag.videos_data_path)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="上传成功但刷新RAG数据库失败，已恢复原文件")
 
         # 删除备份文件
@@ -156,7 +156,7 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
 
     except Exception as e:
         # 删除可能存在的临时文件
-        temp_file_path = os.path.join(os.path.dirname(settings.rag.VIDEOS_DATA_PATH), 'temp_videos.csv')
+        temp_file_path = os.path.join(os.path.dirname(settings.rag.videos_data_path), 'temp_videos.csv')
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"上传videos.csv文件时发生异常: {str(e)}")

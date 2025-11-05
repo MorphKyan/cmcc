@@ -35,8 +35,8 @@ class RAGProcessor:
             settings (RAGSettings): RAG配置
         """
         self.settings = settings
-        self.videos_data_path = settings.VIDEOS_DATA_PATH
-        self.chroma_db_dir = settings.CHROMA_DB_DIR
+        self.videos_data_path = settings.videos_data_path
+        self.chroma_db_dir = settings.chroma_db_dir
 
         # 初始化状态和核心组件
         self.status = RAGStatus.UNINITIALIZED
@@ -67,8 +67,8 @@ class RAGProcessor:
                 await self._check_ollama_connection()
                 # 步骤 2: 初始化Embedding模型
                 self.embedding_model = OllamaEmbeddings(
-                    model=self.settings.OLLAMA_EMBEDDING_MODEL,
-                    base_url=self.settings.OLLAMA_BASE_URL
+                    model=self.settings.ollama_embedding_model,
+                    base_url=self.settings.ollama_base_url
                 )
                 # 步骤 3: 创建或加载向量数据库
                 if not os.path.exists(self.chroma_db_dir):
@@ -78,13 +78,13 @@ class RAGProcessor:
                     logger.info("正在从本地加载向量数据库...")
                     self.vector_store = await asyncio.to_thread(
                         Chroma,
-                        persist_directory=self.settings.CHROMA_DB_DIR,
+                        persist_directory=self.settings.chroma_db_dir,
                         embedding_function=self.embedding_model
                     )
 
                 # 步骤 4: 创建Retriever
                 self.retriever = self.vector_store.as_retriever(
-                    search_kwargs={"k": self.settings.TOP_K_RESULTS}
+                    search_kwargs={"k": self.settings.top_k_results}
                 )
                 self.status = RAGStatus.READY
                 self.error_message = None
@@ -97,29 +97,29 @@ class RAGProcessor:
                 raise
 
     async def _check_ollama_connection(self) -> None:
-        logger.info("正在检查Ollama服务连接: {url}", url=self.settings.OLLAMA_BASE_URL)
+        logger.info("正在检查Ollama服务连接: {url}", url=self.settings.ollama_base_url)
         try:
             # 检查Ollama服务是否在线
-            response = await self._http_client.get(self.settings.OLLAMA_BASE_URL)
+            response = await self._http_client.get(self.settings.ollama_base_url)
             response.raise_for_status()
             # 检查所需模型是否已拉取
-            api_url = urljoin(self.settings.OLLAMA_BASE_URL, "api/tags")
+            api_url = urljoin(self.settings.ollama_base_url, "api/tags")
             response = await self._http_client.get(api_url)
             response.raise_for_status()
 
             available_models = [m['name'] for m in response.json().get('models', [])]
             logger.info("Ollama服务连接成功。可用模型: {models}", models=available_models)
-            if self.settings.OLLAMA_EMBEDDING_MODEL not in available_models:
+            if self.settings.ollama_embedding_model not in available_models:
                 error_msg = (
-                    f"Ollama服务中未找到所需模型: '{self.settings.OLLAMA_EMBEDDING_MODEL}'. "
-                    f"请先执行: ollama pull {self.settings.OLLAMA_EMBEDDING_MODEL}"
+                    f"Ollama服务中未找到所需模型: '{self.settings.ollama_embedding_model}'. "
+                    f"请先执行: ollama pull {self.settings.ollama_embedding_model}"
                 )
                 raise RuntimeError(error_msg)
 
-            logger.info("所需Embedding模型 '{model}' 在Ollama中可用。", model=self.settings.OLLAMA_EMBEDDING_MODEL)
+            logger.info("所需Embedding模型 '{model}' 在Ollama中可用。", model=self.settings.ollama_embedding_model)
 
         except httpx.RequestError as e:
-            raise ConnectionError(f"无法连接到Ollama服务: {self.settings.OLLAMA_BASE_URL}。请确保Ollama正在运行。") from e
+            raise ConnectionError(f"无法连接到Ollama服务: {self.settings.ollama_base_url}。请确保Ollama正在运行。") from e
         except Exception as e:
             raise RuntimeError(f"检查Ollama时发生未知错误: {e}") from e
 
@@ -129,7 +129,7 @@ class RAGProcessor:
         """
         try:
             # 只加载videos数据
-            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.VIDEOS_DATA_PATH])
+            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
 
             if not documents:
                 raise ValueError("从CSV加载的文档为空，无法创建数据库。")
@@ -165,7 +165,7 @@ class RAGProcessor:
         """
         logger.info("正在刷新RAG数据库...")
         try:
-            db_dir = self.settings.CHROMA_DB_DIR
+            db_dir = self.settings.chroma_db_dir
             if os.path.exists(db_dir):
                 logger.info("正在删除旧的数据库 '{db_dir}'...", db_dir=db_dir)
                 await asyncio.to_thread(shutil.rmtree, db_dir)

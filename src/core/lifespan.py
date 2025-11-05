@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
         dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
         
         # Initialize LLM processor based on provider configuration
-        if llm_config.PROVIDER.lower() == "modelscope":
+        if llm_config.provider.lower() == "modelscope":
             dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
             logger.info("使用ModelScope LLM处理器")
         else:

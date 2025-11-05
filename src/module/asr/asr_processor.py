@@ -41,7 +41,7 @@ class ASRProcessor:
         """初始化FunASR语音识别模型"""
         logger.info("ASR处理器正在加载语音识别模型...")
         self.model = AutoModel(
-            model=self.settings.MODEL,
+            model=self.settings.model,
             trust_remote_code=False,
             # vad_model=self.settings.VAD_MODEL,
             # vad_kwargs=self.settings.VAD_KWARGS,
@@ -64,9 +64,9 @@ class ASRProcessor:
 
         # 进行语音识别
         res = self.model.generate(
-            input=audio_data, cache={}, language=self.settings.LANGUAGE, use_itn=self.settings.USE_ITN,
-            batch_size_s=self.settings.BATCH_SIZE_S, merge_vad=self.settings.MERGE_VAD,
-            merge_length_s=self.settings.MERGE_LENGTH_S,
+            input=audio_data, cache={}, language=self.settings.language, use_itn=self.settings.use_itn,
+            batch_size_s=self.settings.batch_size_s, merge_vad=self.settings.merge_vad,
+            merge_length_s=self.settings.merge_length_s,
             ban_emo_unk=True  # 禁止输出感情标签
         )
 
@@ -81,9 +81,9 @@ class ASRProcessor:
                 data = data.astype(np.float32) / 32768.0
 
         model_results = self.model.generate(
-            input=audio_data, cache={}, language=self.settings.LANGUAGE, use_itn=self.settings.USE_ITN,
-            batch_size_s=self.settings.BATCH_SIZE_S, merge_vad=self.settings.MERGE_VAD,
-            merge_length_s=self.settings.MERGE_LENGTH_S,
+            input=audio_data, cache={}, language=self.settings.language, use_itn=self.settings.use_itn,
+            batch_size_s=self.settings.batch_size_s, merge_vad=self.settings.merge_vad,
+            merge_length_s=self.settings.merge_length_s,
             ban_emo_unk=True
         )
 

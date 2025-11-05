@@ -25,7 +25,8 @@ top_k_results = 3
 
 # 大语言模型 (LLM) 配置
 [llm]
-model = "qwen3:8b"
+#model = "qwen3:8b"
+model = "Qwen/Qwen3-8B"
 ollama_base_url = "http://127.0.0.1:11434"
 # LLM 提供商选择: "ollama" 或 "modelscope"
 provider = "modelscope"

@@ -28,7 +28,7 @@ def load_config_from_toml(config_path: str = None) -> dict:
         dict: 配置字典
     """
     if config_path is None:
-        config_path = os.path.join(config_dir, "config.toml")
+        config_path = os.path.join(config_dir, "config.example.toml")
 
     if os.path.exists(config_path):
         try:
@@ -166,54 +166,54 @@ SYSTEM_PROMPT_TEMPLATE = """
 class VADSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="VAD_")
 
-    CHUNK_SIZE: int = 200
-    SAMPLE_RATE: int = 16000
-    MODEL: str = "fsmn-vad"
-    MAX_SINGLE_SEGMENT_TIME: int = 20000  # 最大切割音频时长(ms)
+    chunk_size: int = 200
+    sample_rate: int = 16000
+    model: str = "fsmn-vad"
+    max_single_segment_time: int = 20000  # 最大切割音频时长(ms)
 
 
 class FunASRSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FUNASR_")
 
-    MODEL: str = "iic/SenseVoiceSmall"
-    LANGUAGE: str = "auto"
-    USE_ITN: bool = True
-    BATCH_SIZE_S: float = 60.0  # 动态batch，batch中的音频总时长上限(秒)
-    MERGE_VAD: bool = True
-    MERGE_LENGTH_S: float = 15.0
+    model: str = "iic/SenseVoiceSmall"
+    language: str = "auto"
+    use_itn: bool = True
+    batch_size_s: float = 60.0  # 动态batch，batch中的音频总时长上限(秒)
+    merge_vad: bool = True
+    merge_length_s: float = 15.0
 
 
 class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
-    VIDEOS_DATA_PATH: str = os.path.join(data_dir, "videos.csv")
-    CHROMA_DB_DIR: str = os.path.join(project_dir, "chroma_db")
-    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
-    OLLAMA_EMBEDDING_MODEL: str = "qwen3-embedding:0.6b"
-    TOP_K_RESULTS: int = 3  # 检索返回的文档数
+    videos_data_path: str = os.path.join(data_dir, "videos.csv")
+    chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_embedding_model: str = "qwen3-embedding:0.6b"
+    top_k_results: int = 3  # 检索返回的文档数
 
 
 class LLMSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LLM_")
 
-    MODEL: str = "qwen3:8b"
-    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
-    SYSTEM_PROMPT_TEMPLATE: str = SYSTEM_PROMPT_TEMPLATE
-    SCREENS_INFO: list = SCREENS_INFO
-    DOORS_INFO: list = DOORS_INFO
+    model: str = "qwen3:8b"
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    system_prompt_template: str = SYSTEM_PROMPT_TEMPLATE
+    screens_info: list = SCREENS_INFO
+    doors_info: list = DOORS_INFO
     # LLM Provider selection: "ollama" or "modelscope"
-    PROVIDER: str = "ollama"
+    provider: str = "ollama"
     # ModelScope specific settings
-    MODELSCOPE_BASE_URL: str = "https://api-inference.modelscope.cn/v1"
-    MODELSCOPE_API_KEY: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
+    modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
+    modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
 
 
 class VolcEngineSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="VOLCENGINE_")
 
-    ARK_API_KEY: str = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
-    ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
-    LLM_MODEL_NAME: str = "doubao-seed-1-6-flash-250715"
+    ark_api_key: str = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
+    ark_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
+    llm_model_name: str = "doubao-seed-1-6-flash-250715"
 
 
 class AppSettings(BaseSettings):
@@ -232,11 +232,11 @@ class AppSettings(BaseSettings):
     def __init__(self, **kwargs):
         # 加载 TOML 配置
         toml_config = load_config_from_toml()
-        
+
         # 合并配置：kwargs > TOML 配置
         # Pydantic 会自动处理环境变量（环境变量 > 所有其他配置）
         combined_config = {**toml_config, **kwargs}
-        
+
         super().__init__(**combined_config)
 
 

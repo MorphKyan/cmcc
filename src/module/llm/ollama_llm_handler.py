@@ -21,7 +21,7 @@ class OllamaLLMHandler(BaseLLMHandler):
         # 1. 初始化ChatOllama模型
         # ChatOllama原生支持异步操作
         try:
-            self.model = ChatOllama(model=settings.MODEL)
+            self.model = ChatOllama(model=settings.model)
         except Exception as e:
             logger.exception("初始化ChatOllama客户端失败，请确保Ollama服务正在运行。")
             exit(1)
@@ -32,7 +32,7 @@ class OllamaLLMHandler(BaseLLMHandler):
         # 3. 构建处理链 (Chain)
         self.chain = self.prompt_template | self.model_with_tools | self.output_parser
 
-        logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.MODEL)
+        logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.model)
 
     async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """

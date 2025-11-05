@@ -23,8 +23,8 @@ class BaseLLMHandler(ABC):
             settings (LLMSettings): LLM参数
         """
         self.settings = settings
-        self.screens_info = settings.SCREENS_INFO
-        self.doors_info = settings.DOORS_INFO
+        self.screens_info = settings.screens_info
+        self.doors_info = settings.doors_info
 
         # 定义tools (shared between all LLM handlers)
         self.tools = [
@@ -107,7 +107,7 @@ class BaseLLMHandler(ABC):
 
         # 使用ChatPromptTemplate构建提示词
         self.prompt_template = ChatPromptTemplate.from_messages([
-            ("system", settings.SYSTEM_PROMPT_TEMPLATE),
+            ("system", settings.system_prompt_template),
             ("user", "{USER_INPUT}")
         ])
 

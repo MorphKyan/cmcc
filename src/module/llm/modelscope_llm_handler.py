@@ -23,11 +23,16 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         try:
             # 处理 SecretStr 类型的 API key
             self.model = ChatOpenAI(
-                model=settings.MODEL,
-                base_url=settings.MODELSCOPE_BASE_URL,
-                api_key=settings.MODELSCOPE_API_KEY,
-                temperature=0.1,
-                max_tokens=1024
+                model=settings.model,
+                base_url=settings.modelscope_base_url,
+                api_key=settings.modelscope_api_key,
+                temperature=0.7,
+                top_p=0.8,
+                extra_body={
+                    "top_k": 20,
+                    "min_p": 0,
+                    "enable_thinking": False
+                }
             )
         except Exception as e:
             logger.exception("初始化ModelScope客户端失败，请检查API配置。")
@@ -39,7 +44,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         # 3. 构建处理链 (Chain)
         self.chain = self.prompt_template | self.model_with_tools | self.output_parser
 
-        logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.MODEL)
+        logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.model)
 
     async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """
