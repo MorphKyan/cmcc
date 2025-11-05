@@ -28,7 +28,7 @@ top_k_results = 3
 model = "qwen3:8b"
 ollama_base_url = "http://127.0.0.1:11434"
 # LLM 提供商选择: "ollama" 或 "modelscope"
-provider = "ollama"
+provider = "modelscope"
 # ModelScope 配置
 modelscope_base_url = "https://api-inference.modelscope.cn/v1"
 modelscope_api_key = "ms-b5d21340-4551-4343-86e8-e1c1430ae1f9"

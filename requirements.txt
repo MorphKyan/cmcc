@@ -5,12 +5,14 @@ numpy
 funasr
 torch
 pandas
+pydantic_settings
 openpyxl
-langchain
 chromadb
 sentence-transformers
+langchain
 langchain-community
 langchain-openai
+langchain-ollama
 ollama
 fastapi
 uvicorn[standard]

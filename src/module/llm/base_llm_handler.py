@@ -3,7 +3,7 @@
 
 import json
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputToolsParser
@@ -117,7 +117,7 @@ class BaseLLMHandler(ABC):
         logger.info("LLM处理器基类初始化完成")
 
     @staticmethod
-    def _map_tool_calls_to_response(tool_calls: List[Dict[str, Any]]) -> str:
+    def _map_tool_calls_to_response(tool_calls: list[Dict[str, Any]]) -> str:
         """
         将LangChain解析出的工具调用列表映射到项目所需的最终JSON格式。
         """
@@ -178,7 +178,7 @@ class BaseLLMHandler(ABC):
         return json.dumps(results, ensure_ascii=False)
 
     @abstractmethod
-    async def get_response(self, user_input: str, rag_docs: List[Document]) -> str:
+    async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
 
@@ -191,7 +191,7 @@ class BaseLLMHandler(ABC):
         """
         pass
 
-    def _prepare_chain_input(self, user_input: str, rag_docs: List[Document]) -> Dict[str, Any]:
+    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document]) -> Dict[str, Any]:
         """
         准备Prompt的输入变量，供子类使用。
         """

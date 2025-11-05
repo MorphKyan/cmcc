@@ -22,7 +22,9 @@ class VADCore:
         """
         self.chunk_size = settings.CHUNK_SIZE
         self.sample_rate = settings.SAMPLE_RATE
-        self.kwargs = settings.KWARGS
+        self.kwargs = {
+            "MAX_SINGLE_SEGMENT_TIME": settings.MAX_SINGLE_SEGMENT_TIME
+        }
         self.chunk_stride = int(self.chunk_size * self.sample_rate / 1000)
 
         # 初始化VAD模型

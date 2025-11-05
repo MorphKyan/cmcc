@@ -166,59 +166,59 @@ SYSTEM_PROMPT_TEMPLATE = """
 class VADSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="VAD_")
 
-    chunk_size: int = 200
-    sample_rate: int = 16000
-    model: str = "fsmn-vad"
-    max_single_segment_time: int = 20000  # 最大切割音频时长(ms)
+    CHUNK_SIZE: int = 200
+    SAMPLE_RATE: int = 16000
+    MODEL: str = "fsmn-vad"
+    MAX_SINGLE_SEGMENT_TIME: int = 20000  # 最大切割音频时长(ms)
 
 
 class FunASRSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="FUNASR_")
 
-    model: str = "iic/SenseVoiceSmall"
-    language: str = "auto"
-    use_itn: bool = True
-    batch_size_s: float = 60.0  # 动态batch，batch中的音频总时长上限(秒)
-    merge_vad: bool = True
-    merge_length_s: float = 15.0
+    MODEL: str = "iic/SenseVoiceSmall"
+    LANGUAGE: str = "auto"
+    USE_ITN: bool = True
+    BATCH_SIZE_S: float = 60.0  # 动态batch，batch中的音频总时长上限(秒)
+    MERGE_VAD: bool = True
+    MERGE_LENGTH_S: float = 15.0
 
 
 class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
-    videos_data_path: str = os.path.join(data_dir, "videos.csv")
-    chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
-    ollama_base_url: str = "http://127.0.0.1:11434"
-    ollama_embedding_model: str = "qwen3-embedding:0.6b"
-    top_k_results: int = 3  # 检索返回的文档数
+    VIDEOS_DATA_PATH: str = os.path.join(data_dir, "videos.csv")
+    CHROMA_DB_DIR: str = os.path.join(project_dir, "chroma_db")
+    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
+    OLLAMA_EMBEDDING_MODEL: str = "qwen3-embedding:0.6b"
+    TOP_K_RESULTS: int = 3  # 检索返回的文档数
 
 
 class LLMSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LLM_")
 
-    model: str = "qwen3:8b"
-    ollama_base_url: str = "http://127.0.0.1:11434"
-    system_prompt_template: str = SYSTEM_PROMPT_TEMPLATE
-    screens_info: list = SCREENS_INFO
-    doors_info: list = DOORS_INFO
+    MODEL: str = "qwen3:8b"
+    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
+    SYSTEM_PROMPT_TEMPLATE: str = SYSTEM_PROMPT_TEMPLATE
+    SCREENS_INFO: list = SCREENS_INFO
+    DOORS_INFO: list = DOORS_INFO
     # LLM Provider selection: "ollama" or "modelscope"
-    provider: str = "ollama"
+    PROVIDER: str = "ollama"
     # ModelScope specific settings
-    modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
-    modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
+    MODELSCOPE_BASE_URL: str = "https://api-inference.modelscope.cn/v1"
+    MODELSCOPE_API_KEY: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
 
 
 class VolcEngineSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="VOLCENGINE_")
 
-    ark_api_key: str = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
-    ark_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
-    llm_model_name: str = "doubao-seed-1-6-flash-250715"
+    ARK_API_KEY: str = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
+    ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"
+    LLM_MODEL_NAME: str = "doubao-seed-1-6-flash-250715"
 
 
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_nested_delimiter='__',
+        env_nested_delimiter='_',
         env_file=None,
         extra='allow'
     )

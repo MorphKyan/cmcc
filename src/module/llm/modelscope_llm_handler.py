@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI
 from loguru import logger
 
@@ -41,7 +41,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
 
         logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.MODEL)
 
-    async def get_response(self, user_input: str, rag_docs: list) -> str:
+    async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
 
