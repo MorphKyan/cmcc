@@ -1,27 +1,21 @@
 <template>
   <div class="audio-recorder">
     <h2>网页麦克风输入</h2>
-    <div v-if="isSupported">
-      <button @click="startRecording" :disabled="isRecording">开始录音</button>
-      <button @click="stopRecording" :disabled="!isRecording">停止录音</button>
-      <p>状态: {{ status }}</p>
-      <div v-if="actualAudioConfig" class="audio-config">
-        <h3>实际音频配置:</h3>
-        <ul>
-          <li>采样率: {{ actualAudioConfig.sampleRate }} Hz</li>
-          <li>声道数: {{ actualAudioConfig.channelCount }}</li>
-          <li>采样位数: {{ actualAudioConfig.sampleSize }} bit</li>
-          <li>音频上下文采样率: {{ audioContextSampleRate }} Hz</li>
-        </ul>
-      </div>
-      <div v-if="websocketOutput" class="websocket-output">
-        <h3>处理结果:</h3>
-        <pre>{{ websocketOutput }}</pre>
-      </div>
+    <button @click="startRecording" :disabled="isRecording">开始录音</button>
+    <button @click="stopRecording" :disabled="!isRecording">停止录音</button>
+    <p>状态: {{ status }}</p>
+    <div v-if="actualAudioConfig" class="audio-config">
+      <h3>实际音频配置:</h3>
+      <ul>
+        <li>采样率: {{ actualAudioConfig.sampleRate }} Hz</li>
+        <li>声道数: {{ actualAudioConfig.channelCount }}</li>
+        <li>采样位数: {{ actualAudioConfig.sampleSize }} bit</li>
+        <li>音频上下文采样率: {{ audioContextSampleRate }} Hz</li>
+      </ul>
     </div>
-    <div v-else>
-      <p>抱歉，您的浏览器不支持所需功能。</p>
-      <p>请确保使用现代浏览器并允许麦克风访问。</p>
+    <div v-if="websocketOutput" class="websocket-output">
+      <h3>处理结果:</h3>
+      <pre>{{ websocketOutput }}</pre>
     </div>
   </div>
 </template>
@@ -33,7 +27,6 @@ export default {
     return {
       isRecording: false,
       status: '未开始',
-      isSupported: 'mediaDevices' in navigator && 'WebSocket' in window,
       socket: null,
       audioContext: null,
       audioStream: null,
@@ -42,15 +35,13 @@ export default {
       // 为每个客户端生成一个唯一的ID
       clientId: `web-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       websocketOutput: '',
-      audioWorkletNode: null,
-      scriptProcessorNode: null,
-      usesAudioWorklet: false
+      audioWorkletNode: null
     };
   },
   methods: {
     async startRecording() {
       if (this.isRecording) return;
-      
+
       try {
         // 先尝试获取麦克风权限，使用更宽松的约束
         const audioConstraints = {
@@ -60,7 +51,7 @@ export default {
             autoGainControl: true
           }
         };
-        
+
         // 1. 获取用户麦克风权限和音频流
         this.audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
         this.status = '已获取麦克风权限';
@@ -69,7 +60,7 @@ export default {
         const audioTrack = this.audioStream.getAudioTracks()[0];
         const settings = audioTrack.getSettings();
         console.log('实际应用的音频配置:', settings);
-        
+
         // 保存实际配置到组件数据
         this.actualAudioConfig = {
           sampleRate: settings.sampleRate || 16000,
@@ -82,13 +73,13 @@ export default {
         if (!AudioContext) {
           throw new Error('AudioContext not supported');
         }
-        
+
         this.audioContext = new AudioContext();
         this.audioContextSampleRate = this.audioContext.sampleRate;
-        
+
         // 3. 创建 MediaStreamAudioSourceNode
         const source = this.audioContext.createMediaStreamSource(this.audioStream);
-        
+
         // 4. 建立 WebSocket 连接 - 使用相对URL支持局域网访问
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/api/audio/ws/${this.clientId}`;
@@ -108,10 +99,10 @@ export default {
 
           this.status = 'WebSocket 已连接，正在录音...';
           this.isRecording = true;
-          
-          // 5. 设置音频处理节点（优先使用 AudioWorklet，降级到 ScriptProcessorNode）
+
+          // 5. 设置音频处理节点（只使用 AudioWorklet）
           await this.setupAudioProcessing(source);
-          
+
           // 开始音频上下文
           if (this.audioContext.state === 'suspended') {
             await this.audioContext.resume();
@@ -148,53 +139,19 @@ export default {
     },
 
     async setupAudioProcessing(source) {
-      // 尝试使用 AudioWorklet（现代浏览器）
-      if ('AudioWorklet' in window) {
-        try {
-          await this.audioContext.audioWorklet.addModule('/audio-processor.js');
-          this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
-          source.connect(this.audioWorkletNode);
-          this.audioWorkletNode.connect(this.audioContext.destination);
-          
-          this.audioWorkletNode.port.onmessage = (event) => {
-            if (!this.isRecording || this.socket.readyState !== WebSocket.OPEN) {
-              return;
-            }
-            this.socket.send(event.data);
-          };
-          
-          this.usesAudioWorklet = true;
-          console.log('使用 AudioWorklet 处理音频');
-          return;
-        } catch (workletError) {
-          console.warn('AudioWorklet 不可用，降级到 ScriptProcessorNode:', workletError);
-        }
-      }
-      
-      // 降级到 ScriptProcessorNode（兼容性更好）
-      this.scriptProcessorNode = this.audioContext.createScriptProcessor(4096, 1, 1);
-      source.connect(this.scriptProcessorNode);
-      this.scriptProcessorNode.connect(this.audioContext.destination);
-      
-      this.scriptProcessorNode.onaudioprocess = (event) => {
+      await this.audioContext.audioWorklet.addModule('/audio-processor.js');
+      this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
+      source.connect(this.audioWorkletNode);
+      this.audioWorkletNode.connect(this.audioContext.destination);
+
+      this.audioWorkletNode.port.onmessage = (event) => {
         if (!this.isRecording || this.socket.readyState !== WebSocket.OPEN) {
           return;
         }
-        
-        const inputBuffer = event.inputBuffer;
-        const channelData = inputBuffer.getChannelData(0);
-        
-        // 将Float32Array转换为Int16Array (16-bit PCM)
-        const int16Array = new Int16Array(channelData.length);
-        for (let i = 0; i < channelData.length; i++) {
-          int16Array[i] = Math.max(-32768, Math.min(32767, Math.floor(channelData[i] * 32768)));
-        }
-        
-        this.socket.send(int16Array.buffer);
+        this.socket.send(event.data);
       };
-      
-      this.usesAudioWorklet = false;
-      console.log('使用 ScriptProcessorNode 处理音频');
+
+      console.log('使用 AudioWorklet 处理音频');
     },
 
     stopRecording() {
@@ -212,28 +169,23 @@ export default {
         this.audioStream.getTracks().forEach(track => track.stop());
         this.audioStream = null;
       }
-      
+
       // 断开音频节点连接
       if (this.audioWorkletNode) {
         this.audioWorkletNode.disconnect();
         this.audioWorkletNode = null;
       }
-      
-      if (this.scriptProcessorNode) {
-        this.scriptProcessorNode.disconnect();
-        this.scriptProcessorNode = null;
-      }
-      
+
       // 关闭AudioContext
       if (this.audioContext) {
         this.audioContext.close();
         this.audioContext = null;
       }
-      
+
       this.socket = null;
       this.isRecording = false;
       if (this.status !== 'WebSocket 连接已关闭') {
-          this.status = '已停止';
+        this.status = '已停止';
       }
     }
   },
@@ -261,17 +213,17 @@ export default {
     margin: 10px;
     width: 95%;
   }
-  
+
   h2 {
     font-size: 1.2em;
     margin-bottom: 15px;
   }
-  
+
   .audio-config h3,
   .websocket-output h3 {
     font-size: 1em;
   }
-  
+
   .audio-config ul {
     padding-left: 20px;
     font-size: 0.9em;
