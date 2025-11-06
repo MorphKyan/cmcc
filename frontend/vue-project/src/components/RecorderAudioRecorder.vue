@@ -1,7 +1,6 @@
 <template>
   <div class="recorder-audio-recorder">
     <h2>Recorder库麦克风输入</h2>
-    <div v-if="isSupported">
       <button @click="startRecording" :disabled="isRecording">开始录音</button>
       <button @click="stopRecording" :disabled="!isRecording">停止录音</button>
       <p>状态: {{ status }}</p>
@@ -17,7 +16,6 @@
         <h3>处理结果:</h3>
         <pre>{{ websocketOutput }}</pre>
       </div>
-    </div>
     <div v-else>
       <p>抱歉，您的浏览器不支持所需功能。</p>
     </div>
@@ -35,7 +33,6 @@ export default {
     return {
       isRecording: false,
       status: '未开始',
-      isSupported: 'mediaDevices' in navigator && 'WebSocket' in window,
       socket: null,
       recorder: null,
       actualAudioConfig: null,

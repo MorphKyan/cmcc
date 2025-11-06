@@ -1,4 +1,6 @@
 import { fileURLToPath, URL } from 'node:url'
+import fs from 'fs'
+import path from 'path'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -28,6 +30,10 @@ export default defineConfig({
     port: 5173,
     cors: true,
     open: true,
+    https: {
+      cert: fs.readFileSync(path.resolve(__dirname, 'morph_icu.pem')),
+      key: fs.readFileSync(path.resolve(__dirname, 'morph_icu.key'))
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:5000',

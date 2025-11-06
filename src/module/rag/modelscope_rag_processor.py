@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 import httpx
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
-from langchain_ollama import OllamaEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from loguru import logger
 
 from src.config.config import RAGSettings
@@ -19,10 +19,10 @@ from src.module.data_loader import load_documents_from_csvs
 from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus
 
 
-class RAGProcessor(BaseRAGProcessor):
+class ModelScopeRAGProcessor(BaseRAGProcessor):
     def __init__(self, settings: RAGSettings) -> None:
         """
-        初始化RAG处理器。
+        初始化使用ModelScope的RAG处理器。
 
         Args:
             settings (RAGSettings): RAG配置
@@ -30,13 +30,15 @@ class RAGProcessor(BaseRAGProcessor):
         super().__init__(settings)
 
         # 初始化状态和核心组件
-        self.embedding_model: Optional[OllamaEmbeddings] = None
+        self.error_message: Optional[str] = None
+        self.embedding_model: Optional[OpenAIEmbeddings] = None
         self.vector_store: Optional[Chroma] = None
         self.retriever = None
 
-        # 3. 使用asyncio.Lock来防止并发初始化
+        # 使用asyncio.Lock来防止并发初始化
+        self._init_lock = asyncio.Lock()
         self._http_client = httpx.AsyncClient(timeout=10.0)
-        logger.info("RAGProcessor已创建，状态: UNINITIALIZED。")
+        logger.info("ModelScopeRAGProcessor已创建，状态: UNINITIALIZED。")
 
     async def initialize(self) -> None:
         """
@@ -48,15 +50,16 @@ class RAGProcessor(BaseRAGProcessor):
                 logger.warning("初始化已在进行中，请等待。")
                 return
             self.status = RAGStatus.INITIALIZING
-            logger.info("开始初始化RAG处理器...")
+            logger.info("开始初始化ModelScope RAG处理器...")
 
             try:
-                # 步骤 1: 检查Ollama连接和模型
-                await self._check_ollama_connection()
+                # 步骤 1: 检查ModelScope连接和API密钥
+                await self._check_modelscope_connection()
                 # 步骤 2: 初始化Embedding模型
-                self.embedding_model = OllamaEmbeddings(
-                    model=self.settings.ollama_embedding_model,
-                    base_url=self.settings.ollama_base_url
+                self.embedding_model = OpenAIEmbeddings(
+                    model="text-embedding-v1",  # ModelScope的文本嵌入模型
+                    base_url=self.settings.modelscope_base_url,
+                    api_key=self.settings.modelscope_api_key.get_secret_value()
                 )
                 # 步骤 3: 创建或加载向量数据库
                 if not os.path.exists(self.chroma_db_dir):
@@ -76,40 +79,35 @@ class RAGProcessor(BaseRAGProcessor):
                 )
                 self.status = RAGStatus.READY
                 self.error_message = None
-                logger.success("RAG处理器初始化完成，状态: READY。")
+                logger.success("ModelScope RAG处理器初始化完成，状态: READY。")
             except Exception as e:
                 self.status = RAGStatus.ERROR
-                self.error_message = f"RAG初始化失败: {e}"
+                self.error_message = f"ModelScope RAG初始化失败: {e}"
                 logger.exception(self.error_message)
-                # 4. 向上抛出异常，让调用者知道失败了
+                # 向上抛出异常，让调用者知道失败了
                 raise
 
-    async def _check_ollama_connection(self) -> None:
-        logger.info("正在检查Ollama服务连接: {url}", url=self.settings.ollama_base_url)
+    async def _check_modelscope_connection(self) -> None:
+        logger.info("正在检查ModelScope服务连接: {url}", url=self.settings.modelscope_base_url)
         try:
-            # 检查Ollama服务是否在线
-            response = await self._http_client.get(self.settings.ollama_base_url)
+            # 检查ModelScope服务是否在线
+            response = await self._http_client.get(self.settings.modelscope_base_url)
             response.raise_for_status()
-            # 检查所需模型是否已拉取
-            api_url = urljoin(self.settings.ollama_base_url, "api/tags")
-            response = await self._http_client.get(api_url)
+            
+            # 验证API密钥（通过简单的API调用）
+            api_url = urljoin(self.settings.modelscope_base_url, "models")
+            headers = {
+                "Authorization": f"Bearer {self.settings.modelscope_api_key.get_secret_value()}"
+            }
+            response = await self._http_client.get(api_url, headers=headers)
             response.raise_for_status()
 
-            available_models = [m['name'] for m in response.json().get('models', [])]
-            logger.info("Ollama服务连接成功。可用模型: {models}", models=available_models)
-            if self.settings.ollama_embedding_model not in available_models:
-                error_msg = (
-                    f"Ollama服务中未找到所需模型: '{self.settings.ollama_embedding_model}'. "
-                    f"请先执行: ollama pull {self.settings.ollama_embedding_model}"
-                )
-                raise RuntimeError(error_msg)
-
-            logger.info("所需Embedding模型 '{model}' 在Ollama中可用。", model=self.settings.ollama_embedding_model)
+            logger.info("ModelScope服务连接成功，API密钥验证通过。")
 
         except httpx.RequestError as e:
-            raise ConnectionError(f"无法连接到Ollama服务: {self.settings.ollama_base_url}。请确保Ollama正在运行。") from e
+            raise ConnectionError(f"无法连接到ModelScope服务: {self.settings.modelscope_base_url}。请确保服务地址正确。") from e
         except Exception as e:
-            raise RuntimeError(f"检查Ollama时发生未知错误: {e}") from e
+            raise RuntimeError(f"检查ModelScope时发生未知错误: {e}") from e
 
     async def _create_and_persist_db(self) -> None:
         """
@@ -151,7 +149,7 @@ class RAGProcessor(BaseRAGProcessor):
         """
         刷新数据库，重新加载CSV数据并重建向量数据库。
         """
-        logger.info("正在刷新RAG数据库...")
+        logger.info("正在刷新ModelScope RAG数据库...")
         try:
             db_dir = self.settings.chroma_db_dir
             if os.path.exists(db_dir):
@@ -161,7 +159,7 @@ class RAGProcessor(BaseRAGProcessor):
             self.status = RAGStatus.UNINITIALIZED
             await self.initialize()
 
-            logger.info("RAG数据库刷新完成。")
+            logger.info("ModelScope RAG数据库刷新完成。")
             return True
         except Exception as e:
             logger.exception("刷新数据库失败: {error}", error=str(e))
@@ -170,6 +168,6 @@ class RAGProcessor(BaseRAGProcessor):
             return False
 
     async def close(self) -> None:
-        logger.info("正在关闭RAG处理器资源...")
+        logger.info("正在关闭ModelScope RAG处理器资源...")
         await self._http_client.aclose()
         logger.info("HTTP客户端已关闭。")

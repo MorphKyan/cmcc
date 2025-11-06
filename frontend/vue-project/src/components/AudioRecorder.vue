@@ -90,7 +90,7 @@ export default {
         this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
 
         // 6. 建立 WebSocket 连接
-        const wsUrl = `ws://localhost:5000/api/audio/ws/${this.clientId}`;
+        const wsUrl = `ws://192.168.31.100:5000/api/audio/ws/${this.clientId}`;
         this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = async () => {
