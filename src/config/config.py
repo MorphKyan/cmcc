@@ -20,25 +20,64 @@ config_dir = os.path.join(os.path.dirname(project_dir), "config")
 def load_config_from_toml(config_path: str = None) -> dict:
     """
     从 TOML 文件加载配置
-    
+
     Args:
-        config_path: 配置文件路径，如果为 None 则使用默认路径
-        
+        config_path: 配置文件路径，如果为 None 则使用自动检测逻辑
+
     Returns:
         dict: 配置字典
-    """
-    if config_path is None:
-        config_path = os.path.join(config_dir, "config.example.toml")
 
-    if os.path.exists(config_path):
+    Priority order:
+    1. Explicit config_path parameter (if provided)
+    2. CONFIG_FILE environment variable (if set)
+    3. config/config.toml (user's actual configuration)
+    4. config/config.example.toml (fallback template)
+    5. Built-in defaults (empty dict)
+    """
+    # 1. Use explicit config_path if provided
+    if config_path is not None:
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "rb") as f:
+                    return tomllib.load(f)
+            except Exception as e:
+                logger.warning(f"加载 TOML 配置文件失败: {e}，使用默认配置")
+                return {}
+        else:
+            logger.warning(f"TOML 配置文件不存在: {config_path}，使用默认配置")
+            return {}
+
+    # 2. Check CONFIG_FILE environment variable
+    env_config_path = os.environ.get("CONFIG_FILE")
+    if env_config_path and os.path.exists(env_config_path):
         try:
-            with open(config_path, "rb") as f:
+            with open(env_config_path, "rb") as f:
                 return tomllib.load(f)
         except Exception as e:
-            logger.warning(f"加载 TOML 配置文件失败: {e}，使用默认配置")
+            logger.warning(f"加载环境变量指定的 TOML 配置文件失败: {e}，继续尝试其他配置文件")
+
+    # 3. Try user's actual config file first
+    user_config_path = os.path.join(config_dir, "config.toml")
+    if os.path.exists(user_config_path):
+        try:
+            with open(user_config_path, "rb") as f:
+                logger.info(f"加载用户配置文件: {user_config_path}")
+                return tomllib.load(f)
+        except Exception as e:
+            logger.warning(f"加载用户配置文件失败: {e}，尝试回退到示例配置文件")
+
+    # 4. Fall back to example config file
+    example_config_path = os.path.join(config_dir, "config.example.toml")
+    if os.path.exists(example_config_path):
+        try:
+            with open(example_config_path, "rb") as f:
+                logger.info(f"加载示例配置文件: {example_config_path}")
+                return tomllib.load(f)
+        except Exception as e:
+            logger.warning(f"加载示例配置文件失败: {e}，使用默认配置")
             return {}
     else:
-        logger.warning(f"TOML 配置文件不存在: {config_path}，使用默认配置")
+        logger.warning(f"配置文件不存在: {user_config_path} 和 {example_config_path}，使用默认配置")
         return {}
 
 
@@ -233,7 +272,7 @@ class AppSettings(BaseSettings):
     volcengine: VolcEngineSettings = VolcEngineSettings()
 
     def __init__(self, **kwargs):
-        # 加载 TOML 配置
+        # 加载 TOML 配置 (自动检测优先级)
         toml_config = load_config_from_toml()
 
         # 合并配置：kwargs > TOML 配置

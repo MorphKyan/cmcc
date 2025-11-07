@@ -65,6 +65,23 @@
 4.  **配置API Key**:
     打开 `src/config/config.py` 文件，找到 `ARK_API_KEY` 变量，并将其替换为您自己的火山引擎API密钥。
 
+### 配置文件优先级
+
+系统使用以下优先级顺序加载配置：
+
+1. **`config/config.toml`** - 用户的实际配置文件（推荐使用）
+2. **`config/config.example.toml`** - 回退到示例配置文件（如果用户配置不存在）
+3. **内置默认值** - 如果配置文件都不存在，使用代码中的默认值
+
+**使用方法**：
+- 复制 `config/config.example.toml` 到 `config/config.toml`
+- 编辑 `config/config.toml` 以自定义您的设置
+- 系统会自动优先加载您的 `config.toml` 文件
+
+**环境变量覆盖**：
+- 可以通过 `CONFIG_FILE` 环境变量指定配置文件路径
+- 例如：`CONFIG_FILE=/path/to/custom/config.toml python main.py`
+
 ## 运行程序
 
 在项目根目录下打开终端，确保已激活虚拟环境，然后执行以下命令：

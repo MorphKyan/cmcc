@@ -126,6 +126,14 @@ Currently, there are no dedicated test files in the project. Testing is performe
 - Edit `src/config/config.py` to configure API keys, model paths, and system prompts
 - The application uses loguru for logging, configured in `src/config/logging_config.py`
 
+### Configuration File Priority
+The system loads configuration files in the following priority order:
+1. **`config/config.toml`** - User's actual configuration (recommended)
+2. **`config/config.example.toml`** - Fallback to example configuration
+3. **Built-in defaults** - Code defaults if no config files exist
+
+**Environment Variable Override**: Use `CONFIG_FILE` environment variable to specify a custom config file path.
+
 ## Key Files and Directives
 
 - **Application Entry Point**: `main.py` - FastAPI application with lifespan management
