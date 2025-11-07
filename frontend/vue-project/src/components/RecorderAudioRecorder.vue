@@ -54,6 +54,11 @@ export default {
       if (this.isRecording) return;
       
       try {
+        // Validate Recorder library is available
+        if (typeof Recorder === 'undefined' || Recorder === null) {
+          throw new Error('Recorder library is not properly loaded');
+        }
+
         // 1. 创建Recorder实例
         this.recorder = Recorder({
           type: "unknown", // 使用unknown格式以便清理内存
@@ -61,27 +66,34 @@ export default {
           bitRate: 16, // 目标位深度
           onProcess: (buffers, powerLevel, bufferDuration, bufferSampleRate, newBufferIdx, asyncEnd) => {
             this.processTime = Date.now();
-            
+
             // 实时释放清理内存，用于支持长时间录音
             for (let i = this.clearBufferIdx; i < newBufferIdx; i++) {
               buffers[i] = null;
             }
             this.clearBufferIdx = newBufferIdx;
-            
+
             // 【关键代码】推入实时处理
             this.realTimeSendTry(buffers, bufferSampleRate, false);
           }
         });
+
+        // Validate recorder instance was created successfully
+        if (!this.recorder || typeof this.recorder.open !== 'function') {
+          throw new Error('Failed to initialize Recorder instance');
+        }
 
         // 2. 打开麦克风授权
         this.recorder.open(() => {
           // 获取实际的音频配置
           const audioTrack = this.recorder.srcStream.getAudioTracks()[0];
           const settings = audioTrack.getSettings();
+          // Use fixed sample size of 16 bits since that's what we process
+          // Browser-reported sampleSize may not be reliable
           this.actualAudioConfig = {
             sampleRate: settings.sampleRate,
             channelCount: settings.channelCount,
-            sampleSize: settings.sampleSize || 16
+            sampleSize: 16
           };
 
           // 3. 建立WebSocket连接
@@ -94,7 +106,7 @@ export default {
               type: 'config',
               format: 'pcm',
               sampleRate: this.actualAudioConfig.sampleRate,
-              sampleSize: this.actualAudioConfig.sampleSize,
+              sampleSize: 16, // Always send 16-bit as that's what we process
               channelCount: this.actualAudioConfig.channelCount
             };
             this.socket.send(JSON.stringify(metadata));
@@ -106,6 +118,7 @@ export default {
             this.isRecording = true;
 
             // 【稳如老狗WDT】监控录音是否正常
+            const startTime = Date.now();
             const wdt = setInterval(() => {
               if (!this.recorder || this.recorder.watchDogTimer !== wdt) {
                 clearInterval(wdt);
@@ -119,7 +132,6 @@ export default {
                 this.stopRecording();
               }
             }, 1000);
-            const startTime = Date.now();
             this.recorder.watchDogTimer = wdt;
             this.recorder.wdtPauseT = 0;
           };
@@ -152,7 +164,9 @@ export default {
 
       } catch (error) {
         console.error('无法初始化录音:', error);
-        this.status = '错误：' + error.message;
+        this.status = '错误：' + (error.message || '未知错误');
+        // Ensure cleanup is called even if initialization fails
+        this.cleanup();
       }
     },
 
