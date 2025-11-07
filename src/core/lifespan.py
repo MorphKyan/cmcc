@@ -40,9 +40,11 @@ async def lifespan(app: FastAPI):
             dependencies.llm_processor = OllamaLLMHandler(llm_config)
             logger.info("使用Ollama LLM处理器")
 
+        # Start async initialization for both RAG and LLM processors
         asyncio.create_task(dependencies.rag_processor.initialize())
+        asyncio.create_task(dependencies.llm_processor.initialize())
 
-        logger.info("应用启动序列已开始，RAG正在后台初始化。")
+        logger.info("应用启动序列已开始，RAG和LLM处理器正在后台初始化。")
     except Exception as e:
         logger.exception(f"错误: 处理器初始化失败: {e}")
         # 在这里可以选择是否要阻止应用启动

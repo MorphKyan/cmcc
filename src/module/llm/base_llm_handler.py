@@ -264,6 +264,16 @@ class BaseLLMHandler(ABC):
         """
         pass
 
+    async def initialize(self) -> None:
+        """
+        Optional async initialization method for LLM handlers.
+        Subclasses can override this method to perform async setup operations
+        like model loading, client initialization, or connection establishment.
+
+        This method is called after __init__ during application startup.
+        """
+        pass
+
     def _prepare_chain_input(self, user_input: str, rag_docs: list[Document]) -> Dict[str, Any]:
         """
         准备Prompt的输入变量，供子类使用。

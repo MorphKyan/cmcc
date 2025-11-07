@@ -17,15 +17,30 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             settings (LLMSettings): LLM参数
         """
         super().__init__(settings)
+        # Keep __init__ lightweight - defer heavy initialization to async initialize()
+        self.model = None
+        self.model_with_tools = None
+        self.chain = None
+        logger.info("ModelScope大语言模型处理器已创建，等待异步初始化...")
+
+    async def initialize(self) -> None:
+        """
+        异步初始化ModelScope模型和处理链。
+        This method handles the client initialization which may involve
+        network connections or API validation.
+        """
+        if self.model is not None:
+            # Already initialized
+            return
 
         # 1. 初始化ChatOpenAI模型 for ModelScope
         # ModelScope API is compatible with OpenAI API
         try:
             # 处理 SecretStr 类型的 API key
             self.model = ChatOpenAI(
-                model=settings.model,
-                base_url=settings.modelscope_base_url,
-                api_key=settings.modelscope_api_key,
+                model=self.settings.model,
+                base_url=self.settings.modelscope_base_url,
+                api_key=self.settings.modelscope_api_key,
                 temperature=0.7,
                 top_p=0.8,
                 extra_body={
@@ -36,7 +51,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             )
         except Exception as e:
             logger.exception("初始化ModelScope客户端失败，请检查API配置。")
-            exit(1)
+            raise
 
         # 2. 将工具绑定到模型
         self.model_with_tools = self.model.bind_tools(self.tools)
@@ -57,6 +72,10 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         Returns:
             str: 大模型返回的JSON格式指令或错误信息。
         """
+        # Ensure the handler is initialized before use
+        if self.chain is None:
+            await self.initialize()
+
         logger.info("用户指令: {user_input}", user_input=user_input)
 
         try:

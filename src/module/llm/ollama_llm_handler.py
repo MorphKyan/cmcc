@@ -22,14 +22,29 @@ class OllamaLLMHandler(BaseLLMHandler):
             settings (LLMSettings): LLM参数
         """
         super().__init__(settings)
+        # Keep __init__ lightweight - defer heavy initialization to async initialize()
+        self.model = None
+        self.model_with_tools = None
+        self.chain = None
+        logger.info("异步Ollama大语言模型处理器已创建，等待异步初始化...")
+
+    async def initialize(self) -> None:
+        """
+        异步初始化Ollama模型和处理链。
+        This method handles the heavy initialization that may involve
+        model downloading or loading, which can be time-consuming.
+        """
+        if self.model is not None:
+            # Already initialized
+            return
 
         # 1. 初始化ChatOllama模型
         # ChatOllama原生支持异步操作
         try:
-            self.model = ChatOllama(model=settings.model)
+            self.model = ChatOllama(model=self.settings.model)
         except Exception as e:
             logger.exception("初始化ChatOllama客户端失败，请确保Ollama服务正在运行。")
-            exit(1)
+            raise
 
         # 2. 将工具绑定到模型
         self.model_with_tools = self.model.bind_tools(self.tools)
@@ -50,6 +65,10 @@ class OllamaLLMHandler(BaseLLMHandler):
         Returns:
             str: 大模型返回的JSON格式指令或错误信息。
         """
+        # Ensure the handler is initialized before use
+        if self.chain is None:
+            await self.initialize()
+
         logger.info("用户指令: {user_input}", user_input=user_input)
 
         try:

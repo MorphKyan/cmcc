@@ -77,7 +77,7 @@ The system follows a modular microservice architecture with the following key co
 - **VAD Processor** (`src/module/vad/`) - Voice Activity Detection to filter out silence using FunASR
 - **ASR Processor** (`src/module/asr/`) - Speech-to-text conversion using FunASR models
 - **RAG Processor** (`src/module/rag/`) - Context retrieval using ChromaDB vector database with multiple implementations
-- **LLM Handlers** (`src/module/llm/`) - Interfaces with different LLM providers (VolcEngine Ark, Ollama, ModelScope)
+- **LLM Handlers** (`src/module/llm/`) - Interfaces with different LLM providers (VolcEngine Ark, Ollama, ModelScope). Ollama and ModelScope handlers support async initialization to prevent blocking during startup.
 - **Data Loader** (`src/module/data_loader.py`) - Loads knowledge base from CSV files in the `data/` directory
 - **Configuration** (`src/config/`) - Centralized configuration management and logging setup
 - **API Layer** (`src/api/`) - RESTful endpoints for audio processing and RAG database management
