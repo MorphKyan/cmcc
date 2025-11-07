@@ -26,6 +26,8 @@
 // 引入Recorder库
 import Recorder from 'recorder-core';
 import 'recorder-core/src/engine/pcm';
+// 引入配置
+import { config } from '../config';
 
 export default {
   name: 'RecorderAudioRecorder',
@@ -97,7 +99,7 @@ export default {
           };
 
           // 3. 建立WebSocket连接
-          const wsUrl = `ws://localhost:5000/api/audio/ws/${this.clientId}`;
+          const wsUrl = config.getWebSocketUrl(this.clientId);
           this.socket = new WebSocket(wsUrl);
 
           this.socket.onopen = () => {
@@ -110,6 +112,7 @@ export default {
               channelCount: this.actualAudioConfig.channelCount
             };
             this.socket.send(JSON.stringify(metadata));
+            console.log('已连接到 WebSocket:', wsUrl);
             console.log('已发送元数据:', metadata);
 
             // 开始录音

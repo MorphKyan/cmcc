@@ -25,6 +25,25 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 npm install
 ```
 
+### Backend Configuration
+
+The frontend connects to the backend API using configurable URLs. You can customize the backend connection in different environments:
+
+- **Development**: Edit `.env.development` to set `VITE_BACKEND_URL`
+- **Production**: Edit `.env.production` to set `VITE_BACKEND_URL`, or leave it unset to use the same origin as the frontend
+
+Example `.env.development`:
+```env
+VITE_BACKEND_URL=http://localhost:5000
+```
+
+Example `.env.production`:
+```env
+VITE_BACKEND_URL=https://your-api-domain.com
+```
+
+If no backend URL is configured in production, the frontend will automatically use the same origin as the current page (recommended for most deployments).
+
 ### Compile and Hot-Reload for Development
 
 ```sh
