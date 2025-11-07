@@ -2,17 +2,16 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from typing import NoReturn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
-from src.core.lifespan import lifespan
 from src.api.routers import audio
 from src.api.routers import rag
 from src.api.schemas import HealthResponse
 from src.config.logging_config import setup_logging
+from src.core.lifespan import lifespan
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(__file__))
@@ -40,10 +39,22 @@ async def root() -> HealthResponse:
     return HealthResponse(status="healthy", service="Main API Service")
 
 
-def run_api(host: str = '0.0.0.0', port: int = 5000) -> None:
+def run_api(host: str = '0.0.0.0', port: int = 5000, ssl_certfile: str = None, ssl_keyfile: str = None) -> None:
     """运行API服务"""
     import uvicorn
-    uvicorn.run(app, host=host, port=port, reload=False)
+
+    # 配置SSL参数（如果提供）
+    ssl_config = {}
+    if ssl_certfile and ssl_keyfile:
+        ssl_config = {
+            "ssl_certfile": ssl_certfile,
+            "ssl_keyfile": ssl_keyfile
+        }
+        logger.info("启用HTTPS/WSS支持")
+    else:
+        logger.info("使用HTTP/WS模式（未提供SSL证书）")
+
+    uvicorn.run(app, host=host, port=port, reload=False, **ssl_config)
 
 
 if __name__ == '__main__':
@@ -52,7 +63,24 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='API Service')
     parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
     parser.add_argument('--port', type=int, default=5000, help='Port to bind to')
+    parser.add_argument('--ssl-certfile', help='SSL certificate file path (for HTTPS/WSS)')
+    parser.add_argument('--ssl-keyfile', help='SSL private key file path (for HTTPS/WSS)')
     args = parser.parse_args()
 
-    logger.info("启动API服务: http://{host}:{port}", host=args.host, port=args.port)
-    run_api(host=args.host, port=args.port)
+    # 自动检测前端目录中的证书文件（如果未指定）
+    if not args.ssl_certfile and not args.ssl_keyfile:
+        frontend_cert = os.path.join(os.path.dirname(__file__), 'frontend', 'vue-project', 'morph_icu.pem')
+        frontend_key = os.path.join(os.path.dirname(__file__), 'frontend', 'vue-project', 'morph_icu.key')
+        if os.path.exists(frontend_cert) and os.path.exists(frontend_key):
+            logger.info("检测到前端目录中的SSL证书，自动启用HTTPS/WSS")
+            args.ssl_certfile = frontend_cert
+            args.ssl_keyfile = frontend_key
+
+    # 确保同时提供证书和密钥文件
+    if (args.ssl_certfile and not args.ssl_keyfile) or (args.ssl_keyfile and not args.ssl_certfile):
+        logger.error("错误：必须同时提供--ssl-certfile和--ssl-keyfile参数")
+        sys.exit(1)
+
+    protocol = "https" if args.ssl_certfile and args.ssl_keyfile else "http"
+    logger.info("启动API服务: {protocol}://{host}:{port}", protocol=protocol, host=args.host, port=args.port)
+    run_api(host=args.host, port=args.port, ssl_certfile=args.ssl_certfile, ssl_keyfile=args.ssl_keyfile)

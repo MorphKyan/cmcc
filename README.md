@@ -48,8 +48,13 @@
 1.  **克隆或下载项目**:
     将本项目代码下载到您的本地机器。
 
-2.  **安装Python依赖**:
-    建议在Python 3.8+ 的虚拟环境中进行安装。打开终端，进入项目根目录，然后运行：
+2.  **激活虚拟环境**:
+    项目使用 `.venv` 虚拟环境。在项目根目录下激活虚拟环境：
+    - **Windows**: `.venv\Scripts\activate`
+    - **Linux/macOS**: `source .venv/bin/activate`
+
+3.  **安装Python依赖** (如果虚拟环境未预先配置):
+    在激活的虚拟环境中运行：
     ```bash
     pip install -r requirements.txt
     ```
@@ -57,12 +62,12 @@
     -   在Debian/Ubuntu上: `sudo apt-get install portaudio19-dev`
     -   在macOS上: `brew install portaudio`
 
-3.  **配置API Key**:
-    打开 `src/config.py` 文件，找到 `ARK_API_KEY` 变量，并将其替换为您自己的火山引擎API密钥。
+4.  **配置API Key**:
+    打开 `src/config/config.py` 文件，找到 `ARK_API_KEY` 变量，并将其替换为您自己的火山引擎API密钥。
 
 ## 运行程序
 
-在项目根目录下打开终端，执行以下命令：
+在项目根目录下打开终端，确保已激活虚拟环境，然后执行以下命令：
 
 ```bash
 python main.py
@@ -72,31 +77,32 @@ python main.py
 
 ### 命令行选项
 
--   **选择设备**:
-    默认情况下，程序会自动检测并使用GPU（如果可用）。您可以强制指定设备：
+-   **基本配置**:
     ```bash
-    # 强制使用CPU
-    python main_test.py --device cpu
+    # 指定主机和端口
+    python main.py --host 0.0.0.0 --port 5000
 
-    # 强制使用GPU
-    python main_test.py --device cuda:0
+    # 启用HTTPS/WSS支持（使用项目中的SSL证书）
+    python main.py --ssl-certfile frontend/vue-project/morph_icu.pem --ssl-keyfile frontend/vue-project/morph_icu.key
+
+    # 启用HTTPS/WSS支持（使用自定义SSL证书）
+    python main.py --ssl-certfile /path/to/your/cert.pem --ssl-keyfile /path/to/your/key.key --port 443
     ```
 
--   **更新知识库**:
-    如果您修改了 `data/` 目录下的CSV文件（例如，添加了新的视频或设备），您需要使用 `--force-rag-reload` 标志来强制重建向量数据库，以使更改生效：
-    ```bash
-    python main_test.py --force-rag-reload
-    ```
+-   **自动SSL检测**:
+    如果未指定SSL证书参数，系统会自动检测 `frontend/vue-project/` 目录中的 `morph_icu.pem` 和 `morph_icu.key` 文件，如果存在则自动启用HTTPS/WSS支持。
 
--   **启用API服务**:
-    您可以在启动主程序的同时启动RESTful API服务：
-    ```bash
-    # 启动主程序并同时启动API服务
-    python main_test.py --enable-api
+-   **HTTPS/WSS优势**:
+    - 解决前端HTTPS与后端HTTP的混合内容问题
+    - 支持WebSocket Secure (WSS) 连接
+    - 适用于局域网内部安全通信
+    - 与前端Vite开发服务器的HTTPS配置完美匹配
 
-    # 启动主程序并同时启动API服务，指定端口
-    python main_test.py --enable-api --api-port 8000
-    ```
+### 注意事项
+
+- 确保在运行命令前已激活虚拟环境：`.venv\Scripts\activate` (Windows) 或 `source .venv/bin/activate` (Linux/macOS)
+- SSL证书文件路径必须正确，否则会显示错误信息
+- 如果只提供证书文件或密钥文件中的一个，程序将报错并退出
 
 ## 如何工作
 
@@ -111,17 +117,23 @@ python main.py
 
 ## 运行API服务
 
-本项目还提供了一个基于FastAPI的RESTful API服务，可以远程管理RAG数据库。要启动API服务，请在项目根目录下执行：
+本项目提供了一个基于FastAPI的RESTful API服务，可以远程管理RAG数据库。API服务已集成到主程序中，启动主程序即启动API服务：
 
 ```bash
-python run_api.py
+# HTTP模式（默认）
+python main.py
+
+# HTTPS模式（推荐，解决混合内容问题）
+python main.py --ssl-certfile frontend/vue-project/morph_icu.pem --ssl-keyfile frontend/vue-project/morph_icu.key
 ```
 
-API服务将在 `http://localhost:5000` 上启动。
+API服务将在以下地址启动：
+- HTTP模式: `http://localhost:5000`
+- HTTPS模式: `https://localhost:5000`
 
 FastAPI提供了自动生成的API文档：
-- 交互式API文档: `http://localhost:5000/docs`
-- ReDoc文档: `http://localhost:5000/redoc`
+- 交互式API文档: `[http|https]://localhost:5000/docs`
+- ReDoc文档: `[http|https]://localhost:5000/redoc`
 
 ### API端点
 

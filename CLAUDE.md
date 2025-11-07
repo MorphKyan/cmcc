@@ -84,12 +84,28 @@ The system follows a modular microservice architecture with the following key co
 
 ## Common Development Tasks
 
+### Virtual Environment Setup
+The project uses a `.venv` virtual environment. Always activate it before running commands:
+- **Windows**: `.venv\Scripts\activate`
+- **Linux/macOS**: `source .venv/bin/activate`
+
 ### Running the Application
 ```bash
+# HTTP mode (default)
 python main.py [--host HOST] [--port PORT]
+
+# HTTPS/WSS mode (recommended for production and mixed content resolution)
+python main.py --ssl-certfile frontend/vue-project/morph_icu.pem --ssl-keyfile frontend/vue-project/morph_icu.key [--host HOST] [--port PORT]
 ```
 
-Default: `http://0.0.0.0:5000`
+Default: `http://0.0.0.0:5000` (HTTP) or `https://0.0.0.0:5000` (HTTPS)
+
+### HTTPS/WSS Support
+The backend now supports HTTPS and WebSocket Secure (WSS) connections:
+- Automatically detects SSL certificates in `frontend/vue-project/` directory
+- Resolves mixed content issues when frontend is served over HTTPS
+- Supports both局域网 and production deployments
+- Maintains backward compatibility with HTTP/WS mode
 
 ### API Endpoints
 The service provides the following RESTful endpoints:
@@ -98,8 +114,10 @@ The service provides the following RESTful endpoints:
 - RAG management endpoints (via `src/api/routers/rag.py`)
 
 API documentation is available at:
-- Interactive docs: `http://localhost:5000/docs`
-- ReDoc: `http://localhost:5000/redoc`
+- Interactive docs: `[http|https]://localhost:5000/docs`
+- ReDoc: `[http|https]://localhost:5000/redoc`
+
+The protocol (HTTP/HTTPS) depends on whether SSL certificates were provided when starting the application.
 
 ### Testing
 Currently, there are no dedicated test files in the project. Testing is performed by running the application and using the API endpoints directly.
@@ -128,4 +146,7 @@ Main dependencies include:
 - pandas (for data processing)
 - loguru (for logging)
 
-Install with: `pip install -r requirements.txt`
+The project uses a pre-configured `.venv` virtual environment. If you need to recreate it:
+1. Create virtual environment: `python -m venv .venv`
+2. Activate it: `.venv\Scripts\activate` (Windows) or `source .venv/bin/activate` (Linux/macOS)
+3. Install dependencies: `pip install -r requirements.txt`
