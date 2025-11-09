@@ -1,110 +1,156 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 from typing import List
 
-from config import SCREENS_INFO, DOORS_INFO
 from langchain_core.documents import Document
-from volcenginesdkarkruntime import Ark
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
 from loguru import logger
 
+from src.config.config import LLMSettings, VolcEngineSettings
 from src.module.data_loader import format_docs_for_prompt
+from src.module.llm.base_llm_handler import BaseLLMHandler
 
 
-class LLMHandler:
-    def __init__(self, ark_api_key: str, ark_base_url: str, llm_model_name: str, system_prompt_template: str) -> None:
+class ArkLLMHandler(BaseLLMHandler):
+    def __init__(self, settings: LLMSettings, volcengine_settings: VolcEngineSettings) -> None:
         """
-        初始化大语言模型处理器。
-        
+        初始化使用LangChain的火山引擎Ark大语言模型处理器。
+
         Args:
-            ark_api_key (str): 火山引擎API密钥。
-            ark_base_url (str): 火山引擎API基础URL。
-            llm_model_name (str): 大语言模型名称。
-            system_prompt_template (str): 系统提示模板。
+            settings (LLMSettings): LLM参数
+            volcengine_settings (VolcEngineSettings): 火山引擎参数
         """
-        self.system_prompt_template = system_prompt_template
-        
+        super().__init__(settings)
+
+        # 1. 初始化ChatOpenAI模型 for VolcEngine Ark
+        # VolcEngine Ark API is compatible with OpenAI API
         try:
-            self.client = Ark(api_key=ark_api_key, base_url=ark_base_url)
+            self.model = ChatOpenAI(
+                model=volcengine_settings.llm_model_name,
+                base_url=volcengine_settings.ark_base_url,
+                api_key=volcengine_settings.ark_api_key,
+                temperature=0.7,
+                top_p=0.8,
+                extra_body={
+                    "top_k": 20,
+                    "min_p": 0,
+                    "enable_thinking": False
+                }
+            )
         except Exception as e:
-            logger.exception("初始化火山引擎客户端失败")
-            # 如果客户端初始化失败，后续无法调用，直接退出
+            logger.exception("初始化火山引擎Ark客户端失败，请检查API配置。")
             exit(1)
-            
-        self.llm_model_name = llm_model_name
-        self.conversation_history = []
-        logger.info("大语言模型处理器初始化完成。")
 
-    def _construct_prompt(self, user_input: str, rag_docs: List[Document]) -> str:
-        """
-        构建包含RAG上下文的系统提示，并嵌入screens和doors信息。
-        """
-        rag_context = format_docs_for_prompt(rag_docs)
-        system_prompt = self.system_prompt_template.format(
-            SCREENS_INFO=SCREENS_INFO,
-            DOORS_INFO=DOORS_INFO,
-            rag_context=rag_context,
-            USER_INPUT=user_input  # 模板中也包含USER_INPUT占位符
-        )
-        return system_prompt
+        # 2. 将工具绑定到模型
+        self.model_with_tools = self.model.bind_tools(self.tools)
 
-    def get_response(self, user_input: str, rag_docs: List[Document]) -> str:
+        # 3. 构建处理链 (Chain)
+        self.chain = self.prompt_template | self.model_with_tools | self.output_parser
+
+        logger.info("火山引擎Ark大语言模型处理器初始化完成，使用模型: {model}", model=volcengine_settings.llm_model_name)
+
+    async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """
-        结合RAG上下文，获取大模型的响应。
-        
+        结合RAG上下文，异步获取大模型的响应。
+
         Args:
             user_input (str): 用户的原始输入文本。
             rag_docs (list[Document]): RAG检索器返回的文档列表。
-            
+
         Returns:
             str: 大模型返回的JSON格式指令或错误信息。
         """
-        system_prompt = self._construct_prompt(user_input, rag_docs)
-        
-        # 重置对话历史，每次都以新的RAG上下文作为系统提示
-        self.conversation_history = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input}
-        ]
-        
-        logger.info("\n--- 发送给大模型的最终Prompt ---")
-        logger.info(system_prompt.replace(user_input, "{{{{USER_INPUT}}}}")) # 打印模板
         logger.info("用户指令: {user_input}", user_input=user_input)
-        logger.info("--------------------------------\n")
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.llm_model_name,
-                messages=self.conversation_history
-            )
-            
-            assistant_message = response.choices[0].message.content
-            
-            # 将大模型的响应也添加到对话历史中（虽然当前是单轮，但保留此结构以备将来扩展）
-            self.conversation_history.append({
-                "role": "assistant",
-                "content": assistant_message
-            })
-            
-            # 验证LLM输出是否为有效的JSON格式
-            import json
-            try:
-                # 尝试解析LLM的输出
-                parsed_response = json.loads(assistant_message)
-                # 检查是否包含必需的action字段
-                if isinstance(parsed_response, dict) and "action" in parsed_response:
-                    # 返回格式化的JSON字符串
-                    return json.dumps(parsed_response, ensure_ascii=False)
-                else:
-                    # 如果解析后的对象不包含action字段，返回错误
-                    logger.warning("[警告] LLM输出格式不正确，缺少action字段: {assistant_message}", assistant_message=assistant_message)
-                    return '{"action": "error", "reason": "invalid_format", "target": null, "device": null, "value": null}'
-            except json.JSONDecodeError:
-                # 如果无法解析为JSON，返回错误
-                logger.warning("[警告] LLM输出不是有效的JSON格式: {assistant_message}", assistant_message=assistant_message)
-                return '{"action": "error", "reason": "invalid_json", "target": null, "device": null, "value": null}'
-            
+            # 准备Prompt的输入变量
+            chain_input = self._prepare_chain_input(user_input, rag_docs)
+
+            # 异步调用链
+            tool_calls = await self.chain.ainvoke(chain_input)
+
+            # Validate and retry if necessary
+            return await self._validate_and_retry_tool_calls(tool_calls, user_input, rag_docs, 0)
+
         except Exception as api_error:
-            logger.exception("[错误] 调用大模型API出错: {error}", error=str(api_error))
-            # 返回一个标准的错误JSON
-            return '{"action": "error", "reason": "api_failure", "target": null, "device": null, "value": null}'
+            logger.exception("调用火山引擎Ark API或处理链时出错: {error}", error=str(api_error))
+            # 保持错误返回格式的一致性
+            error_response = {
+                "action": "error",
+                "reason": "api_failure",
+                "target": None,
+                "device": None,
+                "value": None
+            }
+            # 返回一个包含单个错误对象的JSON数组字符串
+            return str(error_response).replace("'", '"')
+
+    async def _retry_with_validation_context(
+        self,
+        user_input: str,
+        rag_docs: List[Document],
+        validation_context: str,
+        validation_errors: List[str],
+        retry_count: int
+    ) -> str:
+        """
+        Retry LLM call with validation context included in the prompt.
+        """
+        logger.info(f"Retrying Ark LLM call with validation context (attempt {retry_count})")
+
+        try:
+            # Create a modified system prompt that includes validation context
+            retry_prompt_template = self.settings.system_prompt_template + """
+
+# 验证上下文 (Validation Context)
+你之前的响应包含无效的资源引用。请只使用以下可用资源：
+
+{validation_context}
+
+# 验证错误 (Validation Errors)
+之前的响应有以下问题：
+{validation_errors_str}
+
+请重新生成响应，确保只使用上述可用资源。
+"""
+            # Prepare retry chain input
+            rag_context = format_docs_for_prompt(rag_docs)
+            screens_info_json = json.dumps(self.screens_info, ensure_ascii=False, indent=2)
+            doors_info_json = json.dumps(self.doors_info, ensure_ascii=False, indent=2)
+            validation_errors_str = "\n".join([f"- {error}" for error in validation_errors])
+
+            retry_chain_input = {
+                "SCREENS_INFO": screens_info_json,
+                "DOORS_INFO": doors_info_json,
+                "rag_context": rag_context,
+                "validation_context": validation_context,
+                "validation_errors_str": validation_errors_str,
+                "USER_INPUT": user_input
+            }
+
+            # Create retry chain with modified prompt
+            retry_prompt = ChatPromptTemplate.from_messages([
+                ("system", retry_prompt_template),
+                ("user", "{USER_INPUT}")
+            ])
+            retry_chain = retry_prompt | self.model_with_tools | self.output_parser
+
+            # Call retry chain
+            tool_calls = await retry_chain.ainvoke(retry_chain_input)
+
+            # Validate again (this will handle further retries if needed)
+            return await self._validate_and_retry_tool_calls(tool_calls, user_input, rag_docs, retry_count)
+
+        except Exception as retry_error:
+            logger.exception(f"Ark retry attempt {retry_count} failed: {retry_error}")
+            # If retry fails, return validation error
+            error_response = {
+                "action": "error",
+                "reason": "retry_failure",
+                "message": f"Ark retry attempt {retry_count} failed",
+                "details": [str(retry_error)]
+            }
+            return json.dumps([error_response], ensure_ascii=False)

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import asyncio
 import json
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputToolsParser
@@ -11,6 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from loguru import logger
 
 from src.config.config import LLMSettings
+from src.core.validation_service import ValidationService
 from src.module.data_loader import format_docs_for_prompt
 
 
@@ -25,6 +27,7 @@ class BaseLLMHandler(ABC):
         self.settings = settings
         self.screens_info = settings.screens_info
         self.doors_info = settings.doors_info
+        self.validation_service = ValidationService()
 
         # 定义tools (shared between all LLM handlers)
         self.tools = [
@@ -115,6 +118,76 @@ class BaseLLMHandler(ABC):
         self.output_parser = JsonOutputToolsParser()
 
         logger.info("LLM处理器基类初始化完成")
+
+    async def _validate_and_retry_tool_calls(
+        self,
+        tool_calls: List[Dict[str, Any]],
+        user_input: str,
+        rag_docs: List[Document],
+        retry_count: int = 0
+    ) -> str:
+        """
+        Validate tool calls and retry if validation fails.
+
+        Args:
+            tool_calls: List of tool calls from LLM
+            user_input: Original user input
+            rag_docs: RAG documents
+            retry_count: Current retry attempt number
+
+        Returns:
+            JSON string response (validated or error)
+        """
+        if not tool_calls:
+            return '[]'
+
+        # Validate the tool calls
+        is_valid, errors = self.validation_service.validate_function_calls(tool_calls)
+
+        if is_valid:
+            # Validation passed, return mapped response
+            return self._map_tool_calls_to_response(tool_calls)
+
+        # Validation failed, check if we should retry
+        max_retries = self.settings.max_validation_retries
+        if retry_count < max_retries:
+            logger.warning(f"Validation failed (attempt {retry_count + 1}/{max_retries + 1}): {errors}")
+
+            # Add delay before retry
+            await asyncio.sleep(self.settings.retry_delay)
+
+            # Get validation context for the retry prompt
+            validation_context = self.validation_service.get_validation_context()
+
+            # Retry with modified prompt that includes validation errors
+            retry_response = await self._retry_with_validation_context(
+                user_input, rag_docs, validation_context, errors, retry_count + 1
+            )
+            return retry_response
+
+        # Max retries exceeded, return error response
+        logger.error(f"Max validation retries ({max_retries}) exceeded. Errors: {errors}")
+        error_response = {
+            "action": "error",
+            "reason": "validation_failed",
+            "message": "Requested resources not found. Please specify valid videos, doors, or screens.",
+            "details": errors
+        }
+        return json.dumps([error_response], ensure_ascii=False)
+
+    async def _retry_with_validation_context(
+        self,
+        user_input: str,
+        rag_docs: List[Document],
+        validation_context: str,
+        validation_errors: List[str],
+        retry_count: int
+    ) -> str:
+        """
+        Abstract method to be implemented by subclasses for retry logic.
+        This method should call the LLM again with validation context included.
+        """
+        raise NotImplementedError("Subclasses must implement _retry_with_validation_context")
 
     @staticmethod
     def _map_tool_calls_to_response(tool_calls: list[Dict[str, Any]]) -> str:

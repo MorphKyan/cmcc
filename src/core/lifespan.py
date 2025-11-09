@@ -9,6 +9,7 @@ from src.core import dependencies
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.llm.ollama_llm_handler import OllamaLLMHandler
 from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
+from src.module.llm.ark_llm_handler import ArkLLMHandler
 from src.module.rag.rag_processor import RAGProcessor
 from src.module.vad.vad_core import VADCore
 
@@ -32,6 +33,9 @@ async def lifespan(app: FastAPI):
         if llm_config.provider.lower() == "modelscope":
             dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
             logger.info("使用ModelScope LLM处理器")
+        elif llm_config.provider.lower() == "ark":
+            dependencies.llm_processor = ArkLLMHandler(llm_config, settings.volcengine)
+            logger.info("使用火山引擎Ark LLM处理器")
         else:
             dependencies.llm_processor = OllamaLLMHandler(llm_config)
             logger.info("使用Ollama LLM处理器")

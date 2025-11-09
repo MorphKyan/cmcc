@@ -206,6 +206,9 @@ class LLMSettings(BaseSettings):
     # ModelScope specific settings
     modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
     modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
+    # Validation and retry settings
+    max_validation_retries: int = 2
+    retry_delay: float = 0.1
 
 
 class VolcEngineSettings(BaseSettings):
