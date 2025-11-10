@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import asyncio
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -52,13 +52,13 @@ class VADProcessor:
     #         result = self._extract_audio(self.last_start_time, end_ms)
     #         self.last_start_time = None
 
-    async def process_chunk(self) -> List[Tuple[int, int]]:
+    async def process_chunk(self) -> list[Tuple[int, int]]:
         chunk = await self.chunk_queue.get()
         segments = self.vad_core.process_chunk(chunk, self.cache)
         self.total_samples_processed += len(chunk)
         return segments
 
-    def process_result(self, segments: List[Tuple[int, int]]) -> List[Tuple[int, int, npt.NDArray[np.float32]]]:
+    def process_result(self, segments: list[Tuple[int, int]]) -> list[Tuple[int, int, npt.NDArray[np.float32]]]:
         completed_segments = []
         for start_ms, end_ms in segments:
             # 情况一：新的语音段开始

@@ -60,4 +60,4 @@ https http混合连接问题
 vad core监控和重启
 llm监控和重启
 config默认加载文件未设置
-function calling 和 validation是否应该重构得更统一
+请分析llm的function calling 和 validation是否应该重构得更统一

@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
@@ -26,7 +26,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str) -> None:
     logger.info("客户端已连接")
 
     context: Optional[Context] = None
-    all_tasks: List[asyncio.Task] = []
+    all_tasks: list[asyncio.Task] = []
     try:
         # 等待第一条元数据消息
         config_message = await websocket.receive_text()

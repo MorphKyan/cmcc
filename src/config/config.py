@@ -3,7 +3,7 @@
 
 import os
 import tomllib
-from typing import Any, Dict, List
+from typing import Any
 
 import pandas as pd
 import pyaudio
@@ -81,11 +81,11 @@ def load_config_from_toml(config_path: str = None) -> dict:
         return {}
 
 
-def load_screens_data(path: str) -> List[Dict[str, Any]]:
+def load_screens_data(path: str) -> list[dict[str, Any]]:
     """加载屏幕数据并返回结构化列表"""
     try:
         df = pd.read_csv(path)
-        screens_info: List[Dict[str, Any]] = []
+        screens_info: list[dict[str, Any]] = []
         for _, row in df.iterrows():
             screen_info = {
                 "name": row['name'],
@@ -98,11 +98,11 @@ def load_screens_data(path: str) -> List[Dict[str, Any]]:
         return []
 
 
-def load_doors_data(path: str) -> List[Dict[str, Any]]:
+def load_doors_data(path: str) -> list[dict[str, Any]]:
     """加载门数据并返回结构化列表"""
     try:
         df = pd.read_csv(path)
-        doors_info: List[Dict[str, Any]] = []
+        doors_info: list[dict[str, Any]] = []
         for _, row in df.iterrows():
             door_info = {
                 "name": row['name'],

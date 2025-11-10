@@ -3,14 +3,13 @@
 
 import json
 import os
-from typing import List
 
 import pandas as pd
 from langchain_core.documents import Document
 from loguru import logger
 
 
-def load_documents_from_csvs(file_paths: List[str]) -> List[Document]:
+def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
     """
     从多个CSV文件加载数据并转换为LangChain的Document对象。
 
@@ -60,7 +59,7 @@ def load_documents_from_csvs(file_paths: List[str]) -> List[Document]:
         
     return documents
 
-def format_docs_for_prompt(docs: List[Document]) -> str:
+def format_docs_for_prompt(docs: list[Document]) -> str:
     """
     将检索到的Document对象格式化为可以插入到Prompt中的字符串。
 

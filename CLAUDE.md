@@ -158,3 +158,34 @@ The project uses a pre-configured `.venv` virtual environment. If you need to re
 1. Create virtual environment: `python -m venv .venv`
 2. Activate it: `.venv\Scripts\activate` (Windows) or `source .venv/bin/activate` (Linux/macOS)
 3. Install dependencies: `pip install -r requirements.txt`
+
+## Python Type Annotation Standards
+
+**IMPORTANT**: Use modern built-in generic types instead of `typing` module imports for basic collections:
+
+✅ **CORRECT** (Python 3.9+):
+```python
+def process_items(items: list[str]) -> dict[str, int]:
+    return {"count": len(items)}
+
+def get_names() -> list[str]:
+    return ["Alice", "Bob"]
+```
+
+❌ **INCORRECT** (legacy typing module):
+```python
+from typing import List, Dict
+
+def process_items(items: List[str]) -> Dict[str, int]:  # Don't do this
+    return {"count": len(items)}
+```
+
+### Guidelines:
+- Use `list[T]` instead of `List[T]` from `typing`
+- Use `dict[K, V]` instead of `Dict[K, V]` from `typing`
+- Use `set[T]` instead of `Set[T]` from `typing`
+- Use `tuple[T, ...]` instead of `Tuple[T, ...]` from `typing`
+- Keep using `typing.Optional`, `typing.Union`, `typing.Any`, etc. for types that don't have built-in equivalents
+- This applies to both type hints and variable annotations
+
+This ensures consistency with modern Python standards and reduces unnecessary imports from the `typing` module.
