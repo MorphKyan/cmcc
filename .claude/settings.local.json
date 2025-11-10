@@ -1,14 +1,15 @@
 {
+  "bypassPermissions": true,
   "permissions": {
     "allow": [
       "Bash(python -m pytest:*)",
       "WebSearch",
       "WebFetch(domain:ollama.com)",
       "Bash(python:*)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []
-  },
-  "bypassPermissions": true
+  }
 }

@@ -248,14 +248,31 @@ class LLMSettings(BaseSettings):
     # Validation and retry settings
     max_validation_retries: int = 2
     retry_delay: float = 0.1
+    # Network timeout settings
+    request_timeout: int = 30  # Request timeout in seconds
+    connection_timeout: int = 10  # Connection timeout in seconds
+    # Network retry settings
+    max_network_retries: int = 3  # Maximum network retry attempts
+    base_retry_delay: float = 1.0  # Base delay for exponential backoff (seconds)
+    max_retry_delay: float = 10.0  # Maximum retry delay (seconds)
+    # Legacy retry settings (for backward compatibility)
+    max_retries: int = 3  # Legacy field, maps to max_network_retries
+    enable_reconnection: bool = True  # Legacy field, always enabled
 
 
 class VolcEngineSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="VOLCENGINE_")
 
-    ark_api_key: str = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
+    ark_api_key: SecretStr = SecretStr("aabd9362-9ca8-43ac-bb4d-828f0ba98f4d")
     ark_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
     llm_model_name: str = "doubao-seed-1-6-flash-250715"
+    # Network timeout settings (inherited from LLMSettings if not specified)
+    request_timeout: int = 30  # Request timeout in seconds
+    connection_timeout: int = 10  # Connection timeout in seconds
+    # Network retry settings (inherited from LLMSettings if not specified)
+    max_network_retries: int = 3  # Maximum network retry attempts
+    base_retry_delay: float = 1.0  # Base delay for exponential backoff (seconds)
+    max_retry_delay: float = 10.0  # Maximum retry delay (seconds)
 
 
 class AppSettings(BaseSettings):

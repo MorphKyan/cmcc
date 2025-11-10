@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import asyncio
 import json
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputToolsParser
@@ -12,6 +11,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from loguru import logger
 
 from src.config.config import LLMSettings
+from src.core.response_mapper import ResponseMapper
+from src.core.validation_retry_service import ValidationRetryService
 from src.core.validation_service import ValidationService
 from src.module.data_loader import format_docs_for_prompt
 
@@ -28,6 +29,8 @@ class BaseLLMHandler(ABC):
         self.screens_info = settings.screens_info
         self.doors_info = settings.doors_info
         self.validation_service = ValidationService()
+        self.validation_retry_service = ValidationRetryService(self.validation_service, settings)
+        self.response_mapper = ResponseMapper()
 
         # 定义tools (shared between all LLM handlers)
         self.tools = [
@@ -119,136 +122,19 @@ class BaseLLMHandler(ABC):
 
         logger.info("LLM处理器基类初始化完成")
 
-    async def _validate_and_retry_tool_calls(
-        self,
-        tool_calls: List[Dict[str, Any]],
-        user_input: str,
-        rag_docs: List[Document],
-        retry_count: int = 0
-    ) -> str:
+    def get_network_retry_config(self) -> dict:
         """
-        Validate tool calls and retry if validation fails.
-
-        Args:
-            tool_calls: List of tool calls from LLM
-            user_input: Original user input
-            rag_docs: RAG documents
-            retry_count: Current retry attempt number
+        获取网络重试配置。
 
         Returns:
-            JSON string response (validated or error)
+            dict: 包含重试配置的字典
         """
-        if not tool_calls:
-            return '[]'
-
-        # Validate the tool calls
-        is_valid, errors = self.validation_service.validate_function_calls(tool_calls)
-
-        if is_valid:
-            # Validation passed, return mapped response
-            return self._map_tool_calls_to_response(tool_calls)
-
-        # Validation failed, check if we should retry
-        max_retries = self.settings.max_validation_retries
-        if retry_count < max_retries:
-            logger.warning(f"Validation failed (attempt {retry_count + 1}/{max_retries + 1}): {errors}")
-
-            # Add delay before retry
-            await asyncio.sleep(self.settings.retry_delay)
-
-            # Get validation context for the retry prompt
-            validation_context = self.validation_service.get_validation_context()
-
-            # Retry with modified prompt that includes validation errors
-            retry_response = await self._retry_with_validation_context(
-                user_input, rag_docs, validation_context, errors, retry_count + 1
-            )
-            return retry_response
-
-        # Max retries exceeded, return error response
-        logger.error(f"Max validation retries ({max_retries}) exceeded. Errors: {errors}")
-        error_response = {
-            "action": "error",
-            "reason": "validation_failed",
-            "message": "Requested resources not found. Please specify valid videos, doors, or screens.",
-            "details": errors
+        return {
+            'max_retries': getattr(self.settings, 'max_network_retries', 3),
+            'base_delay': getattr(self.settings, 'base_retry_delay', 1.0),
+            'max_delay': getattr(self.settings, 'max_retry_delay', 10.0)
         }
-        return json.dumps([error_response], ensure_ascii=False)
 
-    async def _retry_with_validation_context(
-        self,
-        user_input: str,
-        rag_docs: List[Document],
-        validation_context: str,
-        validation_errors: List[str],
-        retry_count: int
-    ) -> str:
-        """
-        Abstract method to be implemented by subclasses for retry logic.
-        This method should call the LLM again with validation context included.
-        """
-        raise NotImplementedError("Subclasses must implement _retry_with_validation_context")
-
-    @staticmethod
-    def _map_tool_calls_to_response(tool_calls: list[Dict[str, Any]]) -> str:
-        """
-        将LangChain解析出的工具调用列表映射到项目所需的最终JSON格式。
-        """
-        if not tool_calls:
-            return '[]'
-
-        results = []
-        for tool_call in tool_calls:
-            function_name = tool_call['type']
-            arguments = tool_call['args']
-            result = {}
-
-            if function_name == "play_video":
-                result = {
-                    "action": "play",
-                    "target": arguments.get("target"),
-                    "device": arguments.get("device"),
-                    "value": None
-                }
-            elif function_name == "control_door":
-                result = {
-                    "action": arguments.get("action"),
-                    "target": arguments.get("target"),
-                    "device": None,
-                    "value": None
-                }
-            elif function_name == "seek_video":
-                result = {
-                    "action": "seek",
-                    "target": None,
-                    "device": arguments.get("device"),
-                    "value": arguments.get("value")
-                }
-            elif function_name == "set_volume":
-                result = {
-                    "action": "set_volume",
-                    "target": None,
-                    "device": arguments.get("device"),
-                    "value": arguments.get("value")
-                }
-            elif function_name == "adjust_volume":
-                result = {
-                    "action": "adjust_volume",
-                    "target": None,
-                    "device": arguments.get("device"),
-                    "value": arguments.get("value")
-                }
-            else:
-                result = {
-                    "action": "error",
-                    "reason": "unknown_function",
-                    "target": None,
-                    "device": None,
-                    "value": None
-                }
-            results.append(result)
-
-        return json.dumps(results, ensure_ascii=False)
 
     @abstractmethod
     async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
@@ -261,6 +147,16 @@ class BaseLLMHandler(ABC):
 
         Returns:
             str: 大模型返回的JSON格式指令或错误信息。
+        """
+        pass
+
+    @abstractmethod
+    async def check_health(self) -> bool:
+        """
+        检查LLM服务的健康状态。
+
+        Returns:
+            bool: True if service is healthy, False otherwise
         """
         pass
 
