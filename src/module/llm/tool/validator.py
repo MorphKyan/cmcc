@@ -1,15 +1,19 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""
+Validation logic for LLM function calls.
 
+This module validates function call parameters against available resources
+loaded from CSV data.
+"""
 import json
 from typing import Any, Dict, List, Tuple
 
+from .types import ToolCall, ValidationResult
 from src.core.csv_loader import CSVLoader
 
 
-class ValidationService:
+class ToolValidator:
     """
-    Centralized validation service for LLM function call parameters.
+    Validator for LLM function call parameters.
 
     This service validates function call parameters against the loaded CSV data
     to ensure that requested resources (videos, doors, screens) actually exist.
@@ -19,7 +23,7 @@ class ValidationService:
         """Initialize the validation service with CSV loader."""
         self.csv_loader = CSVLoader()
 
-    def validate_function_calls(self, tool_calls: List[Dict[str, Any]]) -> Tuple[bool, List[str]]:
+    def validate_function_calls(self, tool_calls: List[ToolCall]) -> ValidationResult:
         """
         Validate a list of function calls against available resources.
 

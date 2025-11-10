@@ -12,10 +12,9 @@ from loguru import logger
 
 from src.config.config import LLMSettings
 from src.core.csv_loader import CSVLoader
-from src.core.response_mapper import ResponseMapper
 from src.core.validation_retry_service import ValidationRetryService
-from src.core.validation_service import ValidationService
 from src.module.data_loader import format_docs_for_prompt
+from src.module.llm.tool.registry import ToolRegistry
 
 
 class BaseLLMHandler(ABC):
@@ -28,89 +27,12 @@ class BaseLLMHandler(ABC):
         """
         self.settings = settings
         self.csv_loader = CSVLoader()
-        self.validation_service = ValidationService()
-        self.validation_retry_service = ValidationRetryService(self.validation_service, settings)
-        self.response_mapper = ResponseMapper()
+        self.tool_registry = ToolRegistry()
+        self.validation_retry_service = ValidationRetryService(self.tool_registry.validator, settings)
         self.model_with_tools = None
 
-        # 定义tools (shared between all LLM handlers)
-        self.tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "play_video",
-                    "description": "播放指定的视频文件",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "target": {"type": "string", "description": "要播放的视频文件名"},
-                            "device": {"type": "string", "description": "要在其上播放视频的屏幕名称"}
-                        },
-                        "required": ["target", "device"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "control_door",
-                    "description": "控制门的开关",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "target": {"type": "string", "description": "门的全称"},
-                            "action": {"type": "string", "enum": ["open", "close"], "description": "要执行的操作：open（打开）或close（关闭）"}
-                        },
-                        "required": ["target", "action"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "seek_video",
-                    "description": "跳转到视频的指定时间点",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "device": {"type": "string", "description": "要跳转进度的屏幕名称"},
-                            "value": {"type": "integer", "description": "跳转到的秒数"}
-                        },
-                        "required": ["device", "value"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "set_volume",
-                    "description": "设置音量到指定的绝对值",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "device": {"type": "string", "description": "要设置音量的屏幕名称"},
-                            "value": {"type": "integer", "minimum": 0, "maximum": 100, "description": "音量值（0-100）"}
-                        },
-                        "required": ["device", "value"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "adjust_volume",
-                    "description": "相对提高或降低音量",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "device": {"type": "string", "description": "要调整音量的屏幕名称"},
-                            "value": {"type": "string", "enum": ["up", "down"], "description": "音量调整方向：up（提高）或down（降低）"}
-                        },
-                        "required": ["device", "value"]
-                    }
-                }
-            }
-        ]
+        # Get tools from the centralized registry
+        self.tools = self.tool_registry.tool_definitions
 
         # 使用ChatPromptTemplate构建提示词
         self.prompt_template = ChatPromptTemplate.from_messages([
@@ -229,3 +151,12 @@ class BaseLLMHandler(ABC):
             tuple: (model_with_tools, output_parser, prompt_template)
         """
         return self.prompt_template, self.model_with_tools, self.output_parser
+
+    @property
+    def response_mapper(self):
+        """
+        Get the response mapper from the tool registry.
+
+        This maintains backward compatibility with ValidationRetryService.
+        """
+        return self.tool_registry.mapper

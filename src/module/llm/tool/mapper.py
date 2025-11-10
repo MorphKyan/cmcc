@@ -1,41 +1,41 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Response mapper for LLM tool calls.
+Response mapping for LLM tool calls.
 
 This module handles the mapping of LangChain tool calls to the project's
 required JSON response format.
 """
-
 import json
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
+from .types import ToolCall
 
 
-class ResponseMapper:
+class ToolResponseMapper:
     """
-    响应映射器。
+    Response mapper for LLM tool calls.
 
-    负责将LangChain解析出的工具调用列表映射到项目所需的最终JSON格式。
+    Responsible for mapping LangChain tool calls to the project's required
+    JSON response format.
     """
 
     def __init__(self, tool_mappings: Optional[Dict[str, Dict[str, Any]]] = None):
         """
-        初始化响应映射器。
+        Initialize the response mapper.
 
         Args:
-            tool_mappings: 自定义工具映射配置，如果为None则使用默认映射
+            tool_mappings: Custom tool mapping configuration, uses default if None
         """
         self.tool_mappings = tool_mappings or self._default_tool_mappings()
 
-    def map_tool_calls_to_response(self, tool_calls: List[Dict[str, Any]]) -> str:
+    def map_tool_calls_to_response(self, tool_calls: List[ToolCall]) -> str:
         """
-        将LangChain解析出的工具调用列表映射到项目所需的最终JSON格式。
+        Map LangChain tool calls to project's JSON response format.
 
         Args:
-            tool_calls: LangChain解析出的工具调用列表
+            tool_calls: LangChain parsed tool calls list
 
         Returns:
-            JSON格式的响应字符串
+            JSON formatted response string
         """
         if not tool_calls:
             return '[]'
@@ -45,72 +45,29 @@ class ResponseMapper:
             function_name = tool_call['type']
             arguments = tool_call['args']
 
-            # 获取工具映射配置
+            # Get tool mapping configuration
             if function_name not in self.tool_mappings:
-                # 未知函数，返回错误响应
+                # Unknown function, return error response
                 result = self.create_error_response("unknown_function")
             else:
-                # 根据映射配置创建响应
+                # Create response based on mapping configuration
                 result = self._create_response_from_mapping(function_name, arguments)
 
             results.append(result)
 
         return json.dumps(results, ensure_ascii=False)
 
-    def _create_response_from_mapping(
-        self,
-        function_name: str,
-        arguments: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        根据映射配置创建响应对象。
-
-        Args:
-            function_name: 函数名称
-            arguments: 函数参数
-
-        Returns:
-            响应对象字典
-        """
-        mapping = self.tool_mappings[function_name]
-
-        # 处理action字段（可能需要从参数中获取）
-        action_value = mapping["action"]
-        if action_value.startswith("args."):
-            arg_name = action_value[5:]  # 移除 "args." 前缀
-            action_value = arguments.get(arg_name)
-
-        # 创建基础响应结构
-        result = {
-            "action": action_value,
-            "target": None,
-            "device": None,
-            "value": None
-        }
-
-        # 根据映射设置各个字段
-        for field, source in mapping["fields"].items():
-            if source == "function_name":
-                result[field] = function_name
-            elif source.startswith("args."):
-                arg_name = source[5:]  # 移除 "args." 前缀
-                result[field] = arguments.get(arg_name)
-            elif source == "none":
-                result[field] = None
-
-        return result
-
     def create_error_response(self, reason: str, message: Optional[str] = None, details: Optional[List[str]] = None) -> Dict[str, Any]:
         """
-        创建错误响应对象。
+        Create error response object.
 
         Args:
-            reason: 错误原因
-            message: 可选的错误消息
-            details: 可选的详细错误信息列表
+            reason: Error reason
+            message: Optional error message
+            details: Optional detailed error information list
 
         Returns:
-            错误响应对象字典
+            Error response object dictionary
         """
         response = {
             "action": "error",
@@ -127,12 +84,55 @@ class ResponseMapper:
 
         return response
 
-    def _default_tool_mappings(self) -> Dict[str, Dict[str, Any]]:
+    def _create_response_from_mapping(
+        self,
+        function_name: str,
+        arguments: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
-        获取默认的工具映射配置。
+        Create response object based on mapping configuration.
+
+        Args:
+            function_name: Function name
+            arguments: Function arguments
 
         Returns:
-            默认工具映射配置字典
+            Response object dictionary
+        """
+        mapping = self.tool_mappings[function_name]
+
+        # Handle action field (may need to get from arguments)
+        action_value = mapping["action"]
+        if action_value.startswith("args."):
+            arg_name = action_value[5:]  # Remove "args." prefix
+            action_value = arguments.get(arg_name)
+
+        # Create base response structure
+        result = {
+            "action": action_value,
+            "target": None,
+            "device": None,
+            "value": None
+        }
+
+        # Set fields based on mapping
+        for field, source in mapping["fields"].items():
+            if source == "function_name":
+                result[field] = function_name
+            elif source.startswith("args."):
+                arg_name = source[5:]  # Remove "args." prefix
+                result[field] = arguments.get(arg_name)
+            elif source == "none":
+                result[field] = None
+
+        return result
+
+    def _default_tool_mappings(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Get default tool mapping configuration.
+
+        Returns:
+            Default tool mapping configuration dictionary
         """
         return {
             "play_video": {
@@ -144,7 +144,7 @@ class ResponseMapper:
                 }
             },
             "control_door": {
-                "action": "args.action",  # action来自参数
+                "action": "args.action",  # action comes from argument
                 "fields": {
                     "target": "args.target",
                     "device": "none",
@@ -184,12 +184,12 @@ class ResponseMapper:
         field_mappings: Dict[str, str]
     ) -> None:
         """
-        动态添加工具映射。
+        Dynamically add tool mapping.
 
         Args:
-            function_name: 函数名称
-            action: 对应的动作
-            field_mappings: 字段映射配置
+            function_name: Function name
+            action: Corresponding action
+            field_mappings: Field mapping configuration
         """
         self.tool_mappings[function_name] = {
             "action": action,
@@ -198,10 +198,10 @@ class ResponseMapper:
 
     def remove_tool_mapping(self, function_name: str) -> None:
         """
-        移除工具映射。
+        Remove tool mapping.
 
         Args:
-            function_name: 函数名称
+            function_name: Function name
         """
         if function_name in self.tool_mappings:
             del self.tool_mappings[function_name]

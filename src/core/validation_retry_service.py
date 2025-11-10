@@ -17,14 +17,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from loguru import logger
 
 from src.config.config import LLMSettings
-from src.core.validation_service import ValidationService
+from src.module.llm.tool.validator import ToolValidator
 from src.module.data_loader import format_docs_for_prompt
 
 
 class BaseValidationRetryService(ABC):
     """验证重试服务基类"""
 
-    def __init__(self, validation_service: ValidationService, settings: LLMSettings):
+    def __init__(self, validation_service: ToolValidator, settings: LLMSettings):
         self.validation_service = validation_service
         self.settings = settings
 
