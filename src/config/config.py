@@ -80,44 +80,6 @@ def load_config_from_toml(config_path: str = None) -> dict:
         logger.warning(f"配置文件不存在: {user_config_path} 和 {example_config_path}，使用默认配置")
         return {}
 
-
-def load_screens_data(path: str) -> list[dict[str, Any]]:
-    """加载屏幕数据并返回结构化列表"""
-    try:
-        df = pd.read_csv(path)
-        screens_info: list[dict[str, Any]] = []
-        for _, row in df.iterrows():
-            screen_info = {
-                "name": row['name'],
-                "aliases": [alias.strip() for alias in row['aliases'].split(',')] if pd.notna(row['aliases']) else []
-            }
-            screens_info.append(screen_info)
-        return screens_info
-    except Exception as e:
-        logger.exception("加载屏幕数据时出错")
-        return []
-
-
-def load_doors_data(path: str) -> list[dict[str, Any]]:
-    """加载门数据并返回结构化列表"""
-    try:
-        df = pd.read_csv(path)
-        doors_info: list[dict[str, Any]] = []
-        for _, row in df.iterrows():
-            door_info = {
-                "name": row['name'],
-                "aliases": [alias.strip() for alias in row['aliases'].split(',')] if pd.notna(row['aliases']) else []
-            }
-            doors_info.append(door_info)
-        return doors_info
-    except Exception as e:
-        logger.exception("加载门数据时出错")
-        return []
-
-
-# 加载并格式化 screens 和 doors 数据
-SCREENS_INFO = load_screens_data(os.path.join(data_dir, "screens.csv"))
-DOORS_INFO = load_doors_data(os.path.join(data_dir, "doors.csv"))
 SYSTEM_PROMPT_TEMPLATE = """
 # 角色与任务
 你是一个中国移动智慧展厅的中央控制AI助手。你的核心任务是根据用户的自然语言语音指令，识别一个或多个意图，并选择合适的函数来调用，以便后续程序执行。对于包含多个操作的指令，你需要生成一个包含多个函数调用的列表。你必须严格遵循以下知识库和行为准则。
@@ -238,8 +200,6 @@ class LLMSettings(BaseSettings):
     model: str = "qwen3:8b"
     ollama_base_url: str = "http://127.0.0.1:11434"
     system_prompt_template: str = SYSTEM_PROMPT_TEMPLATE
-    screens_info: list = SCREENS_INFO
-    doors_info: list = DOORS_INFO
     # LLM Provider selection: "ollama" or "modelscope"
     provider: str = "ollama"
     # ModelScope specific settings

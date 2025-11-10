@@ -48,7 +48,7 @@ class ResponseMapper:
             # 获取工具映射配置
             if function_name not in self.tool_mappings:
                 # 未知函数，返回错误响应
-                result = self._create_error_response("unknown_function")
+                result = self.create_error_response("unknown_function")
             else:
                 # 根据映射配置创建响应
                 result = self._create_response_from_mapping(function_name, arguments)
@@ -100,23 +100,32 @@ class ResponseMapper:
 
         return result
 
-    def _create_error_response(self, reason: str) -> Dict[str, Any]:
+    def create_error_response(self, reason: str, message: Optional[str] = None, details: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         创建错误响应对象。
 
         Args:
             reason: 错误原因
+            message: 可选的错误消息
+            details: 可选的详细错误信息列表
 
         Returns:
             错误响应对象字典
         """
-        return {
+        response = {
             "action": "error",
             "reason": reason,
             "target": None,
             "device": None,
             "value": None
         }
+
+        if message is not None:
+            response["message"] = message
+        if details is not None:
+            response["details"] = details
+
+        return response
 
     def _default_tool_mappings(self) -> Dict[str, Dict[str, Any]]:
         """

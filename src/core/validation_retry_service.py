@@ -10,7 +10,7 @@ when validation fails, using the context from validation errors to guide retries
 import asyncio
 import json
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import Any
 
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
@@ -31,9 +31,9 @@ class BaseValidationRetryService(ABC):
     @abstractmethod
     async def validate_and_retry(
             self,
-            tool_calls: List[Dict[str, Any]],
+            tool_calls: list[dict[str, Any]],
             user_input: str,
-            rag_docs: List[Document],
+            rag_docs: list[Document],
             llm_handler,
             retry_count: int = 0
     ) -> str:
@@ -56,9 +56,9 @@ class BaseValidationRetryService(ABC):
     async def _retry_with_validation_context(
             self,
             user_input: str,
-            rag_docs: List[Document],
+            rag_docs: list[Document],
             validation_context: str,
-            validation_errors: List[str],
+            validation_errors: list[str],
             retry_count: int,
             llm_handler
     ) -> str:
@@ -88,9 +88,9 @@ class ValidationRetryService(BaseValidationRetryService):
 
     async def validate_and_retry(
             self,
-            tool_calls: List[Dict[str, Any]],
+            tool_calls: list[dict[str, Any]],
             user_input: str,
-            rag_docs: List[Document],
+            rag_docs: list[Document],
             llm_handler,
             retry_count: int = 0
     ) -> str:
@@ -115,7 +115,7 @@ class ValidationRetryService(BaseValidationRetryService):
 
         if is_valid:
             # Validation passed, return mapped response
-            return self._map_tool_calls_to_response(tool_calls, llm_handler)
+            return llm_handler.response_mapper.map_tool_calls_to_response(tool_calls)
 
         # Validation failed, check if we should retry
         max_retries = self.settings.max_validation_retries
@@ -136,20 +136,19 @@ class ValidationRetryService(BaseValidationRetryService):
 
         # Max retries exceeded, return error response
         logger.error(f"Max validation retries ({max_retries}) exceeded. Errors: {errors}")
-        error_response = {
-            "action": "error",
-            "reason": "validation_failed",
-            "message": "Requested resources not found. Please specify valid videos, doors, or screens.",
-            "details": errors
-        }
+        error_response = llm_handler.response_mapper.create_error_response(
+            reason="validation_failed",
+            message="Requested resources not found. Please specify valid videos, doors, or screens.",
+            details=errors
+        )
         return json.dumps([error_response], ensure_ascii=False)
 
     async def _retry_with_validation_context(
             self,
             user_input: str,
-            rag_docs: List[Document],
+            rag_docs: list[Document],
             validation_context: str,
-            validation_errors: List[str],
+            validation_errors: list[str],
             retry_count: int,
             llm_handler
     ) -> str:
@@ -185,8 +184,8 @@ class ValidationRetryService(BaseValidationRetryService):
 """
             # Prepare retry chain input
             rag_context = format_docs_for_prompt(rag_docs)
-            screens_info_json = json.dumps(llm_handler.screens_info, ensure_ascii=False, indent=2)
-            doors_info_json = json.dumps(llm_handler.doors_info, ensure_ascii=False, indent=2)
+            screens_info_json = json.dumps(llm_handler.get_screens_info_for_prompt(), ensure_ascii=False, indent=2)
+            doors_info_json = json.dumps(llm_handler.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
             validation_errors_str = "\n".join([f"- {error}" for error in validation_errors])
 
             retry_chain_input = {
@@ -204,9 +203,9 @@ class ValidationRetryService(BaseValidationRetryService):
                 ("user", "{USER_INPUT}")
             ])
 
-            # Get the model with tools from the LLM handler
-            model_with_tools = llm_handler.model_with_tools
-            retry_chain = retry_prompt | model_with_tools | llm_handler.output_parser
+            # Get the model with tools and output parser from the LLM handler
+            _, model_with_tools, output_parser = llm_handler.get_retry_chain_components()
+            retry_chain = retry_prompt | model_with_tools | output_parser
 
             # Call retry chain
             tool_calls = await retry_chain.ainvoke(retry_chain_input)
@@ -217,22 +216,9 @@ class ValidationRetryService(BaseValidationRetryService):
         except Exception as retry_error:
             logger.exception(f"Retry attempt {retry_count} failed: {retry_error}")
             # If retry fails, return validation error
-            error_response = {
-                "action": "error",
-                "reason": "retry_failure",
-                "message": f"Retry attempt {retry_count} failed",
-                "details": [str(retry_error)]
-            }
+            error_response = llm_handler.response_mapper.create_error_response(
+                reason="retry_failure",
+                message=f"Retry attempt {retry_count} failed",
+                details=[str(retry_error)]
+            )
             return json.dumps([error_response], ensure_ascii=False)
-
-    def _map_tool_calls_to_response(
-            self,
-            tool_calls: list[Dict[str, Any]],
-            llm_handler
-    ) -> str:
-        """
-        将LangChain解析出的工具调用列表映射到项目所需的最终JSON格式。
-
-        这个方法委托给LLM处理器的响应映射器，保持一致性。
-        """
-        return llm_handler.response_mapper.map_tool_calls_to_response(tool_calls)

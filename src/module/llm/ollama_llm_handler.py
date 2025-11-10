@@ -94,7 +94,7 @@ class OllamaLLMHandler(BaseLLMHandler):
         except Exception as api_error:
             logger.exception("调用Ollama API或处理链时出错: {error}", error=str(api_error))
             # Use the response mapper to create consistent error response
-            error_response = self.response_mapper._create_error_response("api_failure")
+            error_response = self.response_mapper.create_error_response("api_failure")
             return json.dumps([error_response], ensure_ascii=False)
 
     async def check_health(self) -> bool:

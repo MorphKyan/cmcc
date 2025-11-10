@@ -11,6 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from loguru import logger
 
 from src.config.config import LLMSettings
+from src.core.csv_loader import CSVLoader
 from src.core.response_mapper import ResponseMapper
 from src.core.validation_retry_service import ValidationRetryService
 from src.core.validation_service import ValidationService
@@ -26,11 +27,11 @@ class BaseLLMHandler(ABC):
             settings (LLMSettings): LLM参数
         """
         self.settings = settings
-        self.screens_info = settings.screens_info
-        self.doors_info = settings.doors_info
+        self.csv_loader = CSVLoader()
         self.validation_service = ValidationService()
         self.validation_retry_service = ValidationRetryService(self.validation_service, settings)
         self.response_mapper = ResponseMapper()
+        self.model_with_tools = None
 
         # 定义tools (shared between all LLM handlers)
         self.tools = [
@@ -135,7 +136,6 @@ class BaseLLMHandler(ABC):
             'max_delay': getattr(self.settings, 'max_retry_delay', 10.0)
         }
 
-
     @abstractmethod
     async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """
@@ -170,13 +170,13 @@ class BaseLLMHandler(ABC):
         """
         pass
 
-    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document]) -> Dict[str, Any]:
+    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document]) -> dict[str, Any]:
         """
         准备Prompt的输入变量，供子类使用。
         """
         rag_context = format_docs_for_prompt(rag_docs)
-        screens_info_json = json.dumps(self.screens_info, ensure_ascii=False, indent=2)
-        doors_info_json = json.dumps(self.doors_info, ensure_ascii=False, indent=2)
+        screens_info_json = json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2)
+        doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
 
         return {
             "SCREENS_INFO": screens_info_json,
@@ -184,3 +184,48 @@ class BaseLLMHandler(ABC):
             "rag_context": rag_context,
             "USER_INPUT": user_input
         }
+
+    def get_screens_info_for_prompt(self) -> list[dict[str, Any]]:
+        """
+        获取用于Prompt的屏幕信息列表
+        """
+        screens_info = []
+        all_screens = self.csv_loader.get_all_screens()
+        for screen_name in all_screens:
+            screen_info = self.csv_loader.get_screen_info(screen_name)
+            if screen_info:
+                # Parse aliases from the stored string
+                aliases_str = screen_info.get("aliases", "")
+                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                screens_info.append({
+                    "name": screen_name,
+                    "aliases": aliases
+                })
+        return screens_info
+
+    def get_doors_info_for_prompt(self) -> list[dict[str, Any]]:
+        """
+        获取用于Prompt的门信息列表
+        """
+        doors_info = []
+        all_doors = self.csv_loader.get_all_doors()
+        for door_name in all_doors:
+            door_info = self.csv_loader.get_door_info(door_name)
+            if door_info:
+                # Parse aliases from the stored string
+                aliases_str = door_info.get("aliases", "")
+                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                doors_info.append({
+                    "name": door_name,
+                    "aliases": aliases
+                })
+        return doors_info
+
+    def get_retry_chain_components(self):
+        """
+        获取重试链所需的组件。
+
+        Returns:
+            tuple: (model_with_tools, output_parser, prompt_template)
+        """
+        return self.prompt_template, self.model_with_tools, self.output_parser
