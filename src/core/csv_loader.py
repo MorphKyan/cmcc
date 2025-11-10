@@ -3,8 +3,8 @@
 
 import os
 import threading
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Optional
 
 import pandas as pd
 from loguru import logger
@@ -39,9 +39,9 @@ class CSVLoader:
             return
 
         self._data_lock = threading.Lock()
-        self._videos_cache: Dict[str, Dict[str, Any]] = {}
-        self._doors_cache: Dict[str, Dict[str, Any]] = {}
-        self._screens_cache: Dict[str, Dict[str, Any]] = {}
+        self._videos_cache: dict[str, dict[str, Any]] = {}
+        self._doors_cache: dict[str, dict[str, Any]] = {}
+        self._screens_cache: dict[str, dict[str, Any]] = {}
         self._initialized = True
 
         # Load data on first initialization
@@ -71,7 +71,7 @@ class CSVLoader:
             logger.exception(f"Failed to read CSV file '{file_path}'")
             raise IOError(f"Failed to read CSV file '{file_path}': {e}")
 
-    def _process_videos_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+    def _process_videos_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         """
         Process videos DataFrame into a dictionary keyed by filename.
 
@@ -98,7 +98,7 @@ class CSVLoader:
 
         return videos_dict
 
-    def _process_doors_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+    def _process_doors_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         """
         Process doors DataFrame into a dictionary keyed by door name.
 
@@ -124,7 +124,7 @@ class CSVLoader:
 
         return doors_dict
 
-    def _process_screens_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+    def _process_screens_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         """
         Process screens DataFrame into a dictionary keyed by screen name.
 
@@ -241,7 +241,7 @@ class CSVLoader:
         with self._data_lock:
             return name in self._screens_cache
 
-    def get_video_info(self, filename: str) -> Optional[Dict[str, Any]]:
+    def get_video_info(self, filename: str) -> Optional[dict[str, Any]]:
         """
         Get video information by filename.
 
@@ -254,7 +254,7 @@ class CSVLoader:
         with self._data_lock:
             return self._videos_cache.get(filename)
 
-    def get_door_info(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_door_info(self, name: str) -> Optional[dict[str, Any]]:
         """
         Get door information by name.
 
@@ -267,7 +267,7 @@ class CSVLoader:
         with self._data_lock:
             return self._doors_cache.get(name)
 
-    def get_screen_info(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_screen_info(self, name: str) -> Optional[dict[str, Any]]:
         """
         Get screen information by name.
 
@@ -280,32 +280,32 @@ class CSVLoader:
         with self._data_lock:
             return self._screens_cache.get(name)
 
-    def get_all_videos(self) -> List[str]:
+    def get_all_videos(self) -> list[str]:
         """
         Get list of all available video filenames.
 
         Returns:
-            List of video filenames
+            list of video filenames
         """
         with self._data_lock:
             return list(self._videos_cache.keys())
 
-    def get_all_doors(self) -> List[str]:
+    def get_all_doors(self) -> list[str]:
         """
         Get list of all available door names.
 
         Returns:
-            List of door names
+            list of door names
         """
         with self._data_lock:
             return list(self._doors_cache.keys())
 
-    def get_all_screens(self) -> List[str]:
+    def get_all_screens(self) -> list[str]:
         """
         Get list of all available screen names.
 
         Returns:
-            List of screen names
+            list of screen names
         """
         with self._data_lock:
             return list(self._screens_cache.keys())

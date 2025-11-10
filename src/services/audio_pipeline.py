@@ -31,7 +31,7 @@ async def decode_loop(context: Context) -> None:
             data_bytes = await context.audio_input_queue.get()
             # 将bytes转换为int16数组，然后归一化到-1.0到1.0的float32范围
             int16_array = np.frombuffer(data_bytes, dtype=np.int16)
-            float32_array = int16_array.astype(np.float32) / 32768
+            float32_array = int16_array.astype(np.float32) / 32767.0
             logger.trace("处理PCM数据，形状: {shape}, 类型: {dtype}", shape=float32_array.shape, dtype=float32_array.dtype)
             await context.audio_np_queue.put(float32_array)
         except Exception as e:

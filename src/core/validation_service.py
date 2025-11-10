@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
-from typing import Any, Dict, List, Optional, Tuple
-
-from loguru import logger
+from typing import Any, Dict, List, Tuple
 
 from src.core.csv_loader import CSVLoader
 

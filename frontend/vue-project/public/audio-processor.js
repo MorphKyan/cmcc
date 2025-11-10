@@ -18,7 +18,7 @@ class AudioProcessor extends AudioWorkletProcessor {
       const int16Array = new Int16Array(channelData.length);
       for (let i = 0; i < channelData.length; i++) {
         // 将-1.0到1.0的浮点数转换为-32768到32767的整数
-        int16Array[i] = Math.max(-32768, Math.min(32767, Math.floor(channelData[i] * 32768)));
+        int16Array[i] = Math.max(-32768, Math.min(32767, Math.round(channelData[i] * 32767)));
       }
       
       // 通过port发送PCM数据到主线程

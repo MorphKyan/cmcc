@@ -30,12 +30,12 @@ class BaseValidationRetryService(ABC):
 
     @abstractmethod
     async def validate_and_retry(
-        self,
-        tool_calls: List[Dict[str, Any]],
-        user_input: str,
-        rag_docs: List[Document],
-        llm_handler,
-        retry_count: int = 0
+            self,
+            tool_calls: List[Dict[str, Any]],
+            user_input: str,
+            rag_docs: List[Document],
+            llm_handler,
+            retry_count: int = 0
     ) -> str:
         """
         验证工具调用并根据需要重试。
@@ -54,13 +54,13 @@ class BaseValidationRetryService(ABC):
 
     @abstractmethod
     async def _retry_with_validation_context(
-        self,
-        user_input: str,
-        rag_docs: List[Document],
-        validation_context: str,
-        validation_errors: List[str],
-        retry_count: int,
-        llm_handler
+            self,
+            user_input: str,
+            rag_docs: List[Document],
+            validation_context: str,
+            validation_errors: List[str],
+            retry_count: int,
+            llm_handler
     ) -> str:
         """
         使用验证上下文进行重试。
@@ -87,12 +87,12 @@ class ValidationRetryService(BaseValidationRetryService):
     """
 
     async def validate_and_retry(
-        self,
-        tool_calls: List[Dict[str, Any]],
-        user_input: str,
-        rag_docs: List[Document],
-        llm_handler,
-        retry_count: int = 0
+            self,
+            tool_calls: List[Dict[str, Any]],
+            user_input: str,
+            rag_docs: List[Document],
+            llm_handler,
+            retry_count: int = 0
     ) -> str:
         """
         验证工具调用并根据需要重试。
@@ -145,13 +145,13 @@ class ValidationRetryService(BaseValidationRetryService):
         return json.dumps([error_response], ensure_ascii=False)
 
     async def _retry_with_validation_context(
-        self,
-        user_input: str,
-        rag_docs: List[Document],
-        validation_context: str,
-        validation_errors: List[str],
-        retry_count: int,
-        llm_handler
+            self,
+            user_input: str,
+            rag_docs: List[Document],
+            validation_context: str,
+            validation_errors: List[str],
+            retry_count: int,
+            llm_handler
     ) -> str:
         """
         使用验证上下文进行重试。
@@ -226,9 +226,9 @@ class ValidationRetryService(BaseValidationRetryService):
             return json.dumps([error_response], ensure_ascii=False)
 
     def _map_tool_calls_to_response(
-        self,
-        tool_calls: list[Dict[str, Any]],
-        llm_handler
+            self,
+            tool_calls: list[Dict[str, Any]],
+            llm_handler
     ) -> str:
         """
         将LangChain解析出的工具调用列表映射到项目所需的最终JSON格式。
