@@ -1,0 +1,49 @@
+[
+  {
+    "instruction": "今天天气怎么样？",
+    "expected": []
+  },
+  {
+    "instruction": "你好，能告诉我现在几点吗？",
+    "expected": []
+  },
+  {
+    "instruction": "播放不存在的视频文件.mp4",
+    "expected": []
+  },
+  {
+    "instruction": "在不存在的屏幕上播放5G视频",
+    "expected": []
+  },
+  {
+    "instruction": "打开不存在的门",
+    "expected": []
+  },
+  {
+    "instruction": "音量调到150",
+    "expected": []
+  },
+  {
+    "instruction": "跳转到-30秒",
+    "expected": []
+  },
+  {
+    "instruction": "",
+    "expected": []
+  },
+  {
+    "instruction": "播放5G视频，然后做一下数学题",
+    "expected": [
+      {
+        "action": "play",
+        "target": "5G_Revolution.mp4",
+        "device": "主屏幕",
+        "value": null
+      }
+    ]
+  },
+  {
+    "instruction": "控制音量到up",
+    "expected": []
+  }
+]

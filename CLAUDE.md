@@ -82,7 +82,7 @@ The system follows a modular microservice architecture with the following key co
 - **Configuration** (`src/config/`) - Centralized configuration management and logging setup
 - **API Layer** (`src/api/`) - RESTful endpoints for audio processing and RAG database management
 
-## Common Development Tasks
+## Common Development Commands
 
 ### Virtual Environment Setup
 The project uses a `.venv` virtual environment. Always activate it before running commands:
@@ -100,6 +100,49 @@ python main.py --ssl-certfile frontend/vue-project/morph_icu.pem --ssl-keyfile f
 
 Default: `http://0.0.0.0:5000` (HTTP) or `https://0.0.0.0:5000` (HTTPS)
 
+### Running Tests
+The project includes several test files for different components:
+```bash
+# Run LLM functionality tests (requires Ollama running)
+python test_llm_functionality.py
+
+# Run validation tests
+python test_validation.py
+
+# Run LLM reconnection tests
+python test_llm_reconnect.py
+
+# Run refactored LLM tests
+python test_refactored_llm.py
+
+# Run final integration tests
+python test_final_integration.py
+```
+
+### API Testing Commands
+```bash
+# Health check
+curl http://localhost:5000/
+
+# Refresh RAG database
+curl -X POST http://localhost:5000/api/rag/refresh
+
+# Get RAG status
+curl -X GET http://localhost:5000/api/rag/status
+
+# Query RAG database
+curl -X POST http://localhost:5000/api/rag/query \
+     -H "Content-Type: application/json" \
+     -d '{"query": "我想看关于5G的视频"}'
+
+# Upload videos.csv file
+curl -X POST http://localhost:5000/api/rag/upload-videos \
+     -F "file=@/path/to/your/videos.csv"
+
+# Trigger RAG reinitialization (async)
+curl -X POST http://localhost:5000/api/rag/reinitialize
+```
+
 ### HTTPS/WSS Support
 The backend now supports HTTPS and WebSocket Secure (WSS) connections:
 - Automatically detects SSL certificates in `frontend/vue-project/` directory
@@ -109,18 +152,25 @@ The backend now supports HTTPS and WebSocket Secure (WSS) connections:
 
 ### API Endpoints
 The service provides the following RESTful endpoints:
+
+**Health Check:**
 - `GET /` - Health check
-- Audio processing endpoints (via `src/api/routers/audio.py`)
-- RAG management endpoints (via `src/api/routers/rag.py`)
+
+**Audio Processing (WebSocket):**
+- `GET /api/audio/ws/{client_id}` - WebSocket endpoint for real-time audio processing
+
+**RAG Management:**
+- `POST /api/rag/refresh` - Refresh RAG database
+- `GET /api/rag/status` - Get RAG status
+- `POST /api/rag/query` - Query RAG database
+- `POST /api/rag/upload-videos` - Upload videos.csv file and update RAG database
+- `POST /api/rag/reinitialize` - Trigger async RAG reinitialization
 
 API documentation is available at:
 - Interactive docs: `[http|https]://localhost:5000/docs`
 - ReDoc: `[http|https]://localhost:5000/redoc`
 
 The protocol (HTTP/HTTPS) depends on whether SSL certificates were provided when starting the application.
-
-### Testing
-Currently, there are no dedicated test files in the project. Testing is performed by running the application and using the API endpoints directly.
 
 ### Configuration
 - Edit `src/config/config.py` to configure API keys, model paths, and system prompts

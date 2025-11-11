@@ -3,10 +3,7 @@
 
 import os
 import tomllib
-from typing import Any
 
-import pandas as pd
-import pyaudio
 from loguru import logger
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -79,6 +76,7 @@ def load_config_from_toml(config_path: str = None) -> dict:
     else:
         logger.warning(f"配置文件不存在: {user_config_path} 和 {example_config_path}，使用默认配置")
         return {}
+
 
 SYSTEM_PROMPT_TEMPLATE = """
 # 角色与任务
@@ -283,10 +281,10 @@ class SettingsProxy:
 settings = SettingsProxy()
 
 # --- Audio Settings ---
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 16000  # FunASR的最佳采样率
-CHUNK = 1024
+# FORMAT = pyaudio.paInt16
+# CHANNELS = 1
+# RATE = 16000  # FunASR的最佳采样率
+# CHUNK = 1024
 
 # --- System Prompt (V1版本，保持兼容) ---
 SYSTEM_PROMPT_TEMPLATE_V1 = """
