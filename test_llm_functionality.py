@@ -6,6 +6,10 @@ Standalone LLM Functional Test Script for China Mobile Smart Exhibition Hall
 This script tests the LLM function calling capabilities using the generated test datasets.
 It loads test instructions, processes them through the LLM handler, and compares results
 against expected outputs to identify any failures.
+
+Note: There is a 2-second delay between each test request to avoid overwhelming the LLM service
+and to simulate more realistic usage patterns. This helps prevent rate limiting and ensures
+stable testing conditions.
 """
 
 import asyncio
@@ -20,7 +24,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from src.config.config import get_settings
 from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
-from langchain_core.documents import Document
+from src.module.rag.rag_processor import RAGProcessor
 
 
 def load_test_data() -> List[Dict[str, Any]]:
@@ -77,11 +81,14 @@ def compare_results(actual: List[Dict[str, Any]], expected: List[Dict[str, Any]]
     return norm_actual == norm_expected
 
 
-async def run_llm_test(test_instruction: str, rag_docs: List[Document], llm_handler: ModelScopeLLMHandler) -> List[Dict[str, Any]]:
-    """Run a single test through the LLM handler and return parsed result."""
+async def run_llm_test(test_instruction: str, rag_processor: RAGProcessor, llm_handler: ModelScopeLLMHandler) -> List[Dict[str, Any]]:
+    """Run a single test through the RAG+LLM pipeline and return parsed result."""
     try:
-        # Get response from LLM handler
-        response_str = await llm_handler.get_response(test_instruction, rag_docs)
+        # Retrieve relevant documents using RAG
+        retrieved_docs = await rag_processor.retrieve_context(test_instruction)
+
+        # Get response from LLM handler with retrieved documents
+        response_str = await llm_handler.get_response(test_instruction, retrieved_docs)
 
         # Parse the JSON response
         response_data = json.loads(response_str)
@@ -114,22 +121,25 @@ async def main():
 
     print(f"Loaded {len(test_data)} test cases")
 
-    # Initialize settings and LLM handler
+    # Initialize settings, RAG processor, and LLM handler
     try:
         settings = get_settings()
-        llm_handler = ModelScopeLLMHandler(settings.llm)
 
-        # Initialize the handler (this may take time for model loading)
-        print("Initializing Ollama LLM handler...")
+        # Initialize RAG processor
+        print("Initializing RAG processor...")
+        rag_processor = RAGProcessor(settings.rag)
+        await rag_processor.initialize()
+        print("RAG processor initialized successfully")
+
+        # Initialize LLM handler
+        llm_handler = ModelScopeLLMHandler(settings.llm)
+        print("Initializing LLM handler...")
         await llm_handler.initialize()
         print("LLM handler initialized successfully")
 
     except Exception as e:
-        print(f"Failed to initialize LLM handler: {e}")
+        print(f"Failed to initialize components: {e}")
         return 1
-
-    # Prepare RAG documents (empty for these tests since we're testing function calling directly)
-    rag_docs = []
 
     # Run tests
     passed_tests = 0
@@ -142,8 +152,8 @@ async def main():
         print(f"\nTest {i}/{len(test_data)}: {instruction}")
 
         try:
-            # Run the test
-            actual_result = await run_llm_test(instruction, rag_docs, llm_handler)
+            # Run the test through RAG+LLM pipeline
+            actual_result = await run_llm_test(instruction, rag_processor, llm_handler)
 
             # Compare results
             if compare_results(actual_result, expected):
@@ -158,6 +168,9 @@ async def main():
                 })
                 print(f"   Expected: {json.dumps(expected, ensure_ascii=False, indent=4)}")
                 print(f"   Actual:   {json.dumps(actual_result, ensure_ascii=False, indent=4)}")
+
+            # Add 2-second delay between requests to avoid overwhelming the LLM service
+            await asyncio.sleep(2)
 
         except Exception as e:
             print(f"❌ ERROR: {e}")
