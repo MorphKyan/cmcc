@@ -1,5 +1,6 @@
+from typing import Optional, Any
+
 from pydantic import BaseModel
-from typing import Optional
 
 
 class HealthResponse(BaseModel):
@@ -44,3 +45,15 @@ class WebSocketConfig(BaseModel):
     sampleSize: Optional[int] = None
     channelCount: Optional[int] = None
     mimeType: Optional[str] = None
+
+
+class LLMHealthResponse(BaseModel):
+    status: str
+    message: str
+    provider: str
+
+
+class ConfigResponse(BaseModel):
+    status: str
+    data: dict[str, Any]
+    message: Optional[str] = None

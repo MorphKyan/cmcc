@@ -34,12 +34,22 @@ export const queryRag = (query) => {
 export const uploadVideos = (file) => {
   const formData = new FormData()
   formData.append('file', file)
-  
+
   return api.post('/rag/upload-videos', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   })
+}
+
+// LLM 健康检查
+export const llmHealthCheck = () => {
+  return api.get('/llm/health')
+}
+
+// 获取当前配置
+export const getCurrentConfig = () => {
+  return api.get('/config/current')
 }
 
 export default api

@@ -17,9 +17,11 @@
           <div class="status-content">
             <p>健康检查: {{ healthStatus }}</p>
             <p>RAG 状态: {{ ragStatusInfo }}</p>
+            <p>LLM 健康: {{ llmHealthStatus }}</p>
             <button @click="checkHealth">检查健康</button>
             <button @click="getRagStatus">获取 RAG 状态</button>
             <button @click="refreshRag">刷新 RAG</button>
+            <button @click="checkLLMHealth">检查 LLM 健康</button>
           </div>
         </section>
         
@@ -35,7 +37,25 @@
             </div>
           </div>
         </section>
-        
+
+        <!-- 配置显示 -->
+        <section class="config-section">
+          <h2>当前配置</h2>
+          <div class="config-content">
+            <button @click="loadConfig" :disabled="configLoading">
+              {{ configLoading ? '加载中...' : '加载配置' }}
+            </button>
+            <div v-if="currentConfig" class="config-display">
+              <div v-for="(category, categoryName) in currentConfig" :key="categoryName" class="config-category">
+                <h3>{{ categoryName.toUpperCase() }} 配置</h3>
+                <div v-for="(value, key) in category" :key="key" class="config-item">
+                  <strong>{{ key }}:</strong> {{ value }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- 文件上传 -->
         <section class="upload-section">
           <h2>上传 videos.csv</h2>
@@ -52,7 +72,7 @@
 
 <script>
 import AudioRecorder from './components/AudioRecorder.vue'
-import { healthCheck, ragStatus, refreshRag, queryRag, uploadVideos } from './api'
+import {healthCheck, queryRag, ragStatus, refreshRag, uploadVideos} from './api'
 
 export default {
   name: 'App',
@@ -63,6 +83,9 @@ export default {
     return {
       healthStatus: '未知',
       ragStatusInfo: '未知',
+      llmHealthStatus: '未知',
+      currentConfig: null,
+      configLoading: false,
       queryText: '',
       queryResult: null,
       uploadMessage: ''
@@ -77,7 +100,28 @@ export default {
         this.healthStatus = '错误: ' + error.message
       }
     },
-    
+
+    async loadConfig() {
+      this.configLoading = true
+      try {
+        const response = await getCurrentConfig()
+        this.currentConfig = response.data.data
+      } catch (error) {
+        alert('加载配置失败: ' + error.message)
+      } finally {
+        this.configLoading = false
+      }
+    },
+
+    async checkLLMHealth() {
+      try {
+        const response = await llmHealthCheck()
+        this.llmHealthStatus = `健康 (${response.data.provider})`
+      } catch (error) {
+        this.llmHealthStatus = '不健康: ' + error.message
+      }
+    },
+
     async getRagStatus() {
       try {
         const response = await ragStatus()
@@ -182,5 +226,30 @@ input {
   padding: 10px;
   border-radius: 4px;
   overflow-x: auto;
+}
+
+.config-section {
+  margin-bottom: 40px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.config-category {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.config-item {
+  margin: 5px 0;
+  padding: 5px;
+  background-color: #f9f9f9;
+  border-radius: 3px;
+}
+
+.config-item strong {
+  color: #333;
 }
 </style>
