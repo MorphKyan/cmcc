@@ -57,6 +57,6 @@
 
 https http混合连接问题
 可以自定义配置后端地址和端口
-vad core监控和重启
-llm监控和重启
+vad core重启
+llm监控
 请分析llm的function calling 和 validation是否应该重构得更统一

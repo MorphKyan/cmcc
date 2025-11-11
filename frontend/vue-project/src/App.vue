@@ -16,9 +16,11 @@
           <h2>系统状态</h2>
           <div class="status-content">
             <p>健康检查: {{ healthStatus }}</p>
+            <p>VAD 状态: {{ vadStatusInfo }}</p>
             <p>RAG 状态: {{ ragStatusInfo }}</p>
             <p>LLM 健康: {{ llmHealthStatus }}</p>
             <button @click="checkHealth">检查健康</button>
+            <button @click="getVadStatus">获取 VAD 状态</button>
             <button @click="getRagStatus">获取 RAG 状态</button>
             <button @click="refreshRag">刷新 RAG</button>
             <button @click="checkLLMHealth">检查 LLM 健康</button>
@@ -72,7 +74,7 @@
 
 <script>
 import AudioRecorder from './components/AudioRecorder.vue'
-import {healthCheck, queryRag, ragStatus, refreshRag, uploadVideos} from './api'
+import {healthCheck, queryRag, ragStatus, refreshRag, uploadVideos, vadStatus} from './api'
 
 export default {
   name: 'App',
@@ -83,6 +85,7 @@ export default {
     return {
       healthStatus: '未知',
       ragStatusInfo: '未知',
+      vadStatusInfo: '未知',
       llmHealthStatus: '未知',
       currentConfig: null,
       configLoading: false,
@@ -130,6 +133,15 @@ export default {
         this.ragStatusInfo = '错误: ' + error.message
       }
     },
+
+    async getVadStatus() {
+      try {
+        const response = await vadStatus()
+        this.vadStatusInfo = response.data.status
+      } catch (error) {
+        this.vadStatusInfo = '错误: ' + error.message
+      }
+    },
     
     async refreshRag() {
       try {
@@ -160,14 +172,46 @@ export default {
         alert('请选择一个文件')
         return
       }
-      
+
       try {
         const response = await uploadVideos(file)
         this.uploadMessage = response.data.message
       } catch (error) {
         this.uploadMessage = '上传失败: ' + error.message
       }
+    },
+
+    // 定期更新所有状态
+    async updateAllStatuses() {
+      await this.checkHealth()
+      await this.getVadStatus()
+      await this.getRagStatus()
+      await this.checkLLMHealth()
+    },
+
+    // 启动定时更新
+    startAutoUpdate() {
+      this.updateAllStatuses() // 立即更新一次
+      this.autoUpdateInterval = setInterval(() => {
+        this.updateAllStatuses()
+      }, 5000) // 每5秒更新一次
+    },
+
+    // 停止定时更新
+    stopAutoUpdate() {
+      if (this.autoUpdateInterval) {
+        clearInterval(this.autoUpdateInterval)
+        this.autoUpdateInterval = null
+      }
     }
+  },
+
+  mounted() {
+    this.startAutoUpdate()
+  },
+
+  beforeUnmount() {
+    this.stopAutoUpdate()
   }
 }
 </script>

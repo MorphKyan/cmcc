@@ -52,4 +52,9 @@ export const getCurrentConfig = () => {
   return api.get('/config/current')
 }
 
+// 获取 VAD 状态
+export const vadStatus = () => {
+  return api.get('/vad/status')
+}
+
 export default api
