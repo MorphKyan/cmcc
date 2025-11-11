@@ -174,6 +174,7 @@ The protocol (HTTP/HTTPS) depends on whether SSL certificates were provided when
 
 ### Configuration
 - Edit `src/config/config.py` to configure API keys, model paths, and system prompts
+- For LLM configuration, use `ollama_model` for Ollama models and `modelscope_model` for ModelScope models (the generic `model` parameter is deprecated)
 - The application uses loguru for logging, configured in `src/config/logging_config.py`
 
 ### Configuration File Priority

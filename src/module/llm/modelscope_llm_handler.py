@@ -41,7 +41,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         try:
             # 处理 SecretStr 类型的 API key
             self.model = ChatOpenAI(
-                model=self.settings.model,
+                model=self.settings.modelscope_model,
                 base_url=self.settings.modelscope_base_url,
                 api_key=self.settings.modelscope_api_key,
                 temperature=0.7,
@@ -64,7 +64,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         # 3. 构建处理链 (Chain)
         self.chain = self.prompt_template | self.model_with_tools | self.output_parser
 
-        logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.model)
+        logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.modelscope_model or self.settings.model)
 
     @exponential_backoff_retry(
         max_retries=3,

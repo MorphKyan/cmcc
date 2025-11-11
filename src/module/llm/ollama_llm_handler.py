@@ -40,7 +40,7 @@ class OllamaLLMHandler(BaseLLMHandler):
         # ChatOllama原生支持异步操作
         try:
             self.model = ChatOllama(
-                model=self.settings.model,
+                model=self.settings.ollama_model,
                 base_url=self.settings.ollama_base_url,
                 timeout=self.settings.request_timeout,
                 max_retries=0  # Disable LangChain's built-in retry, we'll handle it ourselves
@@ -55,7 +55,7 @@ class OllamaLLMHandler(BaseLLMHandler):
         # 3. 构建处理链 (Chain)
         self.chain = self.prompt_template | self.model_with_tools | self.output_parser
 
-        logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.model)
+        logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.ollama_model)
 
     @exponential_backoff_retry(
         max_retries=3,

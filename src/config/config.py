@@ -194,13 +194,16 @@ class RAGSettings(BaseSettings):
 
 class LLMSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LLM_")
-
-    model: str = "qwen3:8b"
-    ollama_base_url: str = "http://127.0.0.1:11434"
     system_prompt_template: str = SYSTEM_PROMPT_TEMPLATE
     # LLM Provider selection: "ollama" or "modelscope"
     provider: str = "ollama"
+
+    # ollama specific settings
+    ollama_model: str = "qwen3:8b"
+    ollama_base_url: str = "http://127.0.0.1:11434"
+
     # ModelScope specific settings
+    modelscope_model: str = "qwen3-8b"
     modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
     modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
     # Validation and retry settings
