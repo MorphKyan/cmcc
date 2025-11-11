@@ -169,6 +169,7 @@ class VADSettings(BaseSettings):
     sample_rate: int = 16000
     model: str = "fsmn-vad"
     max_single_segment_time: int = 20000  # 最大切割音频时长(ms)
+    save_audio_segments: bool = True  # 是否保存切割出来的音频片段
 
 
 class FunASRSettings(BaseSettings):

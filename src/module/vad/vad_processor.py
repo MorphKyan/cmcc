@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import asyncio
+import os
 from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
 from loguru import logger
+from scipy.io import wavfile
 from src.module.vad.vad_core import VADCore
 
 
 class VADProcessor:
-    def __init__(self, vad_core: VADCore) -> None:
+    def __init__(self, vad_core: VADCore, save_audio_segments: bool = False) -> None:
         self.vad_core = vad_core
         self.sample_rate = vad_core.sample_rate
         self.chunk_size_samples = int(self.vad_core.chunk_size * self.sample_rate / 1000)
@@ -24,6 +26,7 @@ class VADProcessor:
         self.last_start_time_ms = None  # Start timestamp of the current speech segment in milliseconds
         self.total_samples_processed = 0  # A running counter of all samples seen so far
         self.chunk_queue: asyncio.Queue[npt.NDArray] = asyncio.Queue()
+        self.save_audio_segments = save_audio_segments
 
     def append_audio(self, data: npt.NDArray[np.float32]) -> None:
         # 加入缓冲区
@@ -69,6 +72,9 @@ class VADProcessor:
                     audio = self._extract_audio(self.last_start_time, start_ms)
                     if audio is not None:
                         completed_segments.append((self.last_start_time, start_ms, audio))
+                        # 保存音频片段
+                        if self.save_audio_segments:
+                            self._save_audio_segment(audio, self.last_start_time, start_ms)
                     self.last_start_time = None
                     self.last_end_time = start_ms
                 self.last_start_time = start_ms
@@ -80,6 +86,9 @@ class VADProcessor:
                     audio = self._extract_audio(self.last_start_time, end_ms)
                     if audio is not None:
                         completed_segments.append((self.last_start_time, end_ms, audio))
+                        # 保存音频片段
+                        if self.save_audio_segments:
+                            self._save_audio_segment(audio, self.last_start_time, end_ms)
                     self.last_start_time = None
                     self.last_end_time = end_ms
 
@@ -91,12 +100,18 @@ class VADProcessor:
                     audio = self._extract_audio(self.last_start_time, start_ms)
                     if audio is not None:
                         completed_segments.append((self.last_start_time, start_ms, audio))
+                        # 保存音频片段
+                        if self.save_audio_segments:
+                            self._save_audio_segment(audio, self.last_start_time, start_ms)
                     self.last_start_time = None
                     self.last_end_time = start_ms
 
                 audio = self._extract_audio(start_ms, end_ms)
                 if audio is not None:
                     completed_segments.append((start_ms, end_ms, audio))
+                    # 保存音频片段
+                    if self.save_audio_segments:
+                        self._save_audio_segment(audio, start_ms, end_ms)
                 self.last_start_time = None
                 self.last_end_time = end_ms
 
@@ -116,3 +131,23 @@ class VADProcessor:
             logger.warning("检测到空的音频段: {start}ms - {end}ms", start=start_ms, end=end_ms)
             return None
         return self.history_buffer[start_index_in_buffer:end_index_in_buffer]
+
+    def _save_audio_segment(self, audio_data: npt.NDArray[np.float32], start_ms: int, end_ms: int) -> None:
+        """保存音频片段为WAV文件"""
+        try:
+            # 创建保存目录
+            save_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "audio_segments")
+            os.makedirs(save_dir, exist_ok=True)
+
+            # 使用时间戳命名文件
+            filename = f"segment_{start_ms}_{end_ms}.wav"
+            filepath = os.path.join(save_dir, filename)
+
+            # 保存为WAV文件（需要将float32转换为int16）
+            # 假设音频数据在-1到1之间，乘以32767转换为int16
+            audio_int16 = (audio_data * 32767).astype(np.int16)
+            wavfile.write(filepath, self.sample_rate, audio_int16)
+
+            logger.info(f"音频片段已保存: {filepath}")
+        except Exception as e:
+            logger.error(f"保存音频片段失败: {e}")
