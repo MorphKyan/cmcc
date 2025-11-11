@@ -7,9 +7,9 @@ from loguru import logger
 from src.config.config import settings
 from src.core import dependencies
 from src.module.asr.asr_processor import ASRProcessor
-from src.module.llm.ollama_llm_handler import OllamaLLMHandler
-from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
 from src.module.llm.ark_llm_handler import ArkLLMHandler
+from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
+from src.module.llm.ollama_llm_handler import OllamaLLMHandler
 from src.module.rag.rag_processor import RAGProcessor
 from src.module.vad.vad_core import VADCore
 
@@ -26,9 +26,9 @@ async def lifespan(app: FastAPI):
 
     try:
         dependencies.vad_core = VADCore(vad_config)
-        dependencies.rag_processor = RAGProcessor(rag_config)
         dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
-        
+        dependencies.rag_processor = RAGProcessor(rag_config)
+
         # Initialize LLM processor based on provider configuration
         if llm_config.provider.lower() == "modelscope":
             dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
@@ -40,11 +40,12 @@ async def lifespan(app: FastAPI):
             dependencies.llm_processor = OllamaLLMHandler(llm_config)
             logger.info("使用Ollama LLM处理器")
 
-        # Start async initialization for both RAG and LLM processors
+        # Start async initialization for VAD, RAG and LLM processors
+        asyncio.create_task(dependencies.vad_core.initialize())
         asyncio.create_task(dependencies.rag_processor.initialize())
         asyncio.create_task(dependencies.llm_processor.initialize())
 
-        logger.info("应用启动序列已开始，RAG和LLM处理器正在后台初始化。")
+        logger.info("应用启动序列已开始，VAD、RAG和LLM处理器正在后台初始化。")
     except Exception as e:
         logger.exception(f"错误: 处理器初始化失败: {e}")
         # 在这里可以选择是否要阻止应用启动

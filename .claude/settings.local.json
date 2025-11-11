@@ -6,7 +6,8 @@
       "WebFetch(domain:ollama.com)",
       "Bash(python:*)",
       "Bash(source:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

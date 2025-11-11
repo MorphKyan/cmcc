@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from funasr import AutoModel
 import numpy.typing as npt
+from funasr import AutoModel
 from loguru import logger
 
 from src.config.config import VADSettings
+from src.module.vad.base_vad_processor import BaseVADProcessor, VADStatus
 
 
-class VADCore:
+class VADCore(BaseVADProcessor):
     """
     实时语音活动检测处理器
     """
@@ -20,19 +21,44 @@ class VADCore:
         Args:
             settings (VADSettings): VAD参数
         """
-        self.chunk_size = settings.chunk_size
-        self.sample_rate = settings.sample_rate
-        self.kwargs = {
-            "MAX_SINGLE_SEGMENT_TIME": settings.max_single_segment_time
-        }
-        self.chunk_stride = int(self.chunk_size * self.sample_rate / 1000)
+        super().__init__(settings)
+        self.model = None
+        logger.info("VAD处理器已创建，等待异步初始化...")
 
-        # 初始化VAD模型
-        logger.info("正在加载VAD模型...")
-        self.model = AutoModel(model=settings.model, model_revision="v2.0.4")
-        logger.info("VAD模型加载完成。")
+    async def initialize(self) -> None:
+        """
+        异步初始化VAD模型。
+        """
+        async with self._init_lock:
+            if self.status == VADStatus.INITIALIZING:
+                logger.warning("初始化已在进行中，请等待。")
+                return
+            self.status = VADStatus.INITIALIZING
+            logger.info("开始初始化VAD处理器...")
+
+            try:
+                # 初始化VAD模型
+                logger.info("正在加载VAD模型...")
+                self.model = AutoModel(model=self.settings.model, model_revision="v2.0.4")
+                logger.info("VAD模型加载完成。")
+
+                self.status = VADStatus.READY
+                self.error_message = None
+                logger.success("VAD处理器初始化完成，状态: READY。")
+            except Exception as e:
+                self.status = VADStatus.ERROR
+                self.error_message = f"VAD初始化失败: {e}"
+                logger.exception(self.error_message)
+                # 向上抛出异常，让调用者知道失败了
+                raise
 
     def process_chunk(self, chunk: npt.NDArray, cache) -> list:
+        """
+        处理音频块并返回语音活动检测结果。
+        """
+        if self.status != VADStatus.READY:
+            raise RuntimeError(f"VAD处理器未准备就绪，当前状态: {self.status}")
+
         segments = self.model.generate(
             input=chunk,
             cache=cache,
