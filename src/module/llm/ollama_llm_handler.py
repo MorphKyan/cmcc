@@ -109,9 +109,8 @@ class OllamaLLMHandler(BaseLLMHandler):
 
             # 使用简单的健康检查提示
             health_check_input = {
-                "SCREENS_INFO": json.dumps(self.screens_info, ensure_ascii=False),
-                "DOORS_INFO": json.dumps(self.doors_info, ensure_ascii=False),
-                "rag_context": "",
+                "SCREENS_INFO": json.dumps(self.settings.screens_info, ensure_ascii=False),
+                "DOORS_INFO": json.dumps(self.settings.doors_info, ensure_ascii=False),
                 "USER_INPUT": "健康检查"
             }
 

@@ -5,7 +5,7 @@ from src.api.schemas import LLMHealthResponse
 from src.core import dependencies
 
 router = APIRouter(
-    prefix="/api/llm",
+    prefix="/llm",
     tags=["LLM"]
 )
 

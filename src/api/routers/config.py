@@ -8,7 +8,7 @@ from src.api.schemas import ConfigResponse
 from src.config.config import get_settings
 
 router = APIRouter(
-    prefix="/api/config",
+    prefix="/config",
     tags=["Configuration"]
 )
 

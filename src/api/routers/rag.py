@@ -12,7 +12,7 @@ from src.core import dependencies
 from src.module.rag.rag_processor import RAGStatus
 
 router = APIRouter(
-    prefix="/api/rag",
+    prefix="/rag",
     tags=["RAG"]
 )
 
@@ -74,9 +74,7 @@ async def rag_status() -> StatusResponse:
         data = {
             "initialized": True,
             "database_exists": db_exists,
-            "database_path": dependencies.rag_processor.chroma_db_dir,
-            "embedding_model": dependencies.rag_processor.embedding_model,
-            "top_k_results": dependencies.rag_processor.top_k_results
+            "database_path": dependencies.rag_processor.settings.chroma_db_dir,
         }
         return StatusResponse(status="success", data=data)
     except Exception as e:
@@ -96,7 +94,7 @@ async def query_rag(request: QueryRequest) -> QueryResponse:
 
     try:
         # 2. 将核心任务委托给单例处理器
-        retrieved_docs = dependencies.rag_processor.retrieve_context(query_text)
+        retrieved_docs = await dependencies.rag_processor.retrieve_context(query_text)
 
         # 3. 格式化响应
         results = [{"content": doc.page_content, "metadata": doc.metadata} for doc in retrieved_docs]

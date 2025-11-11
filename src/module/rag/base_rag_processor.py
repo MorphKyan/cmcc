@@ -27,7 +27,7 @@ class BaseRAGProcessor(ABC):
         Args:
             settings (RAGSettings): RAG配置
         """
-        self.settings = settings
+        self.settings: RAGSettings = settings
         self.videos_data_path = settings.videos_data_path
         self.chroma_db_dir = settings.chroma_db_dir
 

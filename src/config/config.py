@@ -187,7 +187,7 @@ class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
     videos_data_path: str = os.path.join(data_dir, "videos.csv")
-    chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
+    chroma_db_dir: str = os.path.join(os.path.dirname(project_dir), "chroma_db")
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_embedding_model: str = "qwen3-embedding:0.6b"
     top_k_results: int = 3  # 检索返回的文档数

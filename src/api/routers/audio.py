@@ -14,7 +14,7 @@ from src.module.input.stream_decoder import StreamDecoder
 from src.services.audio_pipeline import run_vad_appender, run_vad_processor, decode_loop, run_asr_processor, run_llm_rag_processor, receive_loop
 
 router = APIRouter(
-    prefix="/api/audio",
+    prefix="/audio",
     tags=["Audio Processing"]
 )
 

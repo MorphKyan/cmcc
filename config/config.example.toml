@@ -17,8 +17,8 @@ merge_length_s = 15.0
 
 # RAG (检索增强生成) 配置
 [rag]
-videos_data_path = "../data/videos.csv"
-chroma_db_dir = "../chroma_db"
+videos_data_path = "./data/videos.csv"
+chroma_db_dir = "./chroma_db"
 ollama_base_url = "http://127.0.0.1:11434"
 ollama_embedding_model = "qwen3-embedding:0.6b"
 top_k_results = 3

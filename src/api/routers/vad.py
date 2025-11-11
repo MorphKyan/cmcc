@@ -6,7 +6,7 @@ from src.core import dependencies
 from src.module.vad.base_vad_processor import VADStatus
 
 router = APIRouter(
-    prefix="/api/vad",
+    prefix="/vad",
     tags=["VAD"]
 )
 
