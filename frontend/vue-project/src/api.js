@@ -57,4 +57,9 @@ export const vadStatus = () => {
   return api.get('/vad/status')
 }
 
+// 重启 VAD 处理器
+export const vadRestart = () => {
+  return api.post('/vad/restart')
+}
+
 export default api

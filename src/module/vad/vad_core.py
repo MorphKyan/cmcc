@@ -52,6 +52,14 @@ class VADCore(BaseVADProcessor):
                 # 向上抛出异常，让调用者知道失败了
                 raise
 
+    async def restart(self) -> None:
+        """
+        强制重启VAD处理器，可用于从任何状态恢复。
+        此方法是幂等的，并且是线程安全的。
+        """
+        logger.info("开始强制重启VAD处理器...")
+        await self.initialize()
+
     def process_chunk(self, chunk: npt.NDArray, cache) -> list:
         """
         处理音频块并返回语音活动检测结果。

@@ -21,6 +21,7 @@
             <p>LLM 健康: {{ llmHealthStatus }}</p>
             <button @click="checkHealth">检查健康</button>
             <button @click="getVadStatus">获取 VAD 状态</button>
+            <button @click="reinitializeVad">重启 VAD</button>
             <button @click="getRagStatus">获取 RAG 状态</button>
             <button @click="refreshRag">刷新 RAG</button>
             <button @click="checkLLMHealth">检查 LLM 健康</button>
@@ -74,7 +75,7 @@
 
 <script>
 import AudioRecorder from './components/AudioRecorder.vue'
-import {healthCheck, queryRag, ragStatus, refreshRag, uploadVideos, vadStatus} from './api'
+import {healthCheck, queryRag, ragStatus, refreshRag, uploadVideos, vadRestart, vadStatus} from './api'
 
 export default {
   name: 'App',
@@ -140,6 +141,16 @@ export default {
         this.vadStatusInfo = response.data.status
       } catch (error) {
         this.vadStatusInfo = '错误: ' + error.message
+      }
+    },
+
+    async restartVad() {
+      try {
+        const response = await vadRestart()
+        this.vadStatusInfo = response.data.current_status
+        alert('VAD处理器重启请求已提交，当前状态: ' + response.data.current_status)
+      } catch (error) {
+        alert('重启VAD处理器失败: ' + error.message)
       }
     },
     
