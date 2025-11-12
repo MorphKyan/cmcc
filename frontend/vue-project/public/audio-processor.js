@@ -13,14 +13,14 @@ class AudioProcessor extends AudioWorkletProcessor {
     // 如果有输入音频数据
     if (input.length > 0 && input[0].length > 0) {
       const channelData = input[0]; // 获取第一个声道的数据
-      
+
       // 将Float32Array转换为Int16Array (16-bit PCM)
       const int16Array = new Int16Array(channelData.length);
       for (let i = 0; i < channelData.length; i++) {
         // 将-1.0到1.0的浮点数转换为-32768到32767的整数
         int16Array[i] = Math.max(-32768, Math.min(32767, Math.round(channelData[i] * 32767)));
       }
-      
+
       // 通过port发送PCM数据到主线程
       this.port.postMessage(int16Array.buffer, [int16Array.buffer]);
     }

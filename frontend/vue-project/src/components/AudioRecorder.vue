@@ -54,9 +54,10 @@ export default {
       const audioConstraints = {
         audio: {
           sampleRate: 16000,   // 期望的采样率，例如 16kHz（语音识别常用）
-          sampleSize: 16,      // 期望的采样位数，例如 16-bit
+          //sampleSize: 16,      // 期望的采样位数，例如 16-bit
           channelCount: 1,     // 期望的声道数，例如单声道
-          echoCancellation: true, // 开启回声消除
+          autoGainControl: true,
+          echoCancellation: false, // 开启回声消除，十分影响效果建议关闭
           noiseSuppression: true  // 开启噪声抑制
         }
       };

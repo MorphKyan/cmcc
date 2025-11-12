@@ -25,7 +25,7 @@ def get_tool_definitions() -> List[ToolDefinition]:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "target": {"type": "string", "description": "要播放的视频文件名"},
+                        "target": {"type": "string", "description": "要播放的视频文件名filename"},
                         "device": {"type": "string", "description": "要在其上播放视频的屏幕名称"}
                     },
                     "required": ["target", "device"]

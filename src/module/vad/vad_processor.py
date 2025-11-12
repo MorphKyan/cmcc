@@ -137,7 +137,7 @@ class VADProcessor:
         """保存音频片段为WAV文件"""
         try:
             # 创建保存目录
-            save_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "audio_segments")
+            save_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "audio_segments")
             os.makedirs(save_dir, exist_ok=True)
 
             # 使用时间戳命名文件

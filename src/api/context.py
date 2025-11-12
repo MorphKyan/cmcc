@@ -19,7 +19,7 @@ class Context:
         self.decoder: StreamDecoder = decoder
         self.audio_input_queue: asyncio.Queue[bytes] = asyncio.Queue()
         self.audio_np_queue: asyncio.Queue[npt.NDArray[np.float32]] = asyncio.Queue()  # 缓冲输入的原始byte
-        self.VADProcessor: VADProcessor = VADProcessor(vad_core)
+        self.VADProcessor: VADProcessor = VADProcessor(vad_core,True)
         self.audio_segment_queue: asyncio.Queue[npt.NDArray[np.float32]] = asyncio.Queue()
         self.asr_output_queue: asyncio.Queue[str] = asyncio.Queue()
         self.function_calling_queue: asyncio.Queue[Any] = asyncio.Queue()

@@ -59,3 +59,4 @@ https http混合连接问题
 可以自定义配置后端地址和端口
 vad core重启
 rag 上传csv与重新加载分开
+validation和doors、screens的传入有问题
