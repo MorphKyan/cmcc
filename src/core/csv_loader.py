@@ -88,7 +88,7 @@ class CSVLoader:
                 continue
 
             video_info = {
-                "type": str(row.get("type", "")),
+                "type": str(row.get("type", "video")),
                 "name": str(row.get("name", "")),
                 "aliases": str(row.get("aliases", "")),
                 "description": str(row.get("description", "")),

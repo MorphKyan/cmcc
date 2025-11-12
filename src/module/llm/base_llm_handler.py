@@ -3,7 +3,7 @@
 
 import json
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputToolsParser
@@ -13,7 +13,7 @@ from loguru import logger
 from src.config.config import LLMSettings
 from src.core.csv_loader import CSVLoader
 from src.core.validation_retry_service import ValidationRetryService
-from src.module.data_loader import format_docs_for_prompt
+from src.module.data_loader import get_prompt_from_video_document
 from src.module.llm.tool.registry import ToolRegistry
 
 
@@ -96,7 +96,7 @@ class BaseLLMHandler(ABC):
         """
         准备Prompt的输入变量，供子类使用。
         """
-        rag_context = format_docs_for_prompt(rag_docs)
+        rag_context = get_prompt_from_video_document(rag_docs)
         screens_info_json = json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2)
         doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
 

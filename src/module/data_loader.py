@@ -59,7 +59,7 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
         
     return documents
 
-def format_docs_for_prompt(docs: list[Document]) -> str:
+def get_prompt_from_video_document(docs: list[Document]) -> str:
     """
     将检索到的Document对象格式化为可以插入到Prompt中的字符串。
 
@@ -72,18 +72,13 @@ def format_docs_for_prompt(docs: list[Document]) -> str:
     if not docs:
         return ""
 
-    knowledge_base = {
-        "videos": []
-    }
+    videos = []
 
     for doc in docs:
         meta = doc.metadata
-        item_type = meta.get("type")
-        
-        if item_type == "video":
-            knowledge_base["videos"].append({
-                "filename": meta.get("filename"),
-                "description": meta.get("description")
-            })
+        videos.append({
+            "filename": meta.get("filename"),
+            "description": meta.get("description")
+        })
             
-    return json.dumps(knowledge_base, ensure_ascii=False, indent=2)
+    return json.dumps(videos, ensure_ascii=False, indent=2)

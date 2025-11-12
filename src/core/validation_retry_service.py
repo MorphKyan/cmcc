@@ -17,8 +17,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from loguru import logger
 
 from src.config.config import LLMSettings
+from src.module.data_loader import get_prompt_from_video_document
 from src.module.llm.tool.validator import ToolValidator
-from src.module.data_loader import format_docs_for_prompt
 
 
 class BaseValidationRetryService(ABC):
@@ -183,7 +183,7 @@ class ValidationRetryService(BaseValidationRetryService):
 请重新生成响应，确保只使用上述可用资源。
 """
             # Prepare retry chain input
-            rag_context = format_docs_for_prompt(rag_docs)
+            rag_context = get_prompt_from_video_document(rag_docs)
             screens_info_json = json.dumps(llm_handler.get_screens_info_for_prompt(), ensure_ascii=False, indent=2)
             doors_info_json = json.dumps(llm_handler.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
             validation_errors_str = "\n".join([f"- {error}" for error in validation_errors])
