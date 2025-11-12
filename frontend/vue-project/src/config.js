@@ -18,7 +18,7 @@ const getBackendUrl = () => {
   }
 
   // Default development backend URL
-  return 'http://localhost:5000';
+  return 'https://local.morph.icu:5000';
 };
 
 // Get WebSocket URL based on current protocol and backend configuration
@@ -29,13 +29,13 @@ const getWebSocketUrl = (clientId) => {
   try {
     const url = new URL(backendUrl);
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${url.host}/api/audio/ws/${clientId}`;
+    return `${protocol}//${url.host}/audio/ws/${clientId}`;
   } catch (error) {
     console.warn('Invalid backend URL, using default:', backendUrl, error);
     // Fallback to current implementation with protocol detection
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Try to extract host from backendUrl if it's a simple string like "localhost:5000"
-    let host = 'localhost:5000';
+    // Try to extract host from backendUrl if it's a simple string like "local.morph.icu:5000"
+    let host = 'local.morph.icu:5000';
     if (backendUrl && backendUrl.startsWith('http')) {
       try {
         const tempUrl = new URL(backendUrl);

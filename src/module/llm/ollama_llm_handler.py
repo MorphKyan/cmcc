@@ -23,27 +23,20 @@ class OllamaLLMHandler(BaseLLMHandler):
         # Keep __init__ lightweight - defer heavy initialization to async initialize()
         self.model = None
         self.model_with_tools = None
-        self.chain = None
         logger.info("异步Ollama大语言模型处理器已创建，等待异步初始化...")
 
     async def initialize(self) -> None:
         """
         异步初始化Ollama模型和处理链。
-        This method handles the heavy initialization that may involve
-        model downloading or loading, which can be time-consuming.
         """
         if self.model is not None:
-            # Already initialized
             return
 
         # 1. 初始化ChatOllama模型
-        # ChatOllama原生支持异步操作
         try:
             self.model = ChatOllama(
                 model=self.settings.ollama_model,
                 base_url=self.settings.ollama_base_url,
-                timeout=self.settings.request_timeout,
-                max_retries=0  # Disable LangChain's built-in retry, we'll handle it ourselves
             )
         except Exception as e:
             logger.exception("初始化ChatOllama客户端失败，请确保Ollama服务正在运行。")
@@ -96,29 +89,3 @@ class OllamaLLMHandler(BaseLLMHandler):
             # Use the response mapper to create consistent error response
             error_response = self.response_mapper.create_error_response("api_failure")
             return json.dumps([error_response], ensure_ascii=False)
-
-    async def check_health(self) -> bool:
-        """
-        检查Ollama服务的健康状态。
-        通过发送一个简单的健康检查请求来验证服务是否可用。
-        """
-        try:
-            # 确保已初始化
-            if self.chain is None:
-                await self.initialize()
-
-            # 使用简单的健康检查提示
-            health_check_input = {
-                "SCREENS_INFO": json.dumps(self.settings.screens_info, ensure_ascii=False),
-                "DOORS_INFO": json.dumps(self.settings.doors_info, ensure_ascii=False),
-                "USER_INPUT": "健康检查"
-            }
-
-            # 使用较短的超时进行健康检查
-            import asyncio
-            await asyncio.wait_for(self.chain.ainvoke(health_check_input), timeout=5.0)
-
-            return True
-        except Exception as e:
-            logger.warning(f"Ollama健康检查失败: {e}")
-            return False

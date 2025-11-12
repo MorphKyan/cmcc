@@ -8,6 +8,7 @@ from typing import Any
 from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputToolsParser
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableSerializable
 from loguru import logger
 
 from src.config.config import LLMSettings
@@ -30,6 +31,7 @@ class BaseLLMHandler(ABC):
         self.tool_registry = ToolRegistry()
         self.validation_retry_service = ValidationRetryService(self.tool_registry.validator, settings)
         self.model_with_tools = None
+        self.chain: RunnableSerializable[dict, Any] | None = None
 
         # Get tools from the centralized registry
         self.tools = self.tool_registry.tool_definitions
@@ -72,15 +74,32 @@ class BaseLLMHandler(ABC):
         """
         pass
 
-    @abstractmethod
     async def check_health(self) -> bool:
         """
-        检查LLM服务的健康状态。
-
-        Returns:
-            bool: True if service is healthy, False otherwise
+        检查服务的健康状态。
+        通过发送一个简单的健康检查请求来验证服务是否可用。
         """
-        pass
+        try:
+            # 确保已初始化
+            if self.chain is None:
+                await self.initialize()
+
+            # 使用简单的健康检查提示
+            health_check_input = {
+                "SCREENS_INFO": json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2),
+                "DOORS_INFO": json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2),
+                "rag_context": "",
+                "USER_INPUT": "健康检查"
+            }
+
+            # 使用较短的超时进行健康检查
+            import asyncio
+            await asyncio.wait_for(self.chain.ainvoke(health_check_input), timeout=5.0)
+
+            return True
+        except Exception as e:
+            logger.warning(f"LLM健康检查失败: {e}")
+            return False
 
     async def initialize(self) -> None:
         """

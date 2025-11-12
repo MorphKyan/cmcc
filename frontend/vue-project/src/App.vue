@@ -205,7 +205,14 @@ export default {
       }
     },
 
-    // 定期更新所有状态
+    // 定期更新状态
+    async updateStatuses() {
+      await this.checkHealth()
+      await this.getVadStatus()
+      await this.getRagStatus()
+    },
+
+    // 第一次更新所有状态
     async updateAllStatuses() {
       await this.checkHealth()
       await this.getVadStatus()
@@ -217,7 +224,7 @@ export default {
     startAutoUpdate() {
       this.updateAllStatuses() // 立即更新一次
       this.autoUpdateInterval = setInterval(() => {
-        this.updateAllStatuses()
+        this.updateStatuses()
       }, 5000) // 每5秒更新一次
     },
 

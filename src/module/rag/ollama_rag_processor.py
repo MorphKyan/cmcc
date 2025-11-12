@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+import gc
 import os
 import shutil
 from typing import Optional
@@ -14,6 +15,7 @@ from langchain_ollama import OllamaEmbeddings
 from loguru import logger
 
 from src.config.config import RAGSettings
+from src.module.data_loader import load_documents_from_csvs
 from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus
 
 
@@ -125,14 +127,16 @@ class OllamaRAGProcessor(BaseRAGProcessor):
         """
         logger.info("正在刷新RAG数据库...")
         try:
-            db_dir = self.settings.chroma_db_dir
-            if os.path.exists(db_dir):
-                logger.info("正在删除旧的数据库 '{db_dir}'...", db_dir=db_dir)
-                await asyncio.to_thread(shutil.rmtree, db_dir)
-
             self.status = RAGStatus.UNINITIALIZED
-            await self.initialize()
+            self.vector_store.reset_collection()
+            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
 
+            if not documents:
+                raise ValueError("从CSV加载的文档为空，无法创建数据库。")
+
+            logger.info("加载 {num_docs} 个文档，正在创建向量嵌入...", num_docs=len(documents))
+            self.vector_store.add_documents(documents)
+            self.status = RAGStatus.READY
             logger.info("RAG数据库刷新完成。")
             return True
         except Exception as e:
@@ -142,6 +146,5 @@ class OllamaRAGProcessor(BaseRAGProcessor):
             return False
 
     async def close(self) -> None:
-        logger.info("正在关闭RAG处理器资源...")
+        logger.info("正在清理RAG资源...")
         await self._http_client.aclose()
-        logger.info("HTTP客户端已关闭。")

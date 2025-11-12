@@ -45,7 +45,7 @@ async def reinitialize_rag(background_tasks: BackgroundTasks):
 @router.post("/refresh", response_model=RefreshResponse)
 async def refresh_rag() -> RefreshResponse:
     """刷新RAG数据库端点。"""
-    success, message = refresh_rag_database()
+    success, message = await refresh_rag_database()
     if not success:
         # 将内部错误转换为对客户端友好的HTTP错误
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
@@ -138,7 +138,7 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
         shutil.move(temp_file_path, settings.rag.videos_data_path)
 
         # 刷新RAG数据库
-        success, _ = refresh_rag_database()
+        success, _ = await refresh_rag_database()
 
         if not success:
             # 如果刷新失败，恢复备份文件
@@ -160,12 +160,12 @@ async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"上传videos.csv文件时发生异常: {str(e)}")
 
 
-def refresh_rag_database() -> Tuple[bool, str]:
+async def refresh_rag_database() -> tuple[bool, str]:
     """刷新RAG数据库"""
     try:
         if dependencies.rag_processor is None:
             return False, "RAG处理器未初始化"
-        success = dependencies.rag_processor.refresh_database()
+        success = await dependencies.rag_processor.refresh_database()
         if success:
             return True, "RAG数据库已成功刷新"
         else:
@@ -174,7 +174,7 @@ def refresh_rag_database() -> Tuple[bool, str]:
         return False, f"刷新RAG数据库时发生异常: {str(e)}"
 
 
-def validate_csv_structure(file_path: str) -> Tuple[bool, str]:
+def validate_csv_structure(file_path: str) -> tuple[bool, str]:
     """验证CSV文件结构是否正确"""
     try:
         df = pd.read_csv(file_path)

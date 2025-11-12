@@ -23,21 +23,16 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         # Keep __init__ lightweight - defer heavy initialization to async initialize()
         self.model = None
         self.model_with_tools = None
-        self.chain = None
         logger.info("ModelScope大语言模型处理器已创建，等待异步初始化...")
 
     async def initialize(self) -> None:
         """
         异步初始化ModelScope模型和处理链。
-        This method handles the client initialization which may involve
-        network connections or API validation.
         """
         if self.model is not None:
-            # Already initialized
             return
 
         # 1. 初始化ChatOpenAI模型 for ModelScope
-        # ModelScope API is compatible with OpenAI API
         try:
             # 处理 SecretStr 类型的 API key
             self.model = ChatOpenAI(
@@ -54,7 +49,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
                     "enable_thinking": False
                 }
             )
-        except Exception as e:
+        except Exception:
             logger.exception("初始化ModelScope客户端失败，请检查API配置。")
             raise
 
@@ -105,30 +100,3 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             # Use the response mapper to create consistent error response
             error_response = self.response_mapper.create_error_response("api_failure")
             return json.dumps([error_response], ensure_ascii=False)
-
-    async def check_health(self) -> bool:
-        """
-        检查ModelScope服务的健康状态。
-        通过发送一个简单的健康检查请求来验证服务是否可用。
-        """
-        try:
-            # 确保已初始化
-            if self.chain is None:
-                await self.initialize()
-
-            # 使用简单的健康检查提示
-            health_check_input = {
-                "SCREENS_INFO": json.dumps(self.screens_info, ensure_ascii=False),
-                "DOORS_INFO": json.dumps(self.doors_info, ensure_ascii=False),
-                "rag_context": "",
-                "USER_INPUT": "健康检查"
-            }
-
-            # 使用较短的超时进行健康检查
-            import asyncio
-            await asyncio.wait_for(self.chain.ainvoke(health_check_input), timeout=5.0)
-
-            return True
-        except Exception as e:
-            logger.warning(f"ModelScope健康检查失败: {e}")
-            return False

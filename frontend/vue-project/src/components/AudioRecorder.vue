@@ -26,6 +26,9 @@
 </template>
 
 <script>
+// 引入配置
+import { config } from '../config';
+
 export default {
   name: 'AudioRecorder',
   data() {
@@ -90,7 +93,7 @@ export default {
         this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
 
         // 6. 建立 WebSocket 连接
-        const wsUrl = `ws://192.168.31.100:5000/api/audio/ws/${this.clientId}`;
+        const wsUrl = config.getWebSocketUrl(this.clientId);
         this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = async () => {
@@ -103,6 +106,7 @@ export default {
             channelCount: this.actualAudioConfig.channelCount
           };
           this.socket.send(JSON.stringify(metadata));
+          console.log('已连接到 WebSocket:', wsUrl);
           console.log('已发送元数据:', metadata);
 
           this.status = 'WebSocket 已连接，正在录音...';
