@@ -9,7 +9,7 @@ from loguru import logger
 from src.api.schemas import RefreshResponse, StatusResponse, QueryResponse, UploadResponse, QueryRequest
 from src.config.config import settings
 from src.core import dependencies
-from src.module.rag.rag_processor import RAGStatus
+from src.module.rag.ollama_rag_processor import RAGStatus
 
 router = APIRouter(
     prefix="/rag",

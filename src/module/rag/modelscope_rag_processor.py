@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import functools
 import os
 import shutil
-from typing import List, Optional
+from typing import Optional
 from urllib.parse import urljoin
 
 import httpx
@@ -15,7 +14,6 @@ from langchain_openai import OpenAIEmbeddings
 from loguru import logger
 
 from src.config.config import RAGSettings
-from src.module.data_loader import load_documents_from_csvs
 from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus
 
 
@@ -64,7 +62,7 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
                 # 步骤 3: 创建或加载向量数据库
                 if not os.path.exists(self.chroma_db_dir):
                     logger.info("未找到本地向量数据库，正在创建...")
-                    await self._create_and_persist_db()
+                    await self._create_and_persist_db(self.embedding_model)
                 else:
                     logger.info("正在从本地加载向量数据库...")
                     self.vector_store = await asyncio.to_thread(
@@ -82,7 +80,7 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
                 logger.success("ModelScope RAG处理器初始化完成，状态: READY。")
             except Exception as e:
                 self.status = RAGStatus.ERROR
-                self.error_message = f"ModelScope RAG初始化失败: {e}"
+                self.error_message = f"ModelScope RAG初始化失败: {str(e)}"
                 logger.exception(self.error_message)
                 # 向上抛出异常，让调用者知道失败了
                 raise
@@ -93,7 +91,7 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
             # 检查ModelScope服务是否在线
             response = await self._http_client.get(self.settings.modelscope_base_url)
             response.raise_for_status()
-            
+
             # 验证API密钥（通过简单的API调用）
             api_url = urljoin(self.settings.modelscope_base_url, "models")
             headers = {
@@ -109,32 +107,7 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
         except Exception as e:
             raise RuntimeError(f"检查ModelScope时发生未知错误: {e}") from e
 
-    async def _create_and_persist_db(self) -> None:
-        """
-        从CSV加载文档，创建向量数据库并持久化到磁盘。
-        """
-        try:
-            # 只加载videos数据
-            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
-
-            if not documents:
-                raise ValueError("从CSV加载的文档为空，无法创建数据库。")
-
-            logger.info("加载 {num_docs} 个文档，正在创建向量嵌入...", num_docs=len(documents))
-
-            create_db_call = functools.partial(
-                Chroma.from_documents,
-                documents=documents,
-                embedding=self.embedding_model,
-                persist_directory=self.chroma_db_dir
-            )
-            self.vector_store = await asyncio.to_thread(create_db_call)
-
-            logger.info("数据库已成功创建并保存在 '{db_dir}'。", db_dir=self.chroma_db_dir)
-        except (FileNotFoundError, ValueError) as e:
-            raise IOError(f"创建数据库失败: {e}") from e
-
-    async def retrieve_context(self, query: str) -> List[Document]:
+    async def retrieve_context(self, query: str) -> list[Document]:
         """
         根据用户查询异步检索相关上下文。
         """

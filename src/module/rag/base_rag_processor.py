@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+import functools
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from loguru import logger
 
 from src.config.config import RAGSettings
+from src.module.data_loader import load_documents_from_csvs
 
 
 class RAGStatus(Enum):
@@ -48,7 +51,7 @@ class BaseRAGProcessor(ABC):
         pass
 
     @abstractmethod
-    async def retrieve_context(self, query: str) -> List[Document]:
+    async def retrieve_context(self, query: str) -> list[Document]:
         """
         根据用户查询异步检索相关上下文。
         """
@@ -67,3 +70,28 @@ class BaseRAGProcessor(ABC):
         关闭RAG处理器资源。
         """
         pass
+
+    async def _create_and_persist_db(self, embedding_model) -> None:
+        """
+        从CSV加载文档，创建向量数据库并持久化到磁盘。
+        """
+        try:
+            # 只加载videos数据
+            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
+
+            if not documents:
+                raise ValueError("从CSV加载的文档为空，无法创建数据库。")
+
+            logger.info("加载 {num_docs} 个文档，正在创建向量嵌入...", num_docs=len(documents))
+
+            create_db_call = functools.partial(
+                Chroma.from_documents,
+                documents=documents,
+                embedding=embedding_model,
+                persist_directory=self.chroma_db_dir
+            )
+            self.vector_store = await asyncio.to_thread(create_db_call)
+
+            logger.info("数据库已成功创建并保存在 '{db_dir}'。", db_dir=self.chroma_db_dir)
+        except (FileNotFoundError, ValueError) as e:
+            raise IOError(f"创建数据库失败: {e}") from e

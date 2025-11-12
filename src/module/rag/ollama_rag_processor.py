@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import functools
 import os
 import shutil
 from typing import Optional
@@ -15,11 +14,10 @@ from langchain_ollama import OllamaEmbeddings
 from loguru import logger
 
 from src.config.config import RAGSettings
-from src.module.data_loader import load_documents_from_csvs
 from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus
 
 
-class RAGProcessor(BaseRAGProcessor):
+class OllamaRAGProcessor(BaseRAGProcessor):
     def __init__(self, settings: RAGSettings) -> None:
         """
         初始化RAG处理器。
@@ -61,7 +59,7 @@ class RAGProcessor(BaseRAGProcessor):
                 # 步骤 3: 创建或加载向量数据库
                 if not os.path.exists(self.chroma_db_dir):
                     logger.info("未找到本地向量数据库，正在创建...")
-                    await self._create_and_persist_db()
+                    await self._create_and_persist_db(self.embedding_model)
                 else:
                     logger.info("正在从本地加载向量数据库...")
                     self.vector_store = await asyncio.to_thread(
@@ -79,7 +77,7 @@ class RAGProcessor(BaseRAGProcessor):
                 logger.success("RAG处理器初始化完成，状态: READY。")
             except Exception as e:
                 self.status = RAGStatus.ERROR
-                self.error_message = f"RAG初始化失败: {e}"
+                self.error_message = f"RAG初始化失败: {str(e)}"
                 logger.exception(self.error_message)
                 raise
 
@@ -109,31 +107,6 @@ class RAGProcessor(BaseRAGProcessor):
             raise ConnectionError(f"无法连接到Ollama服务: {self.settings.ollama_base_url}。请确保Ollama正在运行。") from e
         except Exception as e:
             raise RuntimeError(f"检查Ollama时发生未知错误: {e}") from e
-
-    async def _create_and_persist_db(self) -> None:
-        """
-        从CSV加载文档，创建向量数据库并持久化到磁盘。
-        """
-        try:
-            # 只加载videos数据
-            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
-
-            if not documents:
-                raise ValueError("从CSV加载的文档为空，无法创建数据库。")
-
-            logger.info("加载 {num_docs} 个文档，正在创建向量嵌入...", num_docs=len(documents))
-
-            create_db_call = functools.partial(
-                Chroma.from_documents,
-                documents=documents,
-                embedding=self.embedding_model,
-                persist_directory=self.chroma_db_dir
-            )
-            self.vector_store = await asyncio.to_thread(create_db_call)
-
-            logger.info("数据库已成功创建并保存在 '{db_dir}'。", db_dir=self.chroma_db_dir)
-        except (FileNotFoundError, ValueError) as e:
-            raise IOError(f"创建数据库失败: {e}") from e
 
     async def retrieve_context(self, query: str) -> list[Document]:
         """

@@ -24,7 +24,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from src.config.config import get_settings
 from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
-from src.module.rag.rag_processor import RAGProcessor
+from src.module.rag.ollama_rag_processor import OllamaRAGProcessor
 
 
 def load_test_data() -> List[Dict[str, Any]]:
@@ -81,7 +81,7 @@ def compare_results(actual: List[Dict[str, Any]], expected: List[Dict[str, Any]]
     return norm_actual == norm_expected
 
 
-async def run_llm_test(test_instruction: str, rag_processor: RAGProcessor, llm_handler: ModelScopeLLMHandler) -> List[Dict[str, Any]]:
+async def run_llm_test(test_instruction: str, rag_processor: OllamaRAGProcessor, llm_handler: ModelScopeLLMHandler) -> List[Dict[str, Any]]:
     """Run a single test through the RAG+LLM pipeline and return parsed result."""
     try:
         # Retrieve relevant documents using RAG
@@ -127,7 +127,7 @@ async def main():
 
         # Initialize RAG processor
         print("Initializing RAG processor...")
-        rag_processor = RAGProcessor(settings.rag)
+        rag_processor = OllamaRAGProcessor(settings.rag)
         await rag_processor.initialize()
         print("RAG processor initialized successfully")
 
