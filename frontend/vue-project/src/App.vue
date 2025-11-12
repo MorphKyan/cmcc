@@ -75,7 +75,17 @@
 
 <script>
 import AudioRecorder from './components/AudioRecorder.vue'
-import {healthCheck, queryRag, ragStatus, refreshRag, uploadVideos, vadRestart, vadStatus} from './api'
+import {
+  getCurrentConfig,
+  healthCheck,
+  llmHealthCheck,
+  queryRag,
+  ragStatus,
+  refreshRag,
+  uploadVideos,
+  vadRestart,
+  vadStatus
+} from './api'
 
 export default {
   name: 'App',
@@ -120,7 +130,7 @@ export default {
     async checkLLMHealth() {
       try {
         const response = await llmHealthCheck()
-        this.llmHealthStatus = `健康 (${response.data.provider})`
+        this.llmHealthStatus = `${response.data.status} (${response.data.provider})`
       } catch (error) {
         this.llmHealthStatus = '不健康: ' + error.message
       }
@@ -129,7 +139,10 @@ export default {
     async getRagStatus() {
       try {
         const response = await ragStatus()
-        this.ragStatusInfo = response.data.status
+        const ragData = response.data.data
+        this.ragStatusInfo = ragData.initialized
+          ? `已初始化 (数据库存在: ${ragData.database_exists ? '是' : '否'})`
+          : '未初始化'
       } catch (error) {
         this.ragStatusInfo = '错误: ' + error.message
       }
@@ -138,7 +151,7 @@ export default {
     async getVadStatus() {
       try {
         const response = await vadStatus()
-        this.vadStatusInfo = response.data.status
+        this.vadStatusInfo = response.data.data.status
       } catch (error) {
         this.vadStatusInfo = '错误: ' + error.message
       }
@@ -147,8 +160,8 @@ export default {
     async restartVad() {
       try {
         const response = await vadRestart()
-        this.vadStatusInfo = response.data.current_status
-        alert('VAD处理器重启请求已提交，当前状态: ' + response.data.current_status)
+        this.vadStatusInfo = response.data.data.current_status
+        alert('VAD处理器重启请求已提交，当前状态: ' + response.data.data.current_status)
       } catch (error) {
         alert('重启VAD处理器失败: ' + error.message)
       }

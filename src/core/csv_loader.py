@@ -115,7 +115,6 @@ class CSVLoader:
                 continue
 
             door_info = {
-                "type": str(row.get("type", "")),
                 "name": name,
                 "aliases": str(row.get("aliases", "")),
                 "description": str(row.get("description", ""))
@@ -141,7 +140,6 @@ class CSVLoader:
                 continue
 
             screen_info = {
-                "type": str(row.get("type", "")),
                 "name": name,
                 "aliases": str(row.get("aliases", "")),
                 "description": str(row.get("description", ""))
