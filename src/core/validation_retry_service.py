@@ -17,7 +17,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from loguru import logger
 
 from src.config.config import LLMSettings
-from src.module.data_loader import get_prompt_from_rag_documents
+from src.module.rag.data_loader import get_prompt_from_rag_documents
 from src.module.llm.tool.validator import ToolValidator
 
 

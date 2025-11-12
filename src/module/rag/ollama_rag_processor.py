@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import gc
 import os
-import shutil
 from typing import Optional
 from urllib.parse import urljoin
 
@@ -15,7 +13,6 @@ from langchain_ollama import OllamaEmbeddings
 from loguru import logger
 
 from src.config.config import RAGSettings
-from src.module.data_loader import load_documents_from_csvs
 from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus
 
 
@@ -31,8 +28,6 @@ class OllamaRAGProcessor(BaseRAGProcessor):
 
         # 初始化状态和核心组件
         self.embedding_model: Optional[OllamaEmbeddings] = None
-        self.vector_store: Optional[Chroma] = None
-        self.retriever = None
 
         # 3. 使用asyncio.Lock来防止并发初始化
         self._http_client = httpx.AsyncClient(timeout=10.0)
@@ -120,30 +115,6 @@ class OllamaRAGProcessor(BaseRAGProcessor):
         docs = await self.retriever.ainvoke(query)
         logger.info("检索到 {num_docs} 个相关文档。", num_docs=len(docs))
         return docs
-
-    async def refresh_database(self) -> bool:
-        """
-        刷新数据库，重新加载CSV数据并重建向量数据库。
-        """
-        logger.info("正在刷新RAG数据库...")
-        try:
-            self.status = RAGStatus.UNINITIALIZED
-            self.vector_store.reset_collection()
-            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
-
-            if not documents:
-                raise ValueError("从CSV加载的文档为空，无法创建数据库。")
-
-            logger.info("加载 {num_docs} 个文档，正在创建向量嵌入...", num_docs=len(documents))
-            self.vector_store.add_documents(documents)
-            self.status = RAGStatus.READY
-            logger.info("RAG数据库刷新完成。")
-            return True
-        except Exception as e:
-            logger.exception("刷新数据库失败: {error}", error=str(e))
-            self.status = RAGStatus.ERROR
-            self.error_message = str(e)
-            return False
 
     async def close(self) -> None:
         logger.info("正在清理RAG资源...")

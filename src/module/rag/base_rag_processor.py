@@ -12,7 +12,7 @@ from langchain_core.documents import Document
 from loguru import logger
 
 from src.config.config import RAGSettings
-from src.module.data_loader import load_documents_from_csvs
+from src.module.rag.data_loader import load_documents_from_csvs
 
 
 class RAGStatus(Enum):
@@ -33,6 +33,8 @@ class BaseRAGProcessor(ABC):
         self.settings: RAGSettings = settings
         self.videos_data_path = settings.videos_data_path
         self.chroma_db_dir = settings.chroma_db_dir
+        self.vector_store: Chroma | None = None
+        self.retriever = None
 
         # 初始化状态和核心组件
         self.status = RAGStatus.UNINITIALIZED
@@ -57,12 +59,31 @@ class BaseRAGProcessor(ABC):
         """
         pass
 
-    @abstractmethod
     async def refresh_database(self) -> bool:
         """
         刷新数据库，重新加载CSV数据并重建向量数据库。
         """
-        pass
+        logger.info("正在刷新RAG数据库...")
+        try:
+            self.status = RAGStatus.UNINITIALIZED
+            self.vector_store.reset_collection()
+
+            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
+
+            if not documents:
+                raise ValueError("从CSV加载的文档为空，无法创建数据库。")
+
+            logger.info("加载 {num_docs} 个文档，正在创建向量嵌入...", num_docs=len(documents))
+            self.vector_store.add_documents(documents)
+
+            self.status = RAGStatus.READY
+            logger.info("RAG数据库刷新完成。")
+            return True
+        except Exception as e:
+            logger.exception("刷新数据库失败: {error}", error=str(e))
+            self.status = RAGStatus.ERROR
+            self.error_message = str(e)
+            return False
 
     @abstractmethod
     async def close(self) -> None:

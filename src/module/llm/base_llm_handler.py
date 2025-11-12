@@ -14,7 +14,7 @@ from loguru import logger
 from src.config.config import LLMSettings
 from src.core.csv_loader import CSVLoader
 from src.core.validation_retry_service import ValidationRetryService
-from src.module.data_loader import get_prompt_from_rag_documents
+from src.module.rag.data_loader import get_prompt_from_rag_documents
 from src.module.llm.tool.registry import ToolRegistry
 
 

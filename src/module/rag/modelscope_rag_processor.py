@@ -28,10 +28,7 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
         super().__init__(settings)
 
         # 初始化状态和核心组件
-        self.error_message: Optional[str] = None
         self.embedding_model: Optional[OpenAIEmbeddings] = None
-        self.vector_store: Optional[Chroma] = None
-        self.retriever = None
 
         # 使用asyncio.Lock来防止并发初始化
         self._init_lock = asyncio.Lock()
@@ -117,28 +114,6 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
         docs = await self.retriever.ainvoke(query)
         logger.info("检索到 {num_docs} 个相关文档。", num_docs=len(docs))
         return docs
-
-    async def refresh_database(self) -> bool:
-        """
-        刷新数据库，重新加载CSV数据并重建向量数据库。
-        """
-        logger.info("正在刷新ModelScope RAG数据库...")
-        try:
-            db_dir = self.settings.chroma_db_dir
-            if os.path.exists(db_dir):
-                logger.info("正在删除旧的数据库 '{db_dir}'...", db_dir=db_dir)
-                await asyncio.to_thread(shutil.rmtree, db_dir)
-
-            self.status = RAGStatus.UNINITIALIZED
-            await self.initialize()
-
-            logger.info("ModelScope RAG数据库刷新完成。")
-            return True
-        except Exception as e:
-            logger.exception("刷新数据库失败: {error}", error=str(e))
-            self.status = RAGStatus.ERROR
-            self.error_message = str(e)
-            return False
 
     async def close(self) -> None:
         logger.info("正在关闭ModelScope RAG处理器资源...")
