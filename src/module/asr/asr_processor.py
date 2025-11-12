@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -75,7 +75,7 @@ class ASRProcessor:
             return recognized_text
         return None
 
-    def process_audio(self, audio_data: List[npt.NDArray[np.float32]]) -> List[str]:
+    def process_audio(self, audio_data: list[npt.NDArray[np.float32]]) -> list[str]:
         for data in audio_data:
             if data.dtype == np.int16:
                 data = data.astype(np.float32) / 32768.0

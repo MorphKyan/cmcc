@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import os
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
 from loguru import logger
 from scipy.io import wavfile
+
 from src.module.vad.vad_core import VADCore
 
 
@@ -55,13 +56,13 @@ class VADProcessor:
     #         result = self._extract_audio(self.last_start_time, end_ms)
     #         self.last_start_time = None
 
-    async def process_chunk(self) -> list[Tuple[int, int]]:
+    async def process_chunk(self) -> list[tuple[int, int]]:
         chunk = await self.chunk_queue.get()
         segments = self.vad_core.process_chunk(chunk, self.cache)
         self.total_samples_processed += len(chunk)
         return segments
 
-    def process_result(self, segments: list[Tuple[int, int]]) -> list[Tuple[int, int, npt.NDArray[np.float32]]]:
+    def process_result(self, segments: list[tuple[int, int]]) -> list[tuple[int, int, npt.NDArray[np.float32]]]:
         completed_segments = []
         for start_ms, end_ms in segments:
             # 情况一：新的语音段开始

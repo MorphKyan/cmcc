@@ -5,7 +5,7 @@ import asyncio
 import functools
 import os
 import shutil
-from typing import List, Optional
+from typing import Optional
 from urllib.parse import urljoin
 
 import httpx
@@ -81,7 +81,6 @@ class RAGProcessor(BaseRAGProcessor):
                 self.status = RAGStatus.ERROR
                 self.error_message = f"RAG初始化失败: {e}"
                 logger.exception(self.error_message)
-                # 4. 向上抛出异常，让调用者知道失败了
                 raise
 
     async def _check_ollama_connection(self) -> None:
@@ -136,7 +135,7 @@ class RAGProcessor(BaseRAGProcessor):
         except (FileNotFoundError, ValueError) as e:
             raise IOError(f"创建数据库失败: {e}") from e
 
-    async def retrieve_context(self, query: str) -> List[Document]:
+    async def retrieve_context(self, query: str) -> list[Document]:
         """
         根据用户查询异步检索相关上下文。
         """
