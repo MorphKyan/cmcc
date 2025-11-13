@@ -49,7 +49,7 @@ export const queryRag = (query) => {
 export const uploadVideos = (file) => {
   const formData = new FormData()
   formData.append('file', file)
-  return api.post('/rag/upload-videos', formData, {
+  return api.post('/data/upload-videos', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

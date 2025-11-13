@@ -161,7 +161,7 @@ class CSVLoader:
         # Try to get data directory from settings first
         try:
             settings = get_settings()
-            data_dir = Path(settings.rag.videos_data_path).parent
+            data_dir = settings.data_dir
             # Verify that the files exist in this directory
             if not (os.path.exists(os.path.join(data_dir, "videos.csv")) and
                     os.path.exists(os.path.join(data_dir, "doors.csv")) and

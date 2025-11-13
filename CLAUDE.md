@@ -136,7 +136,7 @@ curl -X POST http://localhost:5000/api/rag/query \
      -d '{"query": "我想看关于5G的视频"}'
 
 # Upload videos.csv file
-curl -X POST http://localhost:5000/api/rag/upload-videos \
+curl -X POST http://localhost:5000/api/data/upload-videos \
      -F "file=@/path/to/your/videos.csv"
 
 # Trigger RAG reinitialization (async)
@@ -163,7 +163,7 @@ The service provides the following RESTful endpoints:
 - `POST /api/rag/refresh` - Refresh RAG database
 - `GET /api/rag/status` - Get RAG status
 - `POST /api/rag/query` - Query RAG database
-- `POST /api/rag/upload-videos` - Upload videos.csv file and update RAG database
+- `POST /api/data/upload-videos` - Upload videos.csv file and update RAG database
 - `POST /api/rag/reinitialize` - Trigger async RAG reinitialization
 
 API documentation is available at:
@@ -241,3 +241,7 @@ def process_items(items: List[str]) -> Dict[str, int]:  # Don't do this
 
 This ensures consistency with modern Python standards and reduces unnecessary imports from the `typing` module.
 - 不要自动提交并署名
+
+Always use context7 when I need code generation, setup or configuration steps, or
+library/API documentation. This means you should automatically use the Context7 MCP
+tools to resolve library id and get library docs without me having to explicitly ask.

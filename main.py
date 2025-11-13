@@ -9,6 +9,7 @@ from loguru import logger
 
 from src.api.routers import audio
 from src.api.routers import config
+from src.api.routers import data
 from src.api.routers import llm
 from src.api.routers import rag
 from src.api.routers import vad
@@ -37,6 +38,7 @@ app.include_router(audio.router)
 app.include_router(rag.router)
 app.include_router(llm.router)
 app.include_router(config.router)
+app.include_router(data.router)
 app.include_router(vad.router)
 
 

@@ -244,6 +244,8 @@ class AppSettings(BaseSettings):
         extra='allow'
     )
 
+    data_dir = data_dir
+
     vad: VADSettings = VADSettings()
     asr: FunASRSettings = FunASRSettings()
     rag: RAGSettings = RAGSettings()

@@ -158,7 +158,7 @@ FastAPI提供了自动生成的API文档：
 - `POST /api/rag/refresh` - 刷新RAG数据库
 - `GET /api/rag/status` - 获取RAG状态
 - `POST /api/rag/query` - 查询RAG数据库
-- `POST /api/rag/upload-videos` - 上传videos.csv文件并更新RAG数据库
+- `POST /api/data/upload-videos` - 上传videos.csv文件并更新RAG数据库
 
 ### API使用示例
 
@@ -181,6 +181,6 @@ FastAPI提供了自动生成的API文档：
 
 4. 上传videos.csv文件:
    ```bash
-   curl -X POST http://localhost:5000/api/rag/upload-videos \
+   curl -X POST http://localhost:5000/api/data/upload-videos \
         -F "file=@/path/to/your/videos.csv"
    ```
