@@ -1,7 +1,22 @@
+# 项目特定忽略规则
 /.conda
 /__pycache__
 /chroma_db
 /config/config.toml
+
+# Claude设置文件
+.claude/settings.local.json
+
+# Python缓存和临时文件
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+
+# 确保根目录的__pycache__也被忽略
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
