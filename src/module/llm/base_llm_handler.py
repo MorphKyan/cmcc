@@ -6,16 +6,15 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from langchain_core.documents import Document
-from langchain_core.output_parsers import JsonOutputToolsParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableSerializable
+from langchain.agents.structured_output import ToolStrategy
 from loguru import logger
 
 from src.config.config import LLMSettings
 from src.core.csv_loader import CSVLoader
-from src.core.validation_retry_service import ValidationRetryService
 from src.module.rag.data_loader import get_prompt_from_rag_documents
-from src.module.llm.tool.registry import ToolRegistry
+from src.module.llm.tool.definitions import get_tools, get_exhibition_command_schema
 
 
 class BaseLLMHandler(ABC):
@@ -28,22 +27,21 @@ class BaseLLMHandler(ABC):
         """
         self.settings = settings
         self.csv_loader = CSVLoader()
-        self.tool_registry = ToolRegistry()
-        self.validation_retry_service = ValidationRetryService(self.tool_registry.validator, settings)
         self.model_with_tools = None
         self.chain: RunnableSerializable[dict, Any] | None = None
 
-        # Get tools from the centralized registry
-        self.tools = self.tool_registry.tool_definitions
+        # Get modern tools and structured output schema
+        self.tools = get_tools()
+        self.exhibition_command_schema = get_exhibition_command_schema()
+
+        # Create tool strategy for structured output
+        self.tool_strategy = ToolStrategy(self.exhibition_command_schema)
 
         # 使用ChatPromptTemplate构建提示词
         self.prompt_template = ChatPromptTemplate.from_messages([
             ("system", settings.system_prompt_template),
             ("user", "{USER_INPUT}")
         ])
-
-        # 定义输出解析器
-        self.output_parser = JsonOutputToolsParser()
 
         logger.info("LLM处理器基类初始化完成")
 
@@ -162,20 +160,51 @@ class BaseLLMHandler(ABC):
                 })
         return doors_info
 
-    def get_retry_chain_components(self):
+    def _format_structured_response(self, structured_response) -> str:
         """
-        获取重试链所需的组件。
+        将结构化响应格式化为JSON字符串。
+
+        Args:
+            structured_response: 结构化响应对象
 
         Returns:
-            tuple: (model_with_tools, output_parser, prompt_template)
+            JSON格式的响应字符串
         """
-        return self.prompt_template, self.model_with_tools, self.output_parser
+        if isinstance(structured_response, list):
+            # Handle multiple commands
+            commands = []
+            for response in structured_response:
+                commands.append(response.model_dump())
+            return json.dumps(commands, ensure_ascii=False)
+        else:
+            # Handle single command
+            command = structured_response.model_dump()
+            return json.dumps([command], ensure_ascii=False)
 
-    @property
-    def response_mapper(self):
+    def create_error_response(self, reason: str, message: str | None = None, details: list[str] | None = None) -> str:
         """
-        Get the response mapper from the tool registry.
+        创建错误响应。
 
-        This maintains backward compatibility with ValidationRetryService.
+        Args:
+            reason: 错误原因
+            message: 可选错误消息
+            details: 可选详细信息列表
+
+        Returns:
+            JSON格式的错误响应字符串
         """
-        return self.tool_registry.mapper
+        error_command = self.exhibition_command_schema(
+            action="error",
+            target=None,
+            device=None,
+            value=reason
+        )
+
+        error_dict = error_command.model_dump()
+
+        if message:
+            error_dict["message"] = message
+        if details:
+            error_dict["details"] = details
+
+        return json.dumps([error_dict], ensure_ascii=False)

@@ -56,10 +56,10 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         # 2. 将工具绑定到模型
         self.model_with_tools = self.model.bind_tools(self.tools)
 
-        # 3. 构建处理链 (Chain)
-        self.chain = self.prompt_template | self.model_with_tools | self.output_parser
+        # 3. 构建处理链
+        self.chain = self.prompt_template | self.model_with_tools | self.tool_strategy
 
-        logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.modelscope_model or self.settings.model)
+        logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.modelscope_model)
 
     @exponential_backoff_retry(
         max_retries=3,
@@ -68,7 +68,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
     )
     async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """
-        结合RAG上下文，异步获取大模型的响应。
+        结合RAG上下文，异步获取大模型的响应 - 现代结构化输出版本。
 
         Args:
             user_input (str): 用户的原始输入文本。
@@ -87,16 +87,13 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             # 准备Prompt的输入变量
             chain_input = self._prepare_chain_input(user_input, rag_docs)
 
-            # 异步调用链
-            tool_calls = await self.chain.ainvoke(chain_input)
+            # 异步调用现代化处理链 - 直接获得结构化输出
+            structured_response = await self.chain.ainvoke(chain_input)
 
-            # Validate and retry if necessary using the validation retry service
-            return await self.validation_retry_service.validate_and_retry(
-                tool_calls, user_input, rag_docs, self, 0
-            )
+            # 格式化结构化响应为JSON字符串
+            return self._format_structured_response(structured_response)
 
         except Exception as api_error:
             logger.exception("调用ModelScope API或处理链时出错: {error}", error=str(api_error))
-            # Use the response mapper to create consistent error response
-            error_response = self.response_mapper.create_error_response("api_failure")
-            return json.dumps([error_response], ensure_ascii=False)
+            # Use the modern error response method
+            return self.create_error_response("api_failure", str(api_error))
