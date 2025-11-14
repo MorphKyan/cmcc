@@ -3,8 +3,6 @@
 
 import asyncio
 import os
-import shutil
-from typing import Optional
 from urllib.parse import urljoin
 
 import httpx
@@ -28,7 +26,7 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
         super().__init__(settings)
 
         # 初始化状态和核心组件
-        self.embedding_model: Optional[OpenAIEmbeddings] = None
+        self.embedding_model: OpenAIEmbeddings | None = None
 
         # 使用asyncio.Lock来防止并发初始化
         self._init_lock = asyncio.Lock()

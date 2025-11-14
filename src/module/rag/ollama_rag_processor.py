@@ -3,7 +3,6 @@
 
 import asyncio
 import os
-from typing import Optional
 from urllib.parse import urljoin
 
 import httpx
@@ -27,7 +26,7 @@ class OllamaRAGProcessor(BaseRAGProcessor):
         super().__init__(settings)
 
         # 初始化状态和核心组件
-        self.embedding_model: Optional[OllamaEmbeddings] = None
+        self.embedding_model: OllamaEmbeddings | None = None
 
         # 3. 使用asyncio.Lock来防止并发初始化
         self._http_client = httpx.AsyncClient(timeout=10.0)

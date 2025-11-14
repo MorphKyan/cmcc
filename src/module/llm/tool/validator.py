@@ -5,7 +5,7 @@ This module validates function call parameters against available resources
 loaded from CSV data.
 """
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from .types import ToolCall, ValidationResult
 from src.core.csv_loader import CSVLoader
@@ -23,7 +23,7 @@ class ToolValidator:
         """Initialize the validation service with CSV loader."""
         self.csv_loader = CSVLoader()
 
-    def validate_function_calls(self, tool_calls: List[ToolCall]) -> ValidationResult:
+    def validate_function_calls(self, tool_calls: list[ToolCall]) -> ValidationResult:
         """
         Validate a list of function calls against available resources.
 
@@ -64,7 +64,7 @@ class ToolValidator:
 
         return len(errors) == 0, errors
 
-    def _validate_play_video(self, args: Dict[str, Any]) -> Tuple[bool, str]:
+    def _validate_play_video(self, args: dict[str, Any]) -> tuple[bool, str]:
         """
         Validate play_video function arguments.
 
@@ -95,7 +95,7 @@ class ToolValidator:
 
         return True, ""
 
-    def _validate_control_door(self, args: Dict[str, Any]) -> Tuple[bool, str]:
+    def _validate_control_door(self, args: dict[str, Any]) -> tuple[bool, str]:
         """
         Validate control_door function arguments.
 
@@ -124,7 +124,7 @@ class ToolValidator:
 
         return True, ""
 
-    def _validate_seek_video(self, args: Dict[str, Any]) -> Tuple[bool, str]:
+    def _validate_seek_video(self, args: dict[str, Any]) -> tuple[bool, str]:
         """
         Validate seek_video function arguments.
 
@@ -153,7 +153,7 @@ class ToolValidator:
 
         return True, ""
 
-    def _validate_set_volume(self, args: Dict[str, Any]) -> Tuple[bool, str]:
+    def _validate_set_volume(self, args: dict[str, Any]) -> tuple[bool, str]:
         """
         Validate set_volume function arguments.
 
@@ -182,7 +182,7 @@ class ToolValidator:
 
         return True, ""
 
-    def _validate_adjust_volume(self, args: Dict[str, Any]) -> Tuple[bool, str]:
+    def _validate_adjust_volume(self, args: dict[str, Any]) -> tuple[bool, str]:
         """
         Validate adjust_volume function arguments.
 

@@ -1,20 +1,20 @@
 """
 Shared type definitions for LLM function calling.
 """
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 # Tool call representation from LangChain
-ToolCall = Dict[str, Any]
+ToolCall = dict[str, Any]
 
 # Validation result
-ValidationResult = Tuple[bool, List[str]]
+ValidationResult = tuple[bool, list[str]]
 
 # Tool definition structure
-ToolDefinition = Dict[str, Any]
+ToolDefinition = dict[str, Any]
 
 # Response mapping configuration
-ResponseMapping = Dict[str, Any]
+ResponseMapping = dict[str, Any]
 
 # Tool registry entry
-ToolRegistryEntry = Dict[str, Any]
+ToolRegistryEntry = dict[str, Any]

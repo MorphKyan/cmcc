@@ -5,7 +5,6 @@ import asyncio
 import functools
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
@@ -38,7 +37,7 @@ class BaseRAGProcessor(ABC):
 
         # 初始化状态和核心组件
         self.status = RAGStatus.UNINITIALIZED
-        self.error_message: Optional[str] = None
+        self.error_message: str | None = None
 
         # 使用asyncio.Lock来防止并发初始化
         self._init_lock = asyncio.Lock()

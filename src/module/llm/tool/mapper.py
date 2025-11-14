@@ -5,7 +5,7 @@ This module handles the mapping of LangChain tool calls to the project's
 required JSON response format.
 """
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .types import ToolCall
 
@@ -18,7 +18,7 @@ class ToolResponseMapper:
     JSON response format.
     """
 
-    def __init__(self, tool_mappings: Optional[Dict[str, Dict[str, Any]]] = None):
+    def __init__(self, tool_mappings: dict[str, dict[str, Any]] | None = None):
         """
         Initialize the response mapper.
 
@@ -27,7 +27,7 @@ class ToolResponseMapper:
         """
         self.tool_mappings = tool_mappings or self._default_tool_mappings()
 
-    def map_tool_calls_to_response(self, tool_calls: List[ToolCall]) -> str:
+    def map_tool_calls_to_response(self, tool_calls: list[ToolCall]) -> str:
         """
         Map LangChain tool calls to project's JSON response format.
 
@@ -57,7 +57,7 @@ class ToolResponseMapper:
 
         return json.dumps(results, ensure_ascii=False)
 
-    def create_error_response(self, reason: str, message: Optional[str] = None, details: Optional[List[str]] = None) -> Dict[str, Any]:
+    def create_error_response(self, reason: str, message: str | None = None, details: list[str] | None = None) -> dict[str, Any]:
         """
         Create error response object.
 
@@ -87,8 +87,8 @@ class ToolResponseMapper:
     def _create_response_from_mapping(
         self,
         function_name: str,
-        arguments: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        arguments: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Create response object based on mapping configuration.
 
@@ -127,7 +127,7 @@ class ToolResponseMapper:
 
         return result
 
-    def _default_tool_mappings(self) -> Dict[str, Dict[str, Any]]:
+    def _default_tool_mappings(self) -> Dict[str, dict[str, Any]]:
         """
         Get default tool mapping configuration.
 
@@ -181,7 +181,7 @@ class ToolResponseMapper:
         self,
         function_name: str,
         action: str,
-        field_mappings: Dict[str, str]
+        field_mappings: dict[str, str]
     ) -> None:
         """
         Dynamically add tool mapping.

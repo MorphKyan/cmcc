@@ -4,7 +4,7 @@
 import os
 import threading
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 from loguru import logger
@@ -239,7 +239,7 @@ class CSVLoader:
         with self._data_lock:
             return name in self._screens_cache
 
-    def get_video_info(self, filename: str) -> Optional[dict[str, Any]]:
+    def get_video_info(self, filename: str) -> dict[str, Any] | None:
         """
         Get video information by filename.
 
@@ -252,7 +252,7 @@ class CSVLoader:
         with self._data_lock:
             return self._videos_cache.get(filename)
 
-    def get_door_info(self, name: str) -> Optional[dict[str, Any]]:
+    def get_door_info(self, name: str) -> dict[str, Any] | None:
         """
         Get door information by name.
 
@@ -265,7 +265,7 @@ class CSVLoader:
         with self._data_lock:
             return self._doors_cache.get(name)
 
-    def get_screen_info(self, name: str) -> Optional[dict[str, Any]]:
+    def get_screen_info(self, name: str) -> dict[str, Any] | None:
         """
         Get screen information by name.
 

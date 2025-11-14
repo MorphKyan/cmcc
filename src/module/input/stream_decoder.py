@@ -3,7 +3,6 @@ import io
 import subprocess
 import threading
 import queue
-from typing import List, Optional
 
 import av
 import numpy as np
@@ -27,7 +26,7 @@ class StreamDecoder:
             rate=target_sample_rate
         )
 
-    def _decode_and_resample_sync(self, encoded_chunk: bytes) -> List[np.ndarray]:
+    def _decode_and_resample_sync(self, encoded_chunk: bytes) -> list[np.ndarray]:
         """
         【同步方法】在一个数据块上执行实际的解码和重采样。
         这个方法会被 `asyncio.to_thread` 在一个独立的线程中运行。
@@ -52,7 +51,7 @@ class StreamDecoder:
 
         return decoded_frames
 
-    async def decode_chunk(self, encoded_chunk: bytes) -> Optional[np.ndarray]:
+    async def decode_chunk(self, encoded_chunk: bytes) -> np.ndarray | None:
         frames = await asyncio.to_thread(self._decode_and_resample_sync, encoded_chunk)
 
         if not frames:
@@ -85,10 +84,10 @@ class FFmpegStreamDecoder:
             self.output_format = "f32le"  # 默认使用float32
             
         # 流式处理相关的属性
-        self._ffmpeg_process: Optional[subprocess.Popen] = None
+        self._ffmpeg_process: subprocess.Popen | None = None
         self._is_initialized = False
-        self._stdout_queue: Optional[queue.Queue] = None
-        self._stdout_thread: Optional[threading.Thread] = None
+        self._stdout_queue: queue.Queue | None = None
+        self._stdout_thread: threading.Thread | None = None
 
     def _initialize_ffmpeg_process(self) -> bool:
         """初始化FFmpeg进程用于流式处理"""
@@ -191,7 +190,7 @@ class FFmpegStreamDecoder:
                 self._stdout_queue = None
                 self._stdout_thread = None
 
-    def _decode_stream_sync(self, encoded_chunk: bytes) -> Optional[np.ndarray]:
+    def _decode_stream_sync(self, encoded_chunk: bytes) -> np.ndarray | None:
         """
         【同步方法】向流式FFmpeg进程写入数据并读取输出。
         这个方法会被 `asyncio.to_thread` 在一个独立的线程中运行。
@@ -256,16 +255,16 @@ class FFmpegStreamDecoder:
             self._cleanup_process()
             return None
 
-    async def decode_chunk(self, encoded_chunk: bytes) -> Optional[np.ndarray]:
+    async def decode_chunk(self, encoded_chunk: bytes) -> np.ndarray | None:
         """
         异步解码音频块（流式处理）。
-        
+
         :param encoded_chunk: WebM格式的编码音频数据
         :return: 解码后的音频数据NumPy数组，形状为 (channels, samples)，如果暂时没有输出则返回None
         """
         if not encoded_chunk:
             return None
-            
+
         audio_data = await asyncio.to_thread(self._decode_stream_sync, encoded_chunk)
         return audio_data
 

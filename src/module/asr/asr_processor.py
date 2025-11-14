@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -49,7 +48,7 @@ class ASRProcessor:
         )
         logger.info("ASR处理器语音识别模型加载完成。")
 
-    def process_audio_data(self, audio_data: npt.NDArray[np.float32]) -> Optional[str]:
+    def process_audio_data(self, audio_data: npt.NDArray[np.float32]) -> str | None:
         """
         处理音频数据并返回识别结果。
         

@@ -4,12 +4,10 @@ Tool definitions for LLM function calling.
 This module contains the OpenAI-compatible tool definitions that define
 the available functions the LLM can call.
 """
-from typing import List
-
 from .types import ToolDefinition
 
 
-def get_tool_definitions() -> List[ToolDefinition]:
+def get_tool_definitions() -> list[ToolDefinition]:
     """
     Get the list of available tool definitions for LLM function calling.
 
