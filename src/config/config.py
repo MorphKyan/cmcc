@@ -9,9 +9,14 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 项目目录配置
-project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 当前文件路径：.../funasr/src/config/config.py
+current_file = os.path.abspath(__file__)
+# src目录：.../funasr/src
+src_dir = os.path.dirname(os.path.dirname(current_file))
+# 项目根目录：.../funasr
+project_dir = os.path.dirname(src_dir)
+config_dir = os.path.join(project_dir, "config")
 data_dir = os.path.join(os.path.dirname(project_dir), "data")
-config_dir = os.path.join(os.path.dirname(project_dir), "config")
 
 
 def load_config_from_toml(config_path: str = None) -> dict:
@@ -187,7 +192,7 @@ class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
     videos_data_path: str = os.path.join(data_dir, "videos.csv")
-    chroma_db_dir: str = os.path.join(os.path.dirname(project_dir), "chroma_db")
+    chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_embedding_model: str = "qwen3-embedding:0.6b"
     top_k_results: int = 3  # 检索返回的文档数
@@ -243,8 +248,6 @@ class AppSettings(BaseSettings):
         env_file=None,
         extra='allow'
     )
-
-    data_dir = data_dir
 
     vad: VADSettings = VADSettings()
     asr: FunASRSettings = FunASRSettings()
