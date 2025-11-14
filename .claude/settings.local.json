@@ -9,7 +9,8 @@
       "Bash(pip install:*)",
       "Bash(git add:*)",
       "Bash(curl:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
