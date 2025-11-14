@@ -1,8 +1,6 @@
-"""
-Validation logic for LLM function calls.
+"""LLM函数调用参数验证模块。
 
-This module validates function call parameters against available resources
-loaded from CSV data.
+根据CSV数据中的可用资源验证函数调用参数。
 """
 import json
 from typing import Any
@@ -12,28 +10,23 @@ from src.core.csv_loader import CSVLoader
 
 
 class ToolValidator:
-    """
-    Validator for LLM function call parameters.
+    """LLM函数调用参数验证器。
 
-    This service validates function call parameters against the loaded CSV data
-    to ensure that requested resources (videos, doors, screens) actually exist.
+    验证请求的资源（视频、门、屏幕）是否在CSV数据中存在。
     """
 
     def __init__(self):
-        """Initialize the validation service with CSV loader."""
+        """初始化验证器。"""
         self.csv_loader = CSVLoader()
 
     def validate_function_calls(self, tool_calls: list[ToolCall]) -> ValidationResult:
-        """
-        Validate a list of function calls against available resources.
+        """验证函数调用列表。
 
         Args:
-            tool_calls: List of function call dictionaries from LLM output
+            tool_calls: LLM输出的函数调用列表
 
         Returns:
-            Tuple of (is_valid, error_messages)
-            - is_valid: True if all function calls are valid, False otherwise
-            - error_messages: List of error messages for invalid calls
+            (是否有效, 错误消息列表)
         """
         errors = []
 
@@ -65,158 +58,146 @@ class ToolValidator:
         return len(errors) == 0, errors
 
     def _validate_play_video(self, args: dict[str, Any]) -> tuple[bool, str]:
-        """
-        Validate play_video function arguments.
+        """验证play_video函数参数。
 
         Args:
-            args: Function arguments dictionary
+            args: 函数参数字典
 
         Returns:
-            Tuple of (is_valid, error_message)
+            (是否有效, 错误消息)
         """
         target = args.get("target")
         device = args.get("device")
 
         if not target:
-            return False, "Missing required 'target' parameter"
+            return False, "缺少必需的'target'参数"
 
         if not device:
-            return False, "Missing required 'device' parameter"
+            return False, "缺少必需的'device'参数"
 
-        # Validate video filename
         if not self.csv_loader.video_exists(target):
             available_videos = self.csv_loader.get_all_videos()
-            return False, f"Video '{target}' not found. Available videos: {', '.join(available_videos)}"
+            return False, f"视频'{target}'不存在。可用视频: {', '.join(available_videos)}"
 
-        # Validate screen name
         if not self.csv_loader.screen_exists(device):
             available_screens = self.csv_loader.get_all_screens()
-            return False, f"Screen '{device}' not found. Available screens: {', '.join(available_screens)}"
+            return False, f"屏幕'{device}'不存在。可用屏幕: {', '.join(available_screens)}"
 
         return True, ""
 
     def _validate_control_door(self, args: dict[str, Any]) -> tuple[bool, str]:
-        """
-        Validate control_door function arguments.
+        """验证control_door函数参数。
 
         Args:
-            args: Function arguments dictionary
+            args: 函数参数字典
 
         Returns:
-            Tuple of (is_valid, error_message)
+            (是否有效, 错误消息)
         """
         target = args.get("target")
         action = args.get("action")
 
         if not target:
-            return False, "Missing required 'target' parameter"
+            return False, "缺少必需的'target'参数"
 
         if not action:
-            return False, "Missing required 'action' parameter"
+            return False, "缺少必需的'action'参数"
 
         if action not in ["open", "close"]:
-            return False, f"Invalid action '{action}'. Must be 'open' or 'close'"
+            return False, f"无效操作'{action}'，必须是'open'或'close'"
 
-        # Validate door name
         if not self.csv_loader.door_exists(target):
             available_doors = self.csv_loader.get_all_doors()
-            return False, f"Door '{target}' not found. Available doors: {', '.join(available_doors)}"
+            return False, f"门'{target}'不存在。可用门: {', '.join(available_doors)}"
 
         return True, ""
 
     def _validate_seek_video(self, args: dict[str, Any]) -> tuple[bool, str]:
-        """
-        Validate seek_video function arguments.
+        """验证seek_video函数参数。
 
         Args:
-            args: Function arguments dictionary
+            args: 函数参数字典
 
         Returns:
-            Tuple of (is_valid, error_message)
+            (是否有效, 错误消息)
         """
         device = args.get("device")
         value = args.get("value")
 
         if not device:
-            return False, "Missing required 'device' parameter"
+            return False, "缺少必需的'device'参数"
 
         if value is None:
-            return False, "Missing required 'value' parameter"
+            return False, "缺少必需的'value'参数"
 
         if not isinstance(value, int) or value < 0:
-            return False, f"Invalid 'value' parameter: {value}. Must be a non-negative integer"
+            return False, f"无效的'value'参数: {value}，必须是非负整数"
 
-        # Validate screen name
         if not self.csv_loader.screen_exists(device):
             available_screens = self.csv_loader.get_all_screens()
-            return False, f"Screen '{device}' not found. Available screens: {', '.join(available_screens)}"
+            return False, f"屏幕'{device}'不存在。可用屏幕: {', '.join(available_screens)}"
 
         return True, ""
 
     def _validate_set_volume(self, args: dict[str, Any]) -> tuple[bool, str]:
-        """
-        Validate set_volume function arguments.
+        """验证set_volume函数参数。
 
         Args:
-            args: Function arguments dictionary
+            args: 函数参数字典
 
         Returns:
-            Tuple of (is_valid, error_message)
+            (是否有效, 错误消息)
         """
         device = args.get("device")
         value = args.get("value")
 
         if not device:
-            return False, "Missing required 'device' parameter"
+            return False, "缺少必需的'device'参数"
 
         if value is None:
-            return False, "Missing required 'value' parameter"
+            return False, "缺少必需的'value'参数"
 
         if not isinstance(value, int) or value < 0 or value > 100:
-            return False, f"Invalid 'value' parameter: {value}. Must be an integer between 0 and 100"
+            return False, f"无效的'value'参数: {value}，必须是0-100之间的整数"
 
-        # Validate screen name
         if not self.csv_loader.screen_exists(device):
             available_screens = self.csv_loader.get_all_screens()
-            return False, f"Screen '{device}' not found. Available screens: {', '.join(available_screens)}"
+            return False, f"屏幕'{device}'不存在。可用屏幕: {', '.join(available_screens)}"
 
         return True, ""
 
     def _validate_adjust_volume(self, args: dict[str, Any]) -> tuple[bool, str]:
-        """
-        Validate adjust_volume function arguments.
+        """验证adjust_volume函数参数。
 
         Args:
-            args: Function arguments dictionary
+            args: 函数参数字典
 
         Returns:
-            Tuple of (is_valid, error_message)
+            (是否有效, 错误消息)
         """
         device = args.get("device")
         value = args.get("value")
 
         if not device:
-            return False, "Missing required 'device' parameter"
+            return False, "缺少必需的'device'参数"
 
         if not value:
-            return False, "Missing required 'value' parameter"
+            return False, "缺少必需的'value'参数"
 
         if value not in ["up", "down"]:
-            return False, f"Invalid 'value' parameter: {value}. Must be 'up' or 'down'"
+            return False, f"无效的'value'参数: {value}，必须是'up'或'down'"
 
-        # Validate screen name
         if not self.csv_loader.screen_exists(device):
             available_screens = self.csv_loader.get_all_screens()
-            return False, f"Screen '{device}' not found. Available screens: {', '.join(available_screens)}"
+            return False, f"屏幕'{device}'不存在。可用屏幕: {', '.join(available_screens)}"
 
         return True, ""
 
     def get_validation_context(self) -> str:
-        """
-        Get validation context for retry prompts.
+        """获取验证上下文用于重试提示。
 
         Returns:
-            JSON string containing available resources for prompt context
+            包含可用资源的JSON字符串
         """
         context = {
             "available_videos": self.csv_loader.get_all_videos(),

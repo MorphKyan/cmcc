@@ -1,8 +1,5 @@
 """
-Tool registry for LLM function calling.
-
-This module provides a centralized registry that manages all function calling
-components: definitions, validation, and response mapping.
+LLM函数调用工具注册中心。
 """
 import json
 from .definitions import get_tool_definitions
@@ -12,78 +9,42 @@ from .types import ToolDefinition, ToolCall, ValidationResult
 
 
 class ToolRegistry:
-    """
-    Centralized registry for LLM function calling components.
-
-    This class provides a unified interface to access all function calling
-    functionality: tool definitions, validation, and response mapping.
-    """
+    """LLM函数调用工具注册中心，统一管理工具定义、验证和响应映射。"""
 
     def __init__(self):
-        """Initialize the tool registry with all components."""
+        """初始化工具注册中心。"""
         self._tool_definitions = get_tool_definitions()
         self._validator = ToolValidator()
         self._mapper = ToolResponseMapper()
 
     @property
     def tool_definitions(self) -> list[ToolDefinition]:
-        """Get the list of available tool definitions."""
+        """获取工具定义列表。"""
         return self._tool_definitions
 
     @property
     def validator(self) -> ToolValidator:
-        """Get the tool validator instance."""
+        """获取工具验证器实例。"""
         return self._validator
 
     @property
     def mapper(self) -> ToolResponseMapper:
-        """Get the tool response mapper instance."""
+        """获取工具响应映射器实例。"""
         return self._mapper
 
     def validate_function_calls(self, tool_calls: list[ToolCall]) -> ValidationResult:
-        """
-        Validate function calls using the internal validator.
-
-        Args:
-            tool_calls: List of tool calls to validate
-
-        Returns:
-            Validation result tuple (is_valid, errors)
-        """
+        """验证函数调用。"""
         return self._validator.validate_function_calls(tool_calls)
 
     def map_tool_calls_to_response(self, tool_calls: list[ToolCall]) -> str:
-        """
-        Map tool calls to response using the internal mapper.
-
-        Args:
-            tool_calls: List of tool calls to map
-
-        Returns:
-            JSON formatted response string
-        """
+        """将工具调用映射为响应。"""
         return self._mapper.map_tool_calls_to_response(tool_calls)
 
     def create_error_response(self, reason: str, message: str | None = None, details: list[str] | None = None) -> str:
-        """
-        Create error response using the internal mapper.
-
-        Args:
-            reason: Error reason
-            message: Optional error message
-            details: Optional error details
-
-        Returns:
-            JSON formatted error response string
-        """
+        """创建错误响应。"""
         error_response = self._mapper.create_error_response(reason, message, details)
         return json.dumps([error_response], ensure_ascii=False)
 
     def get_validation_context(self) -> str:
-        """
-        Get validation context from the internal validator.
-
-        Returns:
-            JSON string containing available resources
-        """
+        """获取验证上下文。"""
         return self._validator.get_validation_context()

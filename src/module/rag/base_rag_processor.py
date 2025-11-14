@@ -23,11 +23,10 @@ class RAGStatus(Enum):
 
 class BaseRAGProcessor(ABC):
     def __init__(self, settings: RAGSettings) -> None:
-        """
-        初始化RAG处理器基类。
+        """初始化RAG处理器基类。
 
         Args:
-            settings (RAGSettings): RAG配置
+            settings: RAG配置
         """
         self.settings: RAGSettings = settings
         self.videos_data_path = settings.videos_data_path
@@ -35,33 +34,24 @@ class BaseRAGProcessor(ABC):
         self.vector_store: Chroma | None = None
         self.retriever = None
 
-        # 初始化状态和核心组件
         self.status = RAGStatus.UNINITIALIZED
         self.error_message: str | None = None
 
-        # 使用asyncio.Lock来防止并发初始化
         self._init_lock = asyncio.Lock()
         logger.info(f"{self.__class__.__name__}已创建，状态: UNINITIALIZED。")
 
     @abstractmethod
     async def initialize(self) -> None:
-        """
-        执行耗时的初始化过程：检查连接、加载模型、创建或加载数据库。
-        此方法是幂等的，并且是线程安全的。
-        """
+        """初始化RAG处理器（幂等且线程安全）。"""
         pass
 
     @abstractmethod
     async def retrieve_context(self, query: str) -> list[Document]:
-        """
-        根据用户查询异步检索相关上下文。
-        """
+        """根据查询检索相关上下文。"""
         pass
 
     async def refresh_database(self) -> bool:
-        """
-        刷新数据库，重新加载CSV数据并重建向量数据库。
-        """
+        """刷新数据库，重新加载CSV数据并重建向量数据库。"""
         logger.info("正在刷新RAG数据库...")
         try:
             self.status = RAGStatus.UNINITIALIZED

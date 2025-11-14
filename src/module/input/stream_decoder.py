@@ -12,13 +12,12 @@ from loguru import logger
 
 class StreamDecoder:
     def __init__(self, target_sample_rate: int = 16000, target_layout: str = "mono", target_format: str = "fltp") -> None:
-        """
-        初始化解码器和重采样器。
+        """初始化解码器和重采样器。
 
-        :param target_sample_rate: 目标输出采样率 (Hz)。
-        :param target_layout: 目标输出声道布局 (例如, "mono", "stereo")。
-        :param target_format: 目标输出样本格式 (例如, "s16" for int16, "fltp" for float32)。
-                               'fltp' (planar float) 通常是音频处理的首选。
+        Args:
+            target_sample_rate: 目标采样率 (Hz)
+            target_layout: 声道布局 ("mono" 或 "stereo")
+            target_format: 样本格式 ("s16" 或 "fltp")
         """
         self.resampler = AudioResampler(
             format=target_format,
@@ -27,63 +26,68 @@ class StreamDecoder:
         )
 
     def _decode_and_resample_sync(self, encoded_chunk: bytes) -> list[np.ndarray]:
-        """
-        【同步方法】在一个数据块上执行实际的解码和重采样。
-        这个方法会被 `asyncio.to_thread` 在一个独立的线程中运行。
+        """同步解码和重采样音频块。
+
+        Args:
+            encoded_chunk: 编码的音频数据
+
+        Returns:
+            解码后的音频帧列表，错误时返回空列表
         """
         decoded_frames = []
         try:
-            # 使用 BytesIO 将内存中的 bytes 数据模拟成一个文件
             with av.open(io.BytesIO(encoded_chunk), mode='r') as container:
                 audio_stream = container.streams.audio[0]
 
                 for frame in container.decode(audio_stream):
-                    # 重采样帧以匹配目标格式
                     resampled_frames = self.resampler.resample(frame)
                     for resampled_frame in resampled_frames:
-                        # 将 AudioFrame 转换为 NumPy 数组并添加到列表中
                         decoded_frames.append(resampled_frame.to_ndarray())
 
         except Exception:
-            # 使用 logger.exception 可以自动记录堆栈信息
-            logger.exception("解码或重采样音频块时发生错误")
-            return []  # 发生错误时返回空列表
+            logger.exception("音频解码或重采样失败")
+            return []
 
         return decoded_frames
 
     async def decode_chunk(self, encoded_chunk: bytes) -> np.ndarray | None:
+        """异步解码音频块。
+
+        Args:
+            encoded_chunk: 编码的音频数据
+
+        Returns:
+            解码后的音频数组，形状为(channels, samples)，无数据时返回None
+        """
         frames = await asyncio.to_thread(self._decode_and_resample_sync, encoded_chunk)
 
         if not frames:
             return None
 
-        # 将从一个块解码出的所有帧拼接成一个大的 NumPy 数组
-        # axis=1 表示沿着样本维度拼接
         return np.concatenate(frames, axis=1)
 
 
 class FFmpegStreamDecoder:
     def __init__(self, target_sample_rate: int = 16000, target_layout: str = "mono", target_format: str = "fltp") -> None:
-        """
-        初始化FFmpeg流式解码器。
+        """初始化FFmpeg流式解码器。
 
-        :param target_sample_rate: 目标输出采样率 (Hz)。
-        :param target_layout: 目标输出声道布局 (例如, "mono", "stereo")。
-        :param target_format: 目标输出样本格式 (例如, "s16" for int16, "fltp" for float32)。
+        Args:
+            target_sample_rate: 目标采样率 (Hz)
+            target_layout: 声道布局 ("mono" 或 "stereo")
+            target_format: 样本格式 ("s16" 或 "fltp")
         """
         self.target_sample_rate = target_sample_rate
         self.target_channels = 1 if target_layout == "mono" else 2
         self.target_format = target_format
-        
-        # 确定输出格式
+
+        # 确定FFmpeg输出格式
         if target_format == "fltp":
-            self.output_format = "f32le"  # 32-bit float little-endian
+            self.output_format = "f32le"
         elif target_format == "s16":
-            self.output_format = "s16le"  # 16-bit signed integer little-endian
+            self.output_format = "s16le"
         else:
-            self.output_format = "f32le"  # 默认使用float32
-            
-        # 流式处理相关的属性
+            self.output_format = "f32le"
+
         self._ffmpeg_process: subprocess.Popen | None = None
         self._is_initialized = False
         self._stdout_queue: queue.Queue | None = None
@@ -92,46 +96,43 @@ class FFmpegStreamDecoder:
     def _initialize_ffmpeg_process(self) -> bool:
         """初始化FFmpeg进程用于流式处理"""
         if self._ffmpeg_process is not None and self._ffmpeg_process.poll() is None:
-            # 进程已经在运行
             return True
-            
+
         try:
-            # 构建FFmpeg命令 - 使用流式输入
             cmd = [
                 'ffmpeg',
                 '-hide_banner',
-                '-loglevel', 'warning',  # 降低日志级别以减少输出
-                '-f', 'webm',  # 输入格式
-                '-probesize', '32768',  # 减少探测大小以加快启动
-                '-analyzeduration', '0',  # 不分析持续时间
-                '-i', 'pipe:0',  # 从stdin读取
-                '-f', self.output_format,  # 输出格式
-                '-ar', str(self.target_sample_rate),  # 采样率
-                '-ac', str(self.target_channels),  # 声道数
-                '-acodec', 'pcm_' + self.output_format,  # PCM编码
-                '-fflags', 'nobuffer',  # 减少缓冲
-                '-flags', 'low_delay',  # 低延迟模式
-                '-flush_packets', '1',  # 立即刷新包
-                'pipe:1'  # 输出到stdout
+                '-loglevel', 'warning',
+                '-f', 'webm',
+                '-probesize', '32768',
+                '-analyzeduration', '0',
+                '-i', 'pipe:0',
+                '-f', self.output_format,
+                '-ar', str(self.target_sample_rate),
+                '-ac', str(self.target_channels),
+                '-acodec', 'pcm_' + self.output_format,
+                '-fflags', 'nobuffer',
+                '-flags', 'low_delay',
+                '-flush_packets', '1',
+                'pipe:1'
             ]
-            
+
             self._ffmpeg_process = subprocess.Popen(
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                bufsize=0  # 无缓冲
+                bufsize=0
             )
-            
-            # 初始化队列和读取线程
+
             self._stdout_queue = queue.Queue()
             self._stdout_thread = threading.Thread(target=self._read_stdout, daemon=True)
             self._stdout_thread.start()
-            
+
             self._is_initialized = True
             logger.info("FFmpeg流式解码器已初始化")
             return True
-            
+
         except Exception as e:
             logger.exception(f"初始化FFmpeg进程失败: {e}")
             self._cleanup_process()

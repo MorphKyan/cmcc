@@ -1,8 +1,6 @@
-"""
-Response mapping for LLM tool calls.
+"""LLM工具调用响应映射模块。
 
-This module handles the mapping of LangChain tool calls to the project's
-required JSON response format.
+将LangChain工具调用映射为项目所需的JSON响应格式。
 """
 import json
 from typing import Any
@@ -11,31 +9,27 @@ from .types import ToolCall
 
 
 class ToolResponseMapper:
-    """
-    Response mapper for LLM tool calls.
+    """LLM工具调用响应映射器。
 
-    Responsible for mapping LangChain tool calls to the project's required
-    JSON response format.
+    将LangChain工具调用映射为项目所需的JSON响应格式。
     """
 
     def __init__(self, tool_mappings: dict[str, dict[str, Any]] | None = None):
-        """
-        Initialize the response mapper.
+        """初始化响应映射器。
 
         Args:
-            tool_mappings: Custom tool mapping configuration, uses default if None
+            tool_mappings: 自定义工具映射配置，为None时使用默认配置
         """
         self.tool_mappings = tool_mappings or self._default_tool_mappings()
 
     def map_tool_calls_to_response(self, tool_calls: list[ToolCall]) -> str:
-        """
-        Map LangChain tool calls to project's JSON response format.
+        """映射工具调用为JSON响应。
 
         Args:
-            tool_calls: LangChain parsed tool calls list
+            tool_calls: LangChain解析的工具调用列表
 
         Returns:
-            JSON formatted response string
+            JSON格式的响应字符串
         """
         if not tool_calls:
             return '[]'
@@ -45,12 +39,9 @@ class ToolResponseMapper:
             function_name = tool_call['type']
             arguments = tool_call['args']
 
-            # Get tool mapping configuration
             if function_name not in self.tool_mappings:
-                # Unknown function, return error response
                 result = self.create_error_response("unknown_function")
             else:
-                # Create response based on mapping configuration
                 result = self._create_response_from_mapping(function_name, arguments)
 
             results.append(result)

@@ -13,12 +13,9 @@ from src.config.config import get_settings
 
 
 class CSVLoader:
-    """
-    Async-safe CSV loader class for loading and validating resource data.
+    """线程安全的CSV数据加载器。
 
-    This class provides thread-safe operations for loading CSV files containing
-    video, door, and screen information. It supports caching, reloading, and
-    validation of resources against the loaded data.
+    加载和管理视频、门、屏幕等资源的CSV数据，支持缓存和验证。
     """
 
     _instance = None
@@ -33,8 +30,7 @@ class CSVLoader:
         return cls._instance
 
     def __init__(self):
-        """Initialize the CSV loader with empty caches."""
-        # Prevent re-initialization in singleton pattern
+        """初始化CSV加载器。"""
         if hasattr(self, '_initialized'):
             return
 
@@ -44,7 +40,6 @@ class CSVLoader:
         self._screens_cache: dict[str, dict[str, Any]] = {}
         self._initialized = True
 
-        # Load data on first initialization
         self.reload()
 
     def _load_csv_file(self, file_path: str) -> pd.DataFrame:

@@ -1,20 +1,20 @@
 """
-Shared type definitions for LLM function calling.
+LLM函数调用类型定义。
 """
 from typing import Any
 
 
-# Tool call representation from LangChain
+# 工具调用表示
 ToolCall = dict[str, Any]
 
-# Validation result
+# 验证结果
 ValidationResult = tuple[bool, list[str]]
 
-# Tool definition structure
+# 工具定义结构
 ToolDefinition = dict[str, Any]
 
-# Response mapping configuration
+# 响应映射配置
 ResponseMapping = dict[str, Any]
 
-# Tool registry entry
+# 工具注册条目
 ToolRegistryEntry = dict[str, Any]

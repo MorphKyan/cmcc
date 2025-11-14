@@ -13,31 +13,24 @@ from src.config.config import FunASRSettings
 
 
 class ASRProcessor:
-    """
-    实时语音识别(ASR)处理器
-    """
+    """实时语音识别处理器。"""
 
     def __init__(self, settings: FunASRSettings, device: str = "auto") -> None:
-        """
-        初始化ASR处理器。
-        
-        Args:
-            device: 推理设备 ("auto", "cuda:0", or "cpu").
-        """
+        """初始化ASR处理器。"""
         self.settings = settings
         self._setup_device(device)
         self._init_model()
 
     def _setup_device(self, device: str) -> None:
-        """设置推理设备 (CPU/GPU)"""
+        """设置推理设备。"""
         if device == "auto":
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         else:
             self.device = device
-        logger.info("ASR处理器正在使用 {device} 进行推理...", device=self.device)
+        logger.info("ASR处理器使用 {device} 进行推理...", device=self.device)
 
     def _init_model(self) -> None:
-        """初始化FunASR语音识别模型"""
+        """初始化FunASR语音识别模型。"""
         logger.info("ASR处理器正在加载语音识别模型...")
         self.model = AutoModel(
             model=self.settings.model,
@@ -49,19 +42,10 @@ class ASRProcessor:
         logger.info("ASR处理器语音识别模型加载完成。")
 
     def process_audio_data(self, audio_data: npt.NDArray[np.float32]) -> str | None:
-        """
-        处理音频数据并返回识别结果。
-        
-        Args:
-            audio_data: 音频数据
-            
-        Returns:
-            str: 识别的文本结果
-        """
+        """处理音频数据并返回识别结果。"""
         if audio_data.dtype == np.int16:
             audio_data = audio_data.astype(np.float32) / 32768.0
 
-        # 进行语音识别
         res = self.model.generate(
             input=audio_data, cache={}, language=self.settings.language, use_itn=self.settings.use_itn,
             batch_size_s=self.settings.batch_size_s, merge_vad=self.settings.merge_vad,
@@ -75,6 +59,7 @@ class ASRProcessor:
         return None
 
     def process_audio(self, audio_data: list[npt.NDArray[np.float32]]) -> list[str]:
+        """批量处理音频数据。"""
         for data in audio_data:
             if data.dtype == np.int16:
                 data = data.astype(np.float32) / 32768.0
