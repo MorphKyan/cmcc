@@ -216,7 +216,7 @@ class LLMSettings(BaseSettings):
     max_validation_retries: int = 2
     retry_delay: float = 0.1
     # Network timeout settings
-    request_timeout: int = 30  # Request timeout in seconds
+    request_timeout: int = 10  # Request timeout in seconds
     connection_timeout: int = 10  # Connection timeout in seconds
     # Network retry settings
     max_network_retries: int = 3  # Maximum network retry attempts

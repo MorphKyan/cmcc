@@ -42,7 +42,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
                 temperature=0.7,
                 top_p=0.8,
                 timeout=self.settings.request_timeout,
-                max_retries=0,  # Disable LangChain's built-in retry, we'll handle it ourselves
+                max_retries=0,
                 extra_body={
                     "top_k": 20,
                     "min_p": 0,
@@ -55,9 +55,8 @@ class ModelScopeLLMHandler(BaseLLMHandler):
 
         # 2. 将工具绑定到模型
         self.model_with_tools = self.model.bind_tools(self.tools)
-
         # 3. 构建处理链
-        self.chain = self.prompt_template | self.model_with_tools | self.tool_strategy
+        self.chain = self.prompt_template | self.model_with_tools
 
         logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.modelscope_model)
 
@@ -88,10 +87,10 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             chain_input = self._prepare_chain_input(user_input, rag_docs)
 
             # 异步调用现代化处理链 - 直接获得结构化输出
-            structured_response = await self.chain.ainvoke(chain_input)
+            response = await self.chain.ainvoke(chain_input)
 
             # 格式化结构化响应为JSON字符串
-            return self._format_structured_response(structured_response)
+            return self._format_response(response)
 
         except Exception as api_error:
             logger.exception("调用ModelScope API或处理链时出错: {error}", error=str(api_error))

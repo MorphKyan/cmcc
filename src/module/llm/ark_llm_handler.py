@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
 
 from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI
@@ -48,7 +47,7 @@ class ArkLLMHandler(BaseLLMHandler):
         self.model_with_tools = self.model.bind_tools(self.tools)
 
         # 3. 构建处理链
-        self.chain = self.prompt_template | self.model_with_tools | self.tool_strategy
+        self.chain = self.prompt_template | self.model_with_tools
 
         logger.info("火山引擎Ark大语言模型处理器初始化完成，使用模型: {model}", model=volcengine_settings.llm_model_name)
 
@@ -75,10 +74,10 @@ class ArkLLMHandler(BaseLLMHandler):
             chain_input = self._prepare_chain_input(user_input, rag_docs)
 
             # 异步调用链
-            structured_response = await self.chain.ainvoke(chain_input)
+            response = await self.chain.ainvoke(chain_input)
 
             # 格式化结构化响应为JSON字符串
-            return self._format_structured_response(structured_response)
+            return self._format_response(response)
 
         except Exception as api_error:
             logger.exception("调用火山引擎Ark API或处理链时出错: {error}", error=str(api_error))

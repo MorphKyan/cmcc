@@ -14,7 +14,7 @@ from loguru import logger
 from src.config.config import LLMSettings
 from src.core.csv_loader import CSVLoader
 from src.module.rag.data_loader import get_prompt_from_rag_documents
-from src.module.llm.tool.definitions import get_tools, get_exhibition_command_schema
+from src.module.llm.tool.definitions import get_tools, get_exhibition_command_schema, ExhibitionCommand
 
 
 class BaseLLMHandler(ABC):
@@ -32,10 +32,7 @@ class BaseLLMHandler(ABC):
 
         # Get modern tools and structured output schema
         self.tools = get_tools()
-        self.exhibition_command_schema = get_exhibition_command_schema()
-
-        # Create tool strategy for structured output
-        self.tool_strategy = ToolStrategy(self.exhibition_command_schema)
+        self._tool_map = {tool.name: tool for tool in self.tools}
 
         # 使用ChatPromptTemplate构建提示词
         self.prompt_template = ChatPromptTemplate.from_messages([
@@ -160,26 +157,32 @@ class BaseLLMHandler(ABC):
                 })
         return doors_info
 
-    def _format_structured_response(self, structured_response) -> str:
+    def _format_response(self, response) -> str:
         """
         将结构化响应格式化为JSON字符串。
 
         Args:
-            structured_response: 结构化响应对象
+            response: 结构化响应对象
 
         Returns:
             JSON格式的响应字符串
         """
-        if isinstance(structured_response, list):
-            # Handle multiple commands
-            commands = []
-            for response in structured_response:
-                commands.append(response.model_dump())
-            return json.dumps(commands, ensure_ascii=False)
-        else:
-            # Handle single command
-            command = structured_response.model_dump()
-            return json.dumps([command], ensure_ascii=False)
+        commands = []
+        for tool_call in response.tool_calls:
+            tool_name = tool_call.get("name")
+            tool_args = tool_call.get("args")
+
+            if tool_function := self._tool_map.get(tool_name):
+                try:
+                    # 直接调用工具函数
+                    command_result: ExhibitionCommand = tool_function.invoke(tool_args)
+                    commands.append(command_result.model_dump())
+                except Exception as e:
+                    logger.error("执行工具 '{name}' 时出错: {error}", name=tool_name, error=e)
+            else:
+                logger.warning("使用了未知的工具: {name}", name=tool_name)
+
+        return json.dumps(commands, ensure_ascii=False, indent=2)
 
     def create_error_response(self, reason: str, message: str | None = None, details: list[str] | None = None) -> str:
         """
