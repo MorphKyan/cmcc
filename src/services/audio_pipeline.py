@@ -7,6 +7,7 @@ from loguru import logger
 
 from src.api.context import Context
 from src.core import dependencies
+from src.module.llm.smart_retry_handler import SmartRetryHandler
 
 
 async def receive_loop(websocket: WebSocket, context: Context) -> None:
@@ -90,11 +91,27 @@ async def run_asr_processor(context: Context) -> None:
 async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     """LLM/RAG处理逻辑代码"""
     logger.info("LLM/RAG处理器已启动")
+
+    # 创建指令重试处理器
+    retry_handler = SmartRetryHandler(dependencies.llm_processor.settings)
+
     while True:
         try:
             recognized_text = await context.asr_output_queue.get()
             retrieved_docs = await dependencies.rag_processor.retrieve_context(recognized_text)
-            llm_response = await dependencies.llm_processor.get_response(recognized_text, retrieved_docs)
+
+            # 执行指令重试
+            retry_result = await retry_handler.execute_instruction_retry(
+                original_input=recognized_text,
+                llm_function=dependencies.llm_processor.get_response,
+                rag_docs=retrieved_docs
+            )
+
+            # 记录重试统计信息
+            if retry_result.attempt_count > 1:
+                logger.info(f"[重试统计] 尝试次数: {retry_result.attempt_count}, 总耗时: {retry_result.total_time:.2f}s, 成功: {retry_result.success}")
+
+            llm_response = retry_result.response
             logger.info("[大模型响应] {llm_response}", llm_response=llm_response)
             await context.function_calling_queue.put(llm_response)
 

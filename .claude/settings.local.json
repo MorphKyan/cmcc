@@ -12,7 +12,8 @@
       "Bash(npm run dev:*)",
       "Bash(git commit:*)",
       "mcp__context7__get-library-docs",
-      "mcp__context7__resolve-library-id"
+      "mcp__context7__resolve-library-id",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

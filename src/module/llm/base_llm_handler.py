@@ -8,13 +8,12 @@ from typing import Any
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableSerializable
-from langchain.agents.structured_output import ToolStrategy
 from loguru import logger
 
 from src.config.config import LLMSettings
 from src.core.csv_loader import CSVLoader
+from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
 from src.module.rag.data_loader import get_prompt_from_rag_documents
-from src.module.llm.tool.definitions import get_tools, get_exhibition_command_schema, ExhibitionCommand
 
 
 class BaseLLMHandler(ABC):
@@ -174,15 +173,133 @@ class BaseLLMHandler(ABC):
 
             if tool_function := self._tool_map.get(tool_name):
                 try:
+                    # 预执行验证：在执行工具前验证参数
+                    is_valid, error_message = self._validate_tool_args(tool_name, tool_args)
+                    if not is_valid:
+                        logger.warning("工具 '{name}' 参数验证失败: {error}", name=tool_name, error=error_message)
+                        # 创建验证错误响应而不是执行无效工具
+                        error_command = ExhibitionCommand(
+                            action="error",
+                            target=tool_args.get("target"),
+                            device=tool_args.get("device"),
+                            value=f"validation_failed: {error_message}"
+                        )
+                        commands.append(error_command.model_dump())
+                        continue
+
                     # 直接调用工具函数
                     command_result: ExhibitionCommand = tool_function.invoke(tool_args)
                     commands.append(command_result.model_dump())
                 except Exception as e:
                     logger.error("执行工具 '{name}' 时出错: {error}", name=tool_name, error=e)
+                    # 创建执行错误响应
+                    error_command = ExhibitionCommand(
+                        action="error",
+                        target=tool_args.get("target") if tool_args else None,
+                        device=tool_args.get("device") if tool_args else None,
+                        value=f"execution_failed: {str(e)}"
+                    )
+                    commands.append(error_command.model_dump())
             else:
                 logger.warning("使用了未知的工具: {name}", name=tool_name)
+                # 创建未知工具错误响应
+                error_command = ExhibitionCommand(
+                    action="error",
+                    target=tool_args.get("target") if tool_args else None,
+                    device=tool_args.get("device") if tool_args else None,
+                    value=f"unknown_tool: {tool_name}"
+                )
+                commands.append(error_command.model_dump())
 
         return json.dumps(commands, ensure_ascii=False, indent=2)
+
+    def _validate_play_video_args(self, target: str, device: str) -> tuple[bool, str | None]:
+        """
+        Validate play_video tool arguments against CSV data.
+
+        Args:
+            target: Video filename to play
+            device: Screen name to play on
+
+        Returns:
+            tuple[bool, str | None]: (is_valid, error_message)
+        """
+        if not self.csv_loader.video_exists(target):
+            return False, f"Video '{target}' not found in videos.csv"
+
+        if not self.csv_loader.screen_exists(device):
+            return False, f"Screen '{device}' not found in screens.csv"
+
+        return True, None
+
+    def _validate_control_door_args(self, target: str, action: str) -> tuple[bool, str | None]:
+        """
+        Validate control_door tool arguments against CSV data.
+
+        Args:
+            target: Door name to control
+            action: Action to perform ("open" or "close")
+
+        Returns:
+            tuple[bool, str | None]: (is_valid, error_message)
+        """
+        if not self.csv_loader.door_exists(target):
+            return False, f"Door '{target}' not found in doors.csv"
+
+        if action not in ["open", "close"]:
+            return False, f"Invalid door action '{action}'. Must be 'open' or 'close'"
+
+        return True, None
+
+    def _validate_device_args(self, device: str, tool_name: str) -> tuple[bool, str | None]:
+        """
+        Validate device argument for screen-related tools.
+
+        Args:
+            device: Screen name
+            tool_name: Name of the tool being validated
+
+        Returns:
+            tuple[bool, str | None]: (is_valid, error_message)
+        """
+        if not self.csv_loader.screen_exists(device):
+            return False, f"Screen '{device}' not found in screens.csv for {tool_name} tool"
+
+        return True, None
+
+    def _validate_tool_args(self, tool_name: str, tool_args: dict) -> tuple[bool, str | None]:
+        """
+        Validate tool arguments against CSV data before execution.
+
+        Args:
+            tool_name: Name of the tool to validate
+            tool_args: Arguments for the tool
+
+        Returns:
+            tuple[bool, str | None]: (is_valid, error_message)
+        """
+        try:
+            if tool_name == "play_video":
+                target = tool_args.get("target", "")
+                device = tool_args.get("device", "")
+                return self._validate_play_video_args(target, device)
+
+            elif tool_name == "control_door":
+                target = tool_args.get("target", "")
+                action = tool_args.get("action", "")
+                return self._validate_control_door_args(target, action)
+
+            elif tool_name in ["seek_video", "set_volume", "adjust_volume"]:
+                device = tool_args.get("device", "")
+                return self._validate_device_args(device, tool_name)
+
+            else:
+                # Unknown tool, let it proceed (will be handled by existing logic)
+                return True, None
+
+        except Exception as e:
+            logger.error(f"Error validating tool '{tool_name}' arguments: {e}")
+            return False, f"Validation error: {str(e)}"
 
     def create_error_response(self, reason: str, message: str | None = None, details: list[str] | None = None) -> str:
         """
@@ -196,7 +313,7 @@ class BaseLLMHandler(ABC):
         Returns:
             JSON格式的错误响应字符串
         """
-        error_command = self.exhibition_command_schema(
+        error_command = ExhibitionCommand(
             action="error",
             target=None,
             device=None,
