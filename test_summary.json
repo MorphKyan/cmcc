@@ -1,0 +1,20 @@
+{
+  "total_tests": 125,
+  "passed": 124,
+  "failed": 1,
+  "errors": 0,
+  "success_rate": 99.2,
+  "failed_cases": [
+    {
+      "instruction": "播放物联网应用案例视频，然后打开5G先锋体验区的门",
+      "status": "failed",
+      "reason": "Required RAG document 'IoT_Application_Cases.mp4' not found in RAG results",
+      "rag_docs": [
+        "Smart_Energy_IoT.mp4",
+        "5G_mmWave_Exploration.mp4",
+        "New_Info_Consumption_Model.mp4"
+      ],
+      "expected_rag": "IoT_Application_Cases.mp4"
+    }
+  ]
+}
