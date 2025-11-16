@@ -1,0 +1,3724 @@
+{
+  "summary": {
+    "total_tests": 100,
+    "passed": 68,
+    "failed": 32,
+    "success_rate": 68.0,
+    "failed_cases": [
+      {
+        "instruction": "我想了解一下人工智能应用的最新进展",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 2",
+        "result": {
+          "recognized_text": "我想了解一下人工智能应用的最新进展",
+          "rag_docs": [
+            "AI_Applications_Frontier.mp4",
+            "Industry_AI_Large_Model.mp4",
+            "Accessibility_Initiatives.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"AI_Applications_Frontier.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"play\",\n    \"target\": \"Industry_AI_Large_Model.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "play",
+              "target": "AI_Applications_Frontier.mp4",
+              "device": "主屏幕",
+              "value": null
+            },
+            {
+              "action": "play",
+              "target": "Industry_AI_Large_Model.mp4",
+              "device": "主屏幕",
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 9.184569358825684
+        }
+      },
+      {
+        "instruction": "我想了解一下车联网技术",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 device不匹配，预期: 主屏幕, 实际: 右侧演示屏",
+        "result": {
+          "recognized_text": "我想了解一下车联网技术",
+          "rag_docs": [
+            "Vehicle_to_Everything_V2X.mp4",
+            "HeLuTong_Smart_Traffic.mp4",
+            "5G_mmWave_Exploration.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Vehicle_to_Everything_V2X.mp4\",\n    \"device\": \"右侧演示屏\",\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "play",
+              "target": "Vehicle_to_Everything_V2X.mp4",
+              "device": "右侧演示屏",
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 8.682958602905273
+        }
+      },
+      {
+        "instruction": "放一下量子通信加密技术的介绍",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+        "result": {
+          "recognized_text": "放一下量子通信加密技术的介绍",
+          "rag_docs": [
+            "Quantum_Communication_Encryption.mp4",
+            "Green_Communications_Sustainability.mp4",
+            "RCS_5G_Messaging.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.192729949951172
+        }
+      },
+      {
+        "instruction": "我想了解数字人和智能客服",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 2",
+        "result": {
+          "recognized_text": "我想了解数字人和智能客服",
+          "rag_docs": [
+            "Digital_Human_Avatar.mp4",
+            "Cloud_Contact_Center.mp4",
+            "10086_Smart_Customer_Service.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Digital_Human_Avatar.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"play\",\n    \"target\": \"10086_Smart_Customer_Service.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "play",
+              "target": "Digital_Human_Avatar.mp4",
+              "device": "主屏幕",
+              "value": null
+            },
+            {
+              "action": "play",
+              "target": "10086_Smart_Customer_Service.mp4",
+              "device": "主屏幕",
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 10.598761796951294
+        }
+      },
+      {
+        "instruction": "放一下应急通信保障的介绍",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: play, 实际: error",
+        "result": {
+          "recognized_text": "放一下应急通信保障的介绍",
+          "rag_docs": [
+            "Emergency_Communication_Support.mp4p",
+            "AndPACK_Portable_5G_Station.mp4",
+            "Green_Communications_Sustainability.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"error\",\n    \"target\": \"Emergency_Communication_Support.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": \"validation_failed: Video 'Emergency_Communication_Support.mp4' not found in videos.csv\"\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "error",
+              "target": "Emergency_Communication_Support.mp4",
+              "device": "主屏幕",
+              "value": "validation_failed: Video 'Emergency_Communication_Support.mp4' not found in videos.csv"
+            }
+          ],
+          "retry_count": 2,
+          "success": false,
+          "total_time": 9.427948236465454
+        }
+      },
+      {
+        "instruction": "数字应用体验中心的门关上",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 未来科技赋能中心的门",
+        "result": {
+          "recognized_text": "数字应用体验中心的门关上",
+          "rag_docs": [
+            "Data_Center_Infrastructure.mp4",
+            "Digital_Literacy_Inclusion.mp4",
+            "Digital_Government_Services.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "close",
+              "target": "未来科技赋能中心的门",
+              "device": null,
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.81575608253479
+        }
+      },
+      {
+        "instruction": "把数字应用体验中心的门关闭",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+        "result": {
+          "recognized_text": "把数字应用体验中心的门关闭",
+          "rag_docs": [
+            "Accessibility_Initiatives.mp4",
+            "Digital_Literacy_Inclusion.mp4",
+            "Ability_as_a_Service_Platform.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "close",
+              "target": "数字服务互动站的门",
+              "device": null,
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 7.6712868213653564
+        }
+      },
+      {
+        "instruction": "数字应用体验中心的门请关掉",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+        "result": {
+          "recognized_text": "数字应用体验中心的门请关掉",
+          "rag_docs": [
+            "Data_Center_Infrastructure.mp4",
+            "Digital_Literacy_Inclusion.mp4",
+            "Accessibility_Initiatives.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "close",
+              "target": "数字服务互动站的门",
+              "device": null,
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 12.082492351531982
+        }
+      },
+      {
+        "instruction": "数字应用体验中心的门打开",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 未来科技赋能中心的门",
+        "result": {
+          "recognized_text": "数字应用体验中心的门打开",
+          "rag_docs": [
+            "Data_Center_Infrastructure.mp4",
+            "Digital_Literacy_Inclusion.mp4",
+            "Digital_Government_Services.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "open",
+              "target": "未来科技赋能中心的门",
+              "device": null,
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 10.225931406021118
+        }
+      },
+      {
+        "instruction": "数字应用体验中心的门关闭",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+        "result": {
+          "recognized_text": "数字应用体验中心的门关闭",
+          "rag_docs": [
+            "Digital_Literacy_Inclusion.mp4",
+            "Data_Center_Infrastructure.mp4",
+            "Accessibility_Initiatives.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "close",
+              "target": "数字服务互动站的门",
+              "device": null,
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 11.163141250610352
+        }
+      },
+      {
+        "instruction": "我想把音量设为80",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+        "result": {
+          "recognized_text": "我想把音量设为80",
+          "rag_docs": [
+            "Smart_Speaker_Assistant.mp4",
+            "10086_Smart_Customer_Service.mp4",
+            "Accessibility_Initiatives.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.063140392303467
+        }
+      },
+      {
+        "instruction": "音量设置为60",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+        "result": {
+          "recognized_text": "音量设置为60",
+          "rag_docs": [
+            "10086_Smart_Customer_Service.mp4",
+            "6G_Technology_Outlook.mp4",
+            "Smart_Speaker_Assistant.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.19206428527832
+        }
+      },
+      {
+        "instruction": "设置音量为20",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+        "result": {
+          "recognized_text": "设置音量为20",
+          "rag_docs": [
+            "Smart_Speaker_Assistant.mp4",
+            "Accessibility_Initiatives.mp4",
+            "VoLTE_HD_Calling.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.184285640716553
+        }
+      },
+      {
+        "instruction": "我想跳到2分30秒",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "我想跳到2分30秒",
+          "rag_docs": [
+            "Digital_Literacy_Inclusion.mp4",
+            "Blue_Dream_Charity.mp4",
+            "5G_mmWave_Exploration.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 150\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 150
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.453331470489502
+        }
+      },
+      {
+        "instruction": "快进到1分10秒",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "快进到1分10秒",
+          "rag_docs": [
+            "5G_mmWave_Exploration.mp4",
+            "Digital_Literacy_Inclusion.mp4",
+            "Decade_of_4G_Impact.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 70\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 70
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 7.426082372665405
+        }
+      },
+      {
+        "instruction": "跳到5分钟看看",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "跳到5分钟看看",
+          "rag_docs": [
+            "5G_mmWave_Exploration.mp4",
+            "New_Info_Consumption_Model.mp4",
+            "5G_Advanced_Tech_Analysis.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 300\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 300
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.864639759063721
+        }
+      },
+      {
+        "instruction": "从30秒开始播放",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "从30秒开始播放",
+          "rag_docs": [
+            "Video_Color_Ring_Tone.mp4",
+            "Decade_of_4G_Impact.mp4",
+            "Blue_Dream_Charity.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 30\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 30
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 12.118073463439941
+        }
+      },
+      {
+        "instruction": "帮我跳到3分20秒",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "帮我跳到3分20秒",
+          "rag_docs": [
+            "Digital_Literacy_Inclusion.mp4",
+            "Blue_Dream_Charity.mp4",
+            "5G_mmWave_Exploration.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 200\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 200
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 16.43704915046692
+        }
+      },
+      {
+        "instruction": "快进到4分15秒",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "快进到4分15秒",
+          "rag_docs": [
+            "Decade_of_4G_Impact.mp4",
+            "Ultra_HD_Video_Technology.mp4",
+            "Data_Center_Infrastructure.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 255\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 255
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 7.321138620376587
+        }
+      },
+      {
+        "instruction": "跳到1分钟",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "跳到1分钟",
+          "rag_docs": [
+            "Mobile_Authentication_Login.mp4",
+            "5G_mmWave_Exploration.mp4",
+            "Video_Color_Ring_Tone.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 60\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 60
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 7.294810771942139
+        }
+      },
+      {
+        "instruction": "跳转到2分45秒",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+        "result": {
+          "recognized_text": "跳转到2分45秒",
+          "rag_docs": [
+            "Decade_of_4G_Impact.mp4",
+            "HeCaiYun_Cloud_Drive.mp4",
+            "Smart_Grid_Protection.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.272833585739136
+        }
+      },
+      {
+        "instruction": "从10秒开始",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "从10秒开始",
+          "rag_docs": [
+            "Decade_of_4G_Impact.mp4",
+            "5G_mmWave_Exploration.mp4",
+            "Digital_Literacy_Inclusion.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 10\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 10
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 8.763192176818848
+        }
+      },
+      {
+        "instruction": "跳转到6分30秒",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "跳转到6分30秒",
+          "rag_docs": [
+            "6G_Technology_Outlook.mp4",
+            "Digital_Literacy_Inclusion.mp4",
+            "10086_Smart_Customer_Service.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 390\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 390
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 6.2087671756744385
+        }
+      },
+      {
+        "instruction": "我想看5G技术总览，然后打开5G先锋体验区的门",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 2, 实际: 0",
+        "result": {
+          "recognized_text": "我想看5G技术总览，然后打开5G先锋体验区的门",
+          "rag_docs": [
+            "5G_Overview_Intro.mp4",
+            "5G_mmWave_Exploration.mp4",
+            "5G_Advanced_Tech_Analysis.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 7.541589260101318
+        }
+      },
+      {
+        "instruction": "放一下智慧家庭解决方案的视频，音量调到80",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 2, 实际: 0",
+        "result": {
+          "recognized_text": "放一下智慧家庭解决方案的视频，音量调到80",
+          "rag_docs": [
+            "Smart_Home_Solutions.mp4",
+            "Home_Network_Engineer_Team.mp4",
+            "Smart_Speaker_Assistant.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 7.806494474411011
+        }
+      },
+      {
+        "instruction": "在左边互动屏看看云计算，然后跳到2分钟",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 2, 实际: 0",
+        "result": {
+          "recognized_text": "在左边互动屏看看云计算，然后跳到2分钟",
+          "rag_docs": [
+            "Cloud_PC_Desktop.mp4",
+            "HeCaiYun_Cloud_Drive.mp4",
+            "Cloud_BigData_Capabilities.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 8.165919542312622
+        }
+      },
+      {
+        "instruction": "在右边演示屏看看智慧农业，然后跳到1分30秒",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具1 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "在右边演示屏看看智慧农业，然后跳到1分30秒",
+          "rag_docs": [
+            "Smart_Agriculture_Solution.mp4",
+            "Smart_Logistics_Warehouse.mp4",
+            "Smart_Factory_QC.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Agriculture_Solution.mp4\",\n    \"device\": \"右侧演示屏\",\n    \"value\": null\n  },\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"右侧演示屏\",\n    \"value\": 90\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "play",
+              "target": "Smart_Agriculture_Solution.mp4",
+              "device": "右侧演示屏",
+              "value": null
+            },
+            {
+              "action": "seek",
+              "target": null,
+              "device": "右侧演示屏",
+              "value": 90
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 8.70650339126587
+        }
+      },
+      {
+        "instruction": "播放智慧医疗视频，声音小一点，然后关上数字应用体验中心的门",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具2 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+        "result": {
+          "recognized_text": "播放智慧医疗视频，声音小一点，然后关上数字应用体验中心的门",
+          "rag_docs": [
+            "Smart_Healthcare_Imaging_Cloud.mp4",
+            "Accessibility_Initiatives.mp4",
+            "Smart_Doorbell_Intercom.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Healthcare_Imaging_Cloud.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"down\"\n  },\n  {\n    \"action\": \"close\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "play",
+              "target": "Smart_Healthcare_Imaging_Cloud.mp4",
+              "device": "主屏幕",
+              "value": null
+            },
+            {
+              "action": "adjust_volume",
+              "target": null,
+              "device": "主屏幕",
+              "value": "down"
+            },
+            {
+              "action": "close",
+              "target": "数字服务互动站的门",
+              "device": null,
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 11.125622034072876
+        }
+      },
+      {
+        "instruction": "播放AR应用视频，音量设置为70，然后跳转到3分钟",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具2 action不匹配，预期: seek_video, 实际: seek",
+        "result": {
+          "recognized_text": "播放AR应用视频，音量设置为70，然后跳转到3分钟",
+          "rag_docs": [
+            "Augmented_Reality_Applications.mp4",
+            "Video_Color_Ring_Tone.mp4",
+            "Accessibility_Initiatives.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Augmented_Reality_Applications.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 70\n  },\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 180\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "play",
+              "target": "Augmented_Reality_Applications.mp4",
+              "device": "主屏幕",
+              "value": null
+            },
+            {
+              "action": "set_volume",
+              "target": null,
+              "device": "主屏幕",
+              "value": 70
+            },
+            {
+              "action": "seek",
+              "target": null,
+              "device": "主屏幕",
+              "value": 180
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 9.12860918045044
+        }
+      },
+      {
+        "instruction": "在左侧互动大屏播放网络安全视频，然后降低音量",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 2, 实际: 0",
+        "result": {
+          "recognized_text": "在左侧互动大屏播放网络安全视频，然后降低音量",
+          "rag_docs": [
+            "Digital_Literacy_Inclusion.mp4",
+            "Network_Operations_Center.mp4",
+            "Cyber_Security_Defense_System.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 7.0541157722473145
+        }
+      },
+      {
+        "instruction": "播放量子通信视频，跳转到2分15秒，然后关闭智慧生活馆的门",
+        "success": false,
+        "rag_validation": false,
+        "rag_reason": "预期RAG文档 'Quantum_Communication_Encryption.mp4' 未找到，实际返回: ['Smart_Doorbell_Intercom.mp4', 'Smart_Home_Solutions.mp4', 'Home_Network_Engineer_Team.mp4']",
+        "tool_validation": false,
+        "tool_reason": "工具调用数量不匹配，预期: 3, 实际: 0",
+        "result": {
+          "recognized_text": "播放量子通信视频，跳转到2分15秒，然后关闭智慧生活馆的门",
+          "rag_docs": [
+            "Smart_Doorbell_Intercom.mp4",
+            "Smart_Home_Solutions.mp4",
+            "Home_Network_Engineer_Team.mp4"
+          ],
+          "llm_response": "[]",
+          "tool_calls": [],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 12.215619564056396
+        }
+      },
+      {
+        "instruction": "播放超级SIM卡视频，音量增加到90，然后打开数字应用体验中心的门",
+        "success": false,
+        "rag_validation": true,
+        "rag_reason": "",
+        "tool_validation": false,
+        "tool_reason": "工具2 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+        "result": {
+          "recognized_text": "播放超级SIM卡视频，音量增加到90，然后打开数字应用体验中心的门",
+          "rag_docs": [
+            "Super_SIM_Functionality.mp4",
+            "SIM_eID_Digital_Identity.mp4",
+            "Digital_Literacy_Inclusion.mp4"
+          ],
+          "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Super_SIM_Functionality.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 90\n  },\n  {\n    \"action\": \"open\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+          "tool_calls": [
+            {
+              "action": "play",
+              "target": "Super_SIM_Functionality.mp4",
+              "device": "主屏幕",
+              "value": null
+            },
+            {
+              "action": "set_volume",
+              "target": null,
+              "device": "主屏幕",
+              "value": 90
+            },
+            {
+              "action": "open",
+              "target": "数字服务互动站的门",
+              "device": null,
+              "value": null
+            }
+          ],
+          "retry_count": 1,
+          "success": true,
+          "total_time": 12.32493257522583
+        }
+      }
+    ]
+  },
+  "detailed_results": [
+    {
+      "instruction": "我想看看5G技术的总览介绍",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看5G技术的总览介绍",
+        "rag_docs": [
+          "5G_Overview_Intro.mp4",
+          "5G_mmWave_Exploration.mp4",
+          "5G_Advanced_Tech_Analysis.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"5G_Overview_Intro.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "5G_Overview_Intro.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.969374895095825
+      }
+    },
+    {
+      "instruction": "放一下智慧家庭解决方案的视频",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下智慧家庭解决方案的视频",
+        "rag_docs": [
+          "Smart_Home_Solutions.mp4",
+          "Home_Network_Engineer_Team.mp4",
+          "Smart_Community_Platform.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Home_Solutions.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_Home_Solutions.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.194179058074951
+      }
+    },
+    {
+      "instruction": "在左边互动屏看看云计算和大数据的能力",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "在左边互动屏看看云计算和大数据的能力",
+        "rag_docs": [
+          "Cloud_BigData_Capabilities.mp4",
+          "Wutong_Big_Data_Platform.mp4",
+          "HeCaiYun_Cloud_Drive.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Cloud_BigData_Capabilities.mp4\",\n    \"device\": \"左侧互动大屏\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Cloud_BigData_Capabilities.mp4",
+            "device": "左侧互动大屏",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.124829053878784
+      }
+    },
+    {
+      "instruction": "我想了解一下人工智能应用的最新进展",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 2",
+      "result": {
+        "recognized_text": "我想了解一下人工智能应用的最新进展",
+        "rag_docs": [
+          "AI_Applications_Frontier.mp4",
+          "Industry_AI_Large_Model.mp4",
+          "Accessibility_Initiatives.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"AI_Applications_Frontier.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"play\",\n    \"target\": \"Industry_AI_Large_Model.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "AI_Applications_Frontier.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "play",
+            "target": "Industry_AI_Large_Model.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 9.184569358825684
+      }
+    },
+    {
+      "instruction": "看看移动支付和数字人民币是怎么工作的",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "看看移动支付和数字人民币是怎么工作的",
+        "rag_docs": [
+          "Mobile_Payment_eCNY.mp4",
+          "Mobile_Authentication_Login.mp4",
+          "SIM_eID_Digital_Identity.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Mobile_Payment_eCNY.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Mobile_Payment_eCNY.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.965027809143066
+      }
+    },
+    {
+      "instruction": "我想看看智慧城市的未来愿景",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看智慧城市的未来愿景",
+        "rag_docs": [
+          "Smart_City_Future_Vision.mp4",
+          "HeLuTong_Smart_Traffic.mp4",
+          "Future_Network_Evolution.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_City_Future_Vision.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_City_Future_Vision.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.017016649246216
+      }
+    },
+    {
+      "instruction": "放一下绿色通信和可持续发展的介绍",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下绿色通信和可持续发展的介绍",
+        "rag_docs": [
+          "Green_Communications_Sustainability.mp4",
+          "Sustainable_Supply_Chain.mp4",
+          "Blue_Dream_Charity.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Green_Communications_Sustainability.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Green_Communications_Sustainability.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.651843309402466
+      }
+    },
+    {
+      "instruction": "我想了解5G-Advanced的技术解析",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解5G-Advanced的技术解析",
+        "rag_docs": [
+          "5G_Advanced_Tech_Analysis.mp4",
+          "5G_Overview_Intro.mp4",
+          "5G_mmWave_Exploration.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"5G_Advanced_Tech_Analysis.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "5G_Advanced_Tech_Analysis.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.463906764984131
+      }
+    },
+    {
+      "instruction": "看看5G网络切片技术的介绍",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "看看5G网络切片技术的介绍",
+        "rag_docs": [
+          "5G_Network_Slicing.mp4",
+          "Network_Slicing_Mall.mp4",
+          "Smart_Grid_Protection.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"5G_Network_Slicing.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "5G_Network_Slicing.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.474815130233765
+      }
+    },
+    {
+      "instruction": "我想了解一下5G毫米波技术的奥秘",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解一下5G毫米波技术的奥秘",
+        "rag_docs": [
+          "5G_mmWave_Exploration.mp4",
+          "5G_Overview_Intro.mp4",
+          "5G_Advanced_Tech_Analysis.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"5G_mmWave_Exploration.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "5G_mmWave_Exploration.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.548804759979248
+      }
+    },
+    {
+      "instruction": "放一下算力网络的介绍视频",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下算力网络的介绍视频",
+        "rag_docs": [
+          "Computing_First_Network.mp4",
+          "Network_Operations_Center.mp4",
+          "Industrial_Research_Institute.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Computing_First_Network.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Computing_First_Network.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.63310432434082
+      }
+    },
+    {
+      "instruction": "我想看看数据中心基础设施的内容",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看数据中心基础设施的内容",
+        "rag_docs": [
+          "Data_Center_Infrastructure.mp4",
+          "Computing_First_Network.mp4",
+          "Network_Operations_Center.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Data_Center_Infrastructure.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Data_Center_Infrastructure.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.101137161254883
+      }
+    },
+    {
+      "instruction": "放一下家庭安防解决方案的视频",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下家庭安防解决方案的视频",
+        "rag_docs": [
+          "Home_Security_Solution.mp4",
+          "Smart_Home_Solutions.mp4",
+          "Home_Network_Engineer_Team.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Home_Security_Solution.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Home_Security_Solution.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.45249342918396
+      }
+    },
+    {
+      "instruction": "我想了解全屋Wi-Fi覆盖的方案",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解全屋Wi-Fi覆盖的方案",
+        "rag_docs": [
+          "Whole_Home_WiFi.mp4",
+          "Smart_Home_Solutions.mp4",
+          "Home_Network_Engineer_Team.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Whole_Home_WiFi.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Whole_Home_WiFi.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.581591844558716
+      }
+    },
+    {
+      "instruction": "我想看看智慧社区管理平台的内容",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看智慧社区管理平台的内容",
+        "rag_docs": [
+          "Smart_Community_Platform.mp4",
+          "Smart_Building_Management.mp4",
+          "Wutong_Big_Data_Platform.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Community_Platform.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_Community_Platform.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.951826095581055
+      }
+    },
+    {
+      "instruction": "放一下工业互联网平台的介绍",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下工业互联网平台的介绍",
+        "rag_docs": [
+          "Industrial_Internet_Platform.mp4",
+          "OneNET_IoT_Platform.php",
+          "Industrial_Research_Institute.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Industrial_Internet_Platform.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Industrial_Internet_Platform.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.953056335449219
+      }
+    },
+    {
+      "instruction": "我想了解一下车联网技术",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 device不匹配，预期: 主屏幕, 实际: 右侧演示屏",
+      "result": {
+        "recognized_text": "我想了解一下车联网技术",
+        "rag_docs": [
+          "Vehicle_to_Everything_V2X.mp4",
+          "HeLuTong_Smart_Traffic.mp4",
+          "5G_mmWave_Exploration.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Vehicle_to_Everything_V2X.mp4\",\n    \"device\": \"右侧演示屏\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Vehicle_to_Everything_V2X.mp4",
+            "device": "右侧演示屏",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.682958602905273
+      }
+    },
+    {
+      "instruction": "看看智慧农业解决方案是怎么实现的",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "看看智慧农业解决方案是怎么实现的",
+        "rag_docs": [
+          "Smart_Agriculture_Solution.mp4",
+          "Smart_Retail_Solution.mp4",
+          "Smart_Home_Solutions.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Agriculture_Solution.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_Agriculture_Solution.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.505994081497192
+      }
+    },
+    {
+      "instruction": "我想看看智慧医疗影像云的内容",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看智慧医疗影像云的内容",
+        "rag_docs": [
+          "Smart_Healthcare_Imaging_Cloud.mp4",
+          "HeCaiYun_Cloud_Drive.mp4",
+          "Wearables_Health_Monitoring.mp4p"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Healthcare_Imaging_Cloud.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_Healthcare_Imaging_Cloud.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.94496750831604
+      }
+    },
+    {
+      "instruction": "放一下智慧教育互动课堂的视频",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下智慧教育互动课堂的视频",
+        "rag_docs": [
+          "Smart_Education_Classroom.mp4",
+          "e_School_ID_Card.mp4",
+          "Rural_Remote_Education.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Education_Classroom.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_Education_Classroom.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.587604284286499
+      }
+    },
+    {
+      "instruction": "我想了解金融行业的数字化方案",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解金融行业的数字化方案",
+        "rag_docs": [
+          "Digital_Finance_Solutions.mp4",
+          "Smart_Finance_Risk_Control.mp4",
+          "DICT_Industry_Solutions.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Digital_Finance_Solutions.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Digital_Finance_Solutions.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.757856607437134
+      }
+    },
+    {
+      "instruction": "看看智慧文旅的沉浸式体验",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "看看智慧文旅的沉浸式体验",
+        "rag_docs": [
+          "Smart_Tourism_Experience.mp4",
+          "Digital_Cultural_Heritage.mp4",
+          "Smart_Education_Classroom.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Tourism_Experience.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_Tourism_Experience.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.284548282623291
+      }
+    },
+    {
+      "instruction": "我想了解网络安全防护体系",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解网络安全防护体系",
+        "rag_docs": [
+          "Cyber_Security_Defense_System.mp4",
+          "Network_Operations_Center.mp4",
+          "Cloud_Native_Security.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Cyber_Security_Defense_System.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Cyber_Security_Defense_System.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.9172523021698
+      }
+    },
+    {
+      "instruction": "看看数据隐私保护的承诺是什么",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "看看数据隐私保护的承诺是什么",
+        "rag_docs": [
+          "Data_Privacy_Protection.mp4",
+          "Data_Ethics_AI_Transparency.mp4",
+          "Customer_Loyalty_Program.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Data_Privacy_Protection.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Data_Privacy_Protection.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.100831985473633
+      }
+    },
+    {
+      "instruction": "我想了解云原生安全解决方案",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解云原生安全解决方案",
+        "rag_docs": [
+          "Cloud_Native_Security.mp4",
+          "Cloud_Network_Convergence.mp4",
+          "Cloud_Cybercafe_Solution.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Cloud_Native_Security.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Cloud_Native_Security.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.874388217926025
+      }
+    },
+    {
+      "instruction": "放一下量子通信加密技术的介绍",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+      "result": {
+        "recognized_text": "放一下量子通信加密技术的介绍",
+        "rag_docs": [
+          "Quantum_Communication_Encryption.mp4",
+          "Green_Communications_Sustainability.mp4",
+          "RCS_5G_Messaging.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.192729949951172
+      }
+    },
+    {
+      "instruction": "我想看看超级SIM卡有什么功能",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看超级SIM卡有什么功能",
+        "rag_docs": [
+          "Super_SIM_Functionality.mp4",
+          "SIM_eID_Digital_Identity.mp4",
+          "IoT_SIM_CMP_Platform.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Super_SIM_Functionality.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Super_SIM_Functionality.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.213085889816284
+      }
+    },
+    {
+      "instruction": "放一下和彩云网盘的介绍",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下和彩云网盘的介绍",
+        "rag_docs": [
+          "HeCaiYun_Cloud_Drive.mp4",
+          "Cloud_Cybercafe_Solution.mp4",
+          "Cloud_PC_Desktop.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"HeCaiYun_Cloud_Drive.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "HeCaiYun_Cloud_Drive.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.228771924972534
+      }
+    },
+    {
+      "instruction": "我想了解移动高清视频彩铃",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解移动高清视频彩铃",
+        "rag_docs": [
+          "Video_Color_Ring_Tone.mp4",
+          "HeCaiYun_Cloud_Drive.mp4",
+          "CMCC_App_Features.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Video_Color_Ring_Tone.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Video_Color_Ring_Tone.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.524930238723755
+      }
+    },
+    {
+      "instruction": "看看超高清视频技术是怎么实现的",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "看看超高清视频技术是怎么实现的",
+        "rag_docs": [
+          "Ultra_HD_Video_Technology.mp4",
+          "5G_mmWave_Exploration.mp4",
+          "Cloud_Rendering_Technology.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Ultra_HD_Video_Technology.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Ultra_HD_Video_Technology.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.518306493759155
+      }
+    },
+    {
+      "instruction": "我想看看AR增强现实应用",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看AR增强现实应用",
+        "rag_docs": [
+          "Augmented_Reality_Applications.mp4",
+          "Cloud_XR_Platform.mp4",
+          "Virtual_Reality_Experience.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Augmented_Reality_Applications.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Augmented_Reality_Applications.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.808905601501465
+      }
+    },
+    {
+      "instruction": "放一下VR虚拟现实体验的视频",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下VR虚拟现实体验的视频",
+        "rag_docs": [
+          "Virtual_Reality_Experience.mp4",
+          "Cloud_XR_Platform.mp4",
+          "Augmented_Reality_Applications.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Virtual_Reality_Experience.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Virtual_Reality_Experience.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.732775449752808
+      }
+    },
+    {
+      "instruction": "我想了解数字人和智能客服",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 2",
+      "result": {
+        "recognized_text": "我想了解数字人和智能客服",
+        "rag_docs": [
+          "Digital_Human_Avatar.mp4",
+          "Cloud_Contact_Center.mp4",
+          "10086_Smart_Customer_Service.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Digital_Human_Avatar.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"play\",\n    \"target\": \"10086_Smart_Customer_Service.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Digital_Human_Avatar.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "play",
+            "target": "10086_Smart_Customer_Service.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 10.598761796951294
+      }
+    },
+    {
+      "instruction": "看看全球发展和一带一路的内容",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "看看全球发展和一带一路的内容",
+        "rag_docs": [
+          "Global_Strategy_BRI.mp4",
+          "International_Roaming_Service.mp4",
+          "Green_Communications_Sustainability.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Global_Strategy_BRI.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Global_Strategy_BRI.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.214076995849609
+      }
+    },
+    {
+      "instruction": "我想了解社会公益与慈善的内容",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解社会公益与慈善的内容",
+        "rag_docs": [
+          "Social_Welfare_Charity.mp4",
+          "Blue_Dream_Charity.mp4",
+          "Accessibility_Initiatives.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Social_Welfare_Charity.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Social_Welfare_Charity.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.19258189201355
+      }
+    },
+    {
+      "instruction": "放一下应急通信保障的介绍",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: play, 实际: error",
+      "result": {
+        "recognized_text": "放一下应急通信保障的介绍",
+        "rag_docs": [
+          "Emergency_Communication_Support.mp4p",
+          "AndPACK_Portable_5G_Station.mp4",
+          "Green_Communications_Sustainability.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"error\",\n    \"target\": \"Emergency_Communication_Support.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": \"validation_failed: Video 'Emergency_Communication_Support.mp4' not found in videos.csv\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "error",
+            "target": "Emergency_Communication_Support.mp4",
+            "device": "主屏幕",
+            "value": "validation_failed: Video 'Emergency_Communication_Support.mp4' not found in videos.csv"
+          }
+        ],
+        "retry_count": 2,
+        "success": false,
+        "total_time": 9.427948236465454
+      }
+    },
+    {
+      "instruction": "我想看看全民数字素养提升的内容",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看全民数字素养提升的内容",
+        "rag_docs": [
+          "Digital_Literacy_Inclusion.mp4",
+          "Digital_Rural_Revitalization.mp4",
+          "Digital_Government_Services.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Digital_Literacy_Inclusion.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Digital_Literacy_Inclusion.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.606971979141235
+      }
+    },
+    {
+      "instruction": "了解一下科技创新体系",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "了解一下科技创新体系",
+        "rag_docs": [
+          "Tech_Innovation_System.mp4",
+          "Innovation_Startup_Ecosystem.mp4",
+          "Cyber_Security_Defense_System.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Tech_Innovation_System.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Tech_Innovation_System.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.291800022125244
+      }
+    },
+    {
+      "instruction": "我想看看人才发展与培养的内容",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想看看人才发展与培养的内容",
+        "rag_docs": [
+          "Talent_Development_Program.mp4",
+          "Employee_Digital_Skills_Training.mp4",
+          "Blue_Dream_Charity.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Talent_Development_Program.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Talent_Development_Program.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.216957330703735
+      }
+    },
+    {
+      "instruction": "放一下供应链可持续性的介绍",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下供应链可持续性的介绍",
+        "rag_docs": [
+          "Sustainable_Supply_Chain.mp4",
+          "Green_Communications_Sustainability.mp4",
+          "Corporate_Governance_Structure.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Sustainable_Supply_Chain.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Sustainable_Supply_Chain.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.003485918045044
+      }
+    },
+    {
+      "instruction": "我想了解董事会与公司治理",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想了解董事会与公司治理",
+        "rag_docs": [
+          "Corporate_Governance_Structure.mp4",
+          "Network_Operations_Center.mp4",
+          "Wutong_Big_Data_Platform.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Corporate_Governance_Structure.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Corporate_Governance_Structure.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.713298559188843
+      }
+    },
+    {
+      "instruction": "把5G先锋体验区的门打开",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "把5G先锋体验区的门打开",
+        "rag_docs": [
+          "5G_mmWave_Exploration.mp4",
+          "RCS_5G_Messaging.mp4",
+          "5G_Advanced_Tech_Analysis.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"5G先锋体验区的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "5G先锋体验区的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.095855474472046
+      }
+    },
+    {
+      "instruction": "智慧生活馆的门帮我关一下",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "智慧生活馆的门帮我关一下",
+        "rag_docs": [
+          "Smart_Doorbell_Intercom.mp4",
+          "Smart_Community_Platform.mp4",
+          "e_School_ID_Card.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"智慧生活馆的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "智慧生活馆的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.828765630722046
+      }
+    },
+    {
+      "instruction": "我想进未来科技赋能中心，开门",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "我想进未来科技赋能中心，开门",
+        "rag_docs": [
+          "Data_Center_Infrastructure.mp4",
+          "Tech_Innovation_System.mp4",
+          "Smart_Logistics_Warehouse.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.707391738891602
+      }
+    },
+    {
+      "instruction": "数字应用体验中心的门关上",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 未来科技赋能中心的门",
+      "result": {
+        "recognized_text": "数字应用体验中心的门关上",
+        "rag_docs": [
+          "Data_Center_Infrastructure.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "Digital_Government_Services.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.81575608253479
+      }
+    },
+    {
+      "instruction": "请打开5G先锋体验区的门",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "请打开5G先锋体验区的门",
+        "rag_docs": [
+          "5G_mmWave_Exploration.mp4",
+          "RCS_5G_Messaging.mp4",
+          "5G_Advanced_Tech_Analysis.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"5G先锋体验区的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "5G先锋体验区的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.169754266738892
+      }
+    },
+    {
+      "instruction": "把智慧生活馆的门关上",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "把智慧生活馆的门关上",
+        "rag_docs": [
+          "Smart_Community_Platform.mp4",
+          "Smart_Doorbell_Intercom.mp4",
+          "Home_Network_Engineer_Team.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"智慧生活馆的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "智慧生活馆的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.040180921554565
+      }
+    },
+    {
+      "instruction": "开启未来科技赋能中心的门",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "开启未来科技赋能中心的门",
+        "rag_docs": [
+          "Tech_Innovation_System.mp4",
+          "Smart_City_Future_Vision.mp4",
+          "Data_Center_Infrastructure.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 5.8071441650390625
+      }
+    },
+    {
+      "instruction": "把数字应用体验中心的门关闭",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+      "result": {
+        "recognized_text": "把数字应用体验中心的门关闭",
+        "rag_docs": [
+          "Accessibility_Initiatives.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "Ability_as_a_Service_Platform.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "数字服务互动站的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.6712868213653564
+      }
+    },
+    {
+      "instruction": "能打开5G先锋体验区的门吗",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "能打开5G先锋体验区的门吗",
+        "rag_docs": [
+          "5G_mmWave_Exploration.mp4",
+          "RCS_5G_Messaging.mp4",
+          "Smart_Energy_IoT.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"5G先锋体验区的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "5G先锋体验区的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.30947470664978
+      }
+    },
+    {
+      "instruction": "智慧生活馆的门需要关闭",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "智慧生活馆的门需要关闭",
+        "rag_docs": [
+          "Smart_Doorbell_Intercom.mp4",
+          "Smart_Community_Platform.mp4",
+          "e_School_ID_Card.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"智慧生活馆的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "智慧生活馆的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 5.768597602844238
+      }
+    },
+    {
+      "instruction": "开启未来科技赋能中心的门",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "开启未来科技赋能中心的门",
+        "rag_docs": [
+          "Tech_Innovation_System.mp4",
+          "Smart_City_Future_Vision.mp4",
+          "Data_Center_Infrastructure.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.978661060333252
+      }
+    },
+    {
+      "instruction": "数字应用体验中心的门请关掉",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+      "result": {
+        "recognized_text": "数字应用体验中心的门请关掉",
+        "rag_docs": [
+          "Data_Center_Infrastructure.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "Accessibility_Initiatives.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "数字服务互动站的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 12.082492351531982
+      }
+    },
+    {
+      "instruction": "把5G先锋体验区的门打开",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "把5G先锋体验区的门打开",
+        "rag_docs": [
+          "5G_mmWave_Exploration.mp4",
+          "RCS_5G_Messaging.mp4",
+          "5G_Advanced_Tech_Analysis.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"5G先锋体验区的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "5G先锋体验区的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.02598762512207
+      }
+    },
+    {
+      "instruction": "智慧生活馆的门打开一下",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "智慧生活馆的门打开一下",
+        "rag_docs": [
+          "Smart_Doorbell_Intercom.mp4",
+          "Smart_Community_Platform.mp4",
+          "Smart_Home_Solutions.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"智慧生活馆的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "智慧生活馆的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.851555109024048
+      }
+    },
+    {
+      "instruction": "未来科技赋能中心的门关闭",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "未来科技赋能中心的门关闭",
+        "rag_docs": [
+          "Network_Operations_Center.mp4",
+          "Tech_Innovation_System.mp4",
+          "Data_Center_Infrastructure.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 5.991088628768921
+      }
+    },
+    {
+      "instruction": "数字应用体验中心的门打开",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 未来科技赋能中心的门",
+      "result": {
+        "recognized_text": "数字应用体验中心的门打开",
+        "rag_docs": [
+          "Data_Center_Infrastructure.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "Digital_Government_Services.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 10.225931406021118
+      }
+    },
+    {
+      "instruction": "5G先锋体验区的门打开",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "5G先锋体验区的门打开",
+        "rag_docs": [
+          "5G_mmWave_Exploration.mp4",
+          "5G_Advanced_Tech_Analysis.mp4",
+          "AndPACK_Portable_5G_Station.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"5G先锋体验区的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "5G先锋体验区的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.449055433273315
+      }
+    },
+    {
+      "instruction": "智慧生活馆的门关上",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "智慧生活馆的门关上",
+        "rag_docs": [
+          "Smart_Community_Platform.mp4",
+          "Smart_Doorbell_Intercom.mp4",
+          "Smart_Home_Solutions.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"智慧生活馆的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "智慧生活馆的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.230977773666382
+      }
+    },
+    {
+      "instruction": "未来科技赋能中心的门请打开",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "未来科技赋能中心的门请打开",
+        "rag_docs": [
+          "Network_Operations_Center.mp4",
+          "Tech_Innovation_System.mp4",
+          "Ability_as_a_Service_Platform.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.781003713607788
+      }
+    },
+    {
+      "instruction": "数字应用体验中心的门关闭",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+      "result": {
+        "recognized_text": "数字应用体验中心的门关闭",
+        "rag_docs": [
+          "Digital_Literacy_Inclusion.mp4",
+          "Data_Center_Infrastructure.mp4",
+          "Accessibility_Initiatives.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"close\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "close",
+            "target": "数字服务互动站的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 11.163141250610352
+      }
+    },
+    {
+      "instruction": "音量调到50",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "音量调到50",
+        "rag_docs": [
+          "VoLTE_HD_Calling.mp4",
+          "5G_mmWave_Exploration.mp4",
+          "RCS_5G_Messaging.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 50\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "set_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": 50
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.94076418876648
+      }
+    },
+    {
+      "instruction": "声音大一点",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "声音大一点",
+        "rag_docs": [
+          "Smart_Speaker_Assistant.mp4",
+          "Accessibility_Initiatives.mp4",
+          "Satellite_Ground_Integration.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"up\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "up"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.60337233543396
+      }
+    },
+    {
+      "instruction": "我想把音量设为80",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+      "result": {
+        "recognized_text": "我想把音量设为80",
+        "rag_docs": [
+          "Smart_Speaker_Assistant.mp4",
+          "10086_Smart_Customer_Service.mp4",
+          "Accessibility_Initiatives.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.063140392303467
+      }
+    },
+    {
+      "instruction": "声音小一点",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "声音小一点",
+        "rag_docs": [
+          "Accessibility_Initiatives.mp4",
+          "Smart_Speaker_Assistant.mp4",
+          "e_School_ID_Card.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"down\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "down"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.124823808670044
+      }
+    },
+    {
+      "instruction": "声音调到30",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "声音调到30",
+        "rag_docs": [
+          "VoLTE_HD_Calling.mp4",
+          "Smart_Speaker_Assistant.mp4",
+          "Blue_Dream_Charity.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 30\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "set_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": 30
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.797213554382324
+      }
+    },
+    {
+      "instruction": "音量调大一点",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "音量调大一点",
+        "rag_docs": [
+          "VoLTE_HD_Calling.mp4",
+          "Smart_Speaker_Assistant.mp4",
+          "Digital_Literacy_Inclusion.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"up\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "up"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.89323616027832
+      }
+    },
+    {
+      "instruction": "调小音量",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "调小音量",
+        "rag_docs": [
+          "Accessibility_Initiatives.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "Smart_Speaker_Assistant.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"down\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "down"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.390573501586914
+      }
+    },
+    {
+      "instruction": "音量设置为60",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+      "result": {
+        "recognized_text": "音量设置为60",
+        "rag_docs": [
+          "10086_Smart_Customer_Service.mp4",
+          "6G_Technology_Outlook.mp4",
+          "Smart_Speaker_Assistant.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.19206428527832
+      }
+    },
+    {
+      "instruction": "声音大一点",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "声音大一点",
+        "rag_docs": [
+          "Smart_Speaker_Assistant.mp4",
+          "Accessibility_Initiatives.mp4",
+          "Satellite_Ground_Integration.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"up\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "up"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.5492024421691895
+      }
+    },
+    {
+      "instruction": "声音小一点",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "声音小一点",
+        "rag_docs": [
+          "Accessibility_Initiatives.mp4",
+          "Smart_Speaker_Assistant.mp4",
+          "e_School_ID_Card.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"down\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "down"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 5.8000946044921875
+      }
+    },
+    {
+      "instruction": "音量调到90",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "音量调到90",
+        "rag_docs": [
+          "VoLTE_HD_Calling.mp4",
+          "Smart_Speaker_Assistant.mp4",
+          "Digital_Literacy_Inclusion.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 90\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "set_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": 90
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.368860721588135
+      }
+    },
+    {
+      "instruction": "提高音量",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "提高音量",
+        "rag_docs": [
+          "VoLTE_HD_Calling.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "Smart_Speaker_Assistant.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"up\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "up"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 9.027584552764893
+      }
+    },
+    {
+      "instruction": "降低音量",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "降低音量",
+        "rag_docs": [
+          "Accessibility_Initiatives.mp4",
+          "Smart_Speaker_Assistant.mp4",
+          "Digital_Literacy_Inclusion.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"down\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "down"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.7977471351623535
+      }
+    },
+    {
+      "instruction": "设置音量为20",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+      "result": {
+        "recognized_text": "设置音量为20",
+        "rag_docs": [
+          "Smart_Speaker_Assistant.mp4",
+          "Accessibility_Initiatives.mp4",
+          "VoLTE_HD_Calling.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.184285640716553
+      }
+    },
+    {
+      "instruction": "音量调到100",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "音量调到100",
+        "rag_docs": [
+          "VoLTE_HD_Calling.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "Smart_Speaker_Assistant.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 100\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "set_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": 100
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.388012886047363
+      }
+    },
+    {
+      "instruction": "我想跳到2分30秒",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "我想跳到2分30秒",
+        "rag_docs": [
+          "Digital_Literacy_Inclusion.mp4",
+          "Blue_Dream_Charity.mp4",
+          "5G_mmWave_Exploration.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 150\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 150
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.453331470489502
+      }
+    },
+    {
+      "instruction": "快进到1分10秒",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "快进到1分10秒",
+        "rag_docs": [
+          "5G_mmWave_Exploration.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "Decade_of_4G_Impact.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 70\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 70
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.426082372665405
+      }
+    },
+    {
+      "instruction": "跳到5分钟看看",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "跳到5分钟看看",
+        "rag_docs": [
+          "5G_mmWave_Exploration.mp4",
+          "New_Info_Consumption_Model.mp4",
+          "5G_Advanced_Tech_Analysis.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 300\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 300
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.864639759063721
+      }
+    },
+    {
+      "instruction": "从30秒开始播放",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "从30秒开始播放",
+        "rag_docs": [
+          "Video_Color_Ring_Tone.mp4",
+          "Decade_of_4G_Impact.mp4",
+          "Blue_Dream_Charity.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 30\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 30
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 12.118073463439941
+      }
+    },
+    {
+      "instruction": "帮我跳到3分20秒",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "帮我跳到3分20秒",
+        "rag_docs": [
+          "Digital_Literacy_Inclusion.mp4",
+          "Blue_Dream_Charity.mp4",
+          "5G_mmWave_Exploration.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 200\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 200
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 16.43704915046692
+      }
+    },
+    {
+      "instruction": "快进到4分15秒",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "快进到4分15秒",
+        "rag_docs": [
+          "Decade_of_4G_Impact.mp4",
+          "Ultra_HD_Video_Technology.mp4",
+          "Data_Center_Infrastructure.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 255\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 255
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.321138620376587
+      }
+    },
+    {
+      "instruction": "跳到1分钟",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "跳到1分钟",
+        "rag_docs": [
+          "Mobile_Authentication_Login.mp4",
+          "5G_mmWave_Exploration.mp4",
+          "Video_Color_Ring_Tone.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 60\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 60
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.294810771942139
+      }
+    },
+    {
+      "instruction": "跳转到2分45秒",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 1, 实际: 0",
+      "result": {
+        "recognized_text": "跳转到2分45秒",
+        "rag_docs": [
+          "Decade_of_4G_Impact.mp4",
+          "HeCaiYun_Cloud_Drive.mp4",
+          "Smart_Grid_Protection.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.272833585739136
+      }
+    },
+    {
+      "instruction": "从10秒开始",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "从10秒开始",
+        "rag_docs": [
+          "Decade_of_4G_Impact.mp4",
+          "5G_mmWave_Exploration.mp4",
+          "Digital_Literacy_Inclusion.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 10\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 10
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.763192176818848
+      }
+    },
+    {
+      "instruction": "跳转到6分30秒",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具0 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "跳转到6分30秒",
+        "rag_docs": [
+          "6G_Technology_Outlook.mp4",
+          "Digital_Literacy_Inclusion.mp4",
+          "10086_Smart_Customer_Service.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 390\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 390
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 6.2087671756744385
+      }
+    },
+    {
+      "instruction": "我想看5G技术总览，然后打开5G先锋体验区的门",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 2, 实际: 0",
+      "result": {
+        "recognized_text": "我想看5G技术总览，然后打开5G先锋体验区的门",
+        "rag_docs": [
+          "5G_Overview_Intro.mp4",
+          "5G_mmWave_Exploration.mp4",
+          "5G_Advanced_Tech_Analysis.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.541589260101318
+      }
+    },
+    {
+      "instruction": "放一下智慧家庭解决方案的视频，音量调到80",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 2, 实际: 0",
+      "result": {
+        "recognized_text": "放一下智慧家庭解决方案的视频，音量调到80",
+        "rag_docs": [
+          "Smart_Home_Solutions.mp4",
+          "Home_Network_Engineer_Team.mp4",
+          "Smart_Speaker_Assistant.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.806494474411011
+      }
+    },
+    {
+      "instruction": "在左边互动屏看看云计算，然后跳到2分钟",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 2, 实际: 0",
+      "result": {
+        "recognized_text": "在左边互动屏看看云计算，然后跳到2分钟",
+        "rag_docs": [
+          "Cloud_PC_Desktop.mp4",
+          "HeCaiYun_Cloud_Drive.mp4",
+          "Cloud_BigData_Capabilities.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.165919542312622
+      }
+    },
+    {
+      "instruction": "播放人工智能视频，声音大一点",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "播放人工智能视频，声音大一点",
+        "rag_docs": [
+          "Smart_Speaker_Assistant.mp4",
+          "AI_Applications_Frontier.mp4",
+          "General_AI_Large_Model.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"AI_Applications_Frontier.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"up\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "AI_Applications_Frontier.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "up"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.705273389816284
+      }
+    },
+    {
+      "instruction": "打开智慧生活馆的门，然后放智慧城市的视频",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "打开智慧生活馆的门，然后放智慧城市的视频",
+        "rag_docs": [
+          "Smart_City_Future_Vision.mp4",
+          "Smart_Community_Platform.mp4",
+          "Smart_Home_Solutions.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"智慧生活馆的门\",\n    \"device\": null,\n    \"value\": null\n  },\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_City_Future_Vision.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "智慧生活馆的门",
+            "device": null,
+            "value": null
+          },
+          {
+            "action": "play",
+            "target": "Smart_City_Future_Vision.mp4",
+            "device": "主屏幕",
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.978420257568359
+      }
+    },
+    {
+      "instruction": "放一下5G网络切片，音量调60，然后打开未来科技中心的门",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "放一下5G网络切片，音量调60，然后打开未来科技中心的门",
+        "rag_docs": [
+          "Network_Slicing_Mall.mp4",
+          "5G_Network_Slicing.mp4",
+          "Smart_Grid_Protection.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"5G_Network_Slicing.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 60\n  },\n  {\n    \"action\": \"open\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "5G_Network_Slicing.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "set_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": 60
+          },
+          {
+            "action": "open",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 9.369610071182251
+      }
+    },
+    {
+      "instruction": "在右边演示屏看看智慧农业，然后跳到1分30秒",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具1 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "在右边演示屏看看智慧农业，然后跳到1分30秒",
+        "rag_docs": [
+          "Smart_Agriculture_Solution.mp4",
+          "Smart_Logistics_Warehouse.mp4",
+          "Smart_Factory_QC.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Agriculture_Solution.mp4\",\n    \"device\": \"右侧演示屏\",\n    \"value\": null\n  },\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"右侧演示屏\",\n    \"value\": 90\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_Agriculture_Solution.mp4",
+            "device": "右侧演示屏",
+            "value": null
+          },
+          {
+            "action": "seek",
+            "target": null,
+            "device": "右侧演示屏",
+            "value": 90
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.70650339126587
+      }
+    },
+    {
+      "instruction": "播放智慧医疗视频，声音小一点，然后关上数字应用体验中心的门",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具2 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+      "result": {
+        "recognized_text": "播放智慧医疗视频，声音小一点，然后关上数字应用体验中心的门",
+        "rag_docs": [
+          "Smart_Healthcare_Imaging_Cloud.mp4",
+          "Accessibility_Initiatives.mp4",
+          "Smart_Doorbell_Intercom.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Smart_Healthcare_Imaging_Cloud.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"down\"\n  },\n  {\n    \"action\": \"close\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Smart_Healthcare_Imaging_Cloud.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "down"
+          },
+          {
+            "action": "close",
+            "target": "数字服务互动站的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 11.125622034072876
+      }
+    },
+    {
+      "instruction": "播放AR应用视频，音量设置为70，然后跳转到3分钟",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具2 action不匹配，预期: seek_video, 实际: seek",
+      "result": {
+        "recognized_text": "播放AR应用视频，音量设置为70，然后跳转到3分钟",
+        "rag_docs": [
+          "Augmented_Reality_Applications.mp4",
+          "Video_Color_Ring_Tone.mp4",
+          "Accessibility_Initiatives.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Augmented_Reality_Applications.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 70\n  },\n  {\n    \"action\": \"seek\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 180\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Augmented_Reality_Applications.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "set_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": 70
+          },
+          {
+            "action": "seek",
+            "target": null,
+            "device": "主屏幕",
+            "value": 180
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 9.12860918045044
+      }
+    },
+    {
+      "instruction": "打开5G先锋体验区的门，播放VR体验视频，然后提高音量",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "打开5G先锋体验区的门，播放VR体验视频，然后提高音量",
+        "rag_docs": [
+          "RCS_5G_Messaging.mp4",
+          "Virtual_Reality_Experience.mp4",
+          "New_Info_Consumption_Model.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"open\",\n    \"target\": \"5G先锋体验区的门\",\n    \"device\": null,\n    \"value\": null\n  },\n  {\n    \"action\": \"play\",\n    \"target\": \"Virtual_Reality_Experience.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"adjust_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": \"up\"\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "open",
+            "target": "5G先锋体验区的门",
+            "device": null,
+            "value": null
+          },
+          {
+            "action": "play",
+            "target": "Virtual_Reality_Experience.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "adjust_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": "up"
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 8.893895149230957
+      }
+    },
+    {
+      "instruction": "播放全球战略视频，音量调到40，然后打开未来科技中心的门",
+      "success": true,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": true,
+      "tool_reason": "",
+      "result": {
+        "recognized_text": "播放全球战略视频，音量调到40，然后打开未来科技中心的门",
+        "rag_docs": [
+          "Smart_City_Future_Vision.mp4",
+          "Global_Strategy_BRI.mp4",
+          "Tech_Innovation_System.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Global_Strategy_BRI.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 40\n  },\n  {\n    \"action\": \"open\",\n    \"target\": \"未来科技赋能中心的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Global_Strategy_BRI.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "set_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": 40
+          },
+          {
+            "action": "open",
+            "target": "未来科技赋能中心的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 10.708577394485474
+      }
+    },
+    {
+      "instruction": "在左侧互动大屏播放网络安全视频，然后降低音量",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 2, 实际: 0",
+      "result": {
+        "recognized_text": "在左侧互动大屏播放网络安全视频，然后降低音量",
+        "rag_docs": [
+          "Digital_Literacy_Inclusion.mp4",
+          "Network_Operations_Center.mp4",
+          "Cyber_Security_Defense_System.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 7.0541157722473145
+      }
+    },
+    {
+      "instruction": "播放量子通信视频，跳转到2分15秒，然后关闭智慧生活馆的门",
+      "success": false,
+      "rag_validation": false,
+      "rag_reason": "预期RAG文档 'Quantum_Communication_Encryption.mp4' 未找到，实际返回: ['Smart_Doorbell_Intercom.mp4', 'Smart_Home_Solutions.mp4', 'Home_Network_Engineer_Team.mp4']",
+      "tool_validation": false,
+      "tool_reason": "工具调用数量不匹配，预期: 3, 实际: 0",
+      "result": {
+        "recognized_text": "播放量子通信视频，跳转到2分15秒，然后关闭智慧生活馆的门",
+        "rag_docs": [
+          "Smart_Doorbell_Intercom.mp4",
+          "Smart_Home_Solutions.mp4",
+          "Home_Network_Engineer_Team.mp4"
+        ],
+        "llm_response": "[]",
+        "tool_calls": [],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 12.215619564056396
+      }
+    },
+    {
+      "instruction": "播放超级SIM卡视频，音量增加到90，然后打开数字应用体验中心的门",
+      "success": false,
+      "rag_validation": true,
+      "rag_reason": "",
+      "tool_validation": false,
+      "tool_reason": "工具2 target不匹配，预期: 数字应用体验中心的门, 实际: 数字服务互动站的门",
+      "result": {
+        "recognized_text": "播放超级SIM卡视频，音量增加到90，然后打开数字应用体验中心的门",
+        "rag_docs": [
+          "Super_SIM_Functionality.mp4",
+          "SIM_eID_Digital_Identity.mp4",
+          "Digital_Literacy_Inclusion.mp4"
+        ],
+        "llm_response": "[\n  {\n    \"action\": \"play\",\n    \"target\": \"Super_SIM_Functionality.mp4\",\n    \"device\": \"主屏幕\",\n    \"value\": null\n  },\n  {\n    \"action\": \"set_volume\",\n    \"target\": null,\n    \"device\": \"主屏幕\",\n    \"value\": 90\n  },\n  {\n    \"action\": \"open\",\n    \"target\": \"数字服务互动站的门\",\n    \"device\": null,\n    \"value\": null\n  }\n]",
+        "tool_calls": [
+          {
+            "action": "play",
+            "target": "Super_SIM_Functionality.mp4",
+            "device": "主屏幕",
+            "value": null
+          },
+          {
+            "action": "set_volume",
+            "target": null,
+            "device": "主屏幕",
+            "value": 90
+          },
+          {
+            "action": "open",
+            "target": "数字服务互动站的门",
+            "device": null,
+            "value": null
+          }
+        ],
+        "retry_count": 1,
+        "success": true,
+        "total_time": 12.32493257522583
+      }
+    }
+  ]
+}
