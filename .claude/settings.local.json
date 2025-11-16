@@ -13,7 +13,12 @@
       "Bash(git commit:*)",
       "mcp__context7__get-library-docs",
       "mcp__context7__resolve-library-id",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(timeout 10 curl:*)",
+      "Bash(ollama serve:*)",
+      "Bash(timeout 30 python test_run_llm_rag_processor.py)",
+      "Bash(timeout 10 python test_run_llm_rag_processor.py)",
+      "Bash(timeout 5 python test_run_llm_rag_processor.py)"
     ],
     "deny": [],
     "ask": []

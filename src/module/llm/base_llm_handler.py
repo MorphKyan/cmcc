@@ -131,10 +131,11 @@ class BaseLLMHandler(ABC):
             if screen_info:
                 # Parse aliases from the stored string
                 aliases_str = screen_info.get("aliases", "")
+                description_str = screen_info.get("description", "")
                 aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
                 screens_info.append({
                     "name": screen_name,
-                    "aliases": aliases
+                    "description": f"也称为{aliases},{description_str}"
                 })
         return screens_info
 
@@ -149,10 +150,11 @@ class BaseLLMHandler(ABC):
             if door_info:
                 # Parse aliases from the stored string
                 aliases_str = door_info.get("aliases", "")
+                description_str = door_info.get("description", "")
                 aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
                 doors_info.append({
                     "name": door_name,
-                    "aliases": aliases
+                    "description": f"也称为{aliases},{description_str}"
                 })
         return doors_info
 
