@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
 import os
 
 import pandas as pd
@@ -28,7 +27,7 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
 
     for file_path in file_paths:
         if not os.path.exists(file_path):
-            raise FileNotFoundError(f"数据文件未找到: {file_path}")
+            raise FileNotFoundError(f"文件不存在: {file_path}")
 
         try:
             df = pd.read_csv(file_path)
@@ -39,21 +38,17 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
             filename = os.path.basename(file_path).lower()
             if 'screens' in filename:
                 device_type = 'screen'
-                prefix = '屏幕名称'
             elif 'doors' in filename:
                 device_type = 'door'
-                prefix = '门名称'
             elif 'videos' in filename:
                 device_type = 'video'
-                prefix = '视频名称'
             else:
                 # 默认处理为通用类型
                 device_type = 'unknown'
-                prefix = '项目名称'
 
             for _, row in df.iterrows():
                 # 构建内容，使用适当的前缀
-                content_parts = [f"{prefix}: {row['name']}"]
+                content_parts = [f"{row['name']}"]
                 if pd.notna(row.get('aliases')):
                     content_parts.append(f"也称为{row['aliases']}")
                 if pd.notna(row.get('description')):
@@ -78,31 +73,3 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
             raise IOError(f"读取CSV文件 '{file_path}' 失败: {e}")
 
     return documents
-
-def get_prompt_from_rag_documents(docs: list[Document]) -> str:
-    """
-    将检索到的Document对象格式化为可以插入到Prompt中的字符串。
-
-    支持多种设备类型：
-    - video: 视频内容
-
-    Args:
-        docs (list[Document]): 检索到的Document对象列表。
-
-    Returns:
-        str: 格式化后的知识库字符串，包含设备类型、名称、描述和文件名（如果适用）。
-    """
-    if not docs:
-        return ""
-
-    videos = []
-
-    for doc in docs:
-        meta = doc.metadata
-        video = {
-            "filename": meta.get("filename", ""),
-            "description": meta.get("description", ""),
-        }
-        videos.append(video)
-
-    return json.dumps(videos, ensure_ascii=False, indent=2)

@@ -13,7 +13,6 @@ from loguru import logger
 from src.config.config import LLMSettings
 from src.core.csv_loader import CSVLoader
 from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
-from src.module.rag.data_loader import get_prompt_from_rag_documents
 
 
 class BaseLLMHandler(ABC):
@@ -109,7 +108,7 @@ class BaseLLMHandler(ABC):
         """
         准备Prompt的输入变量，供子类使用。
         """
-        rag_context = get_prompt_from_rag_documents(rag_docs)
+        rag_context = self._get_prompt_from_documents(rag_docs)
         screens_info_json = json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2)
         doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
 
@@ -129,13 +128,12 @@ class BaseLLMHandler(ABC):
         for screen_name in all_screens:
             screen_info = self.csv_loader.get_screen_info(screen_name)
             if screen_info:
-                # Parse aliases from the stored string
                 aliases_str = screen_info.get("aliases", "")
                 description_str = screen_info.get("description", "")
                 aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
                 screens_info.append({
                     "name": screen_name,
-                    "description": f"也称为{aliases},{description_str}"
+                    "description": f"{description_str}，也称为{aliases}"
                 })
         return screens_info
 
@@ -148,13 +146,12 @@ class BaseLLMHandler(ABC):
         for door_name in all_doors:
             door_info = self.csv_loader.get_door_info(door_name)
             if door_info:
-                # Parse aliases from the stored string
                 aliases_str = door_info.get("aliases", "")
                 description_str = door_info.get("description", "")
                 aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
                 doors_info.append({
                     "name": door_name,
-                    "description": f"也称为{aliases},{description_str}"
+                    "description": f"{description_str}，也称为{aliases}"
                 })
         return doors_info
 
@@ -216,16 +213,6 @@ class BaseLLMHandler(ABC):
         return json.dumps(commands, ensure_ascii=False, indent=2)
 
     def _validate_play_video_args(self, target: str, device: str) -> tuple[bool, str | None]:
-        """
-        Validate play_video tool arguments against CSV data.
-
-        Args:
-            target: Video filename to play
-            device: Screen name to play on
-
-        Returns:
-            tuple[bool, str | None]: (is_valid, error_message)
-        """
         if not self.csv_loader.video_exists(target):
             return False, f"Video '{target}' not found in videos.csv"
 
@@ -235,16 +222,6 @@ class BaseLLMHandler(ABC):
         return True, None
 
     def _validate_control_door_args(self, target: str, action: str) -> tuple[bool, str | None]:
-        """
-        Validate control_door tool arguments against CSV data.
-
-        Args:
-            target: Door name to control
-            action: Action to perform ("open" or "close")
-
-        Returns:
-            tuple[bool, str | None]: (is_valid, error_message)
-        """
         if not self.csv_loader.door_exists(target):
             return False, f"Door '{target}' not found in doors.csv"
 
@@ -254,32 +231,12 @@ class BaseLLMHandler(ABC):
         return True, None
 
     def _validate_device_args(self, device: str, tool_name: str) -> tuple[bool, str | None]:
-        """
-        Validate device argument for screen-related tools.
-
-        Args:
-            device: Screen name
-            tool_name: Name of the tool being validated
-
-        Returns:
-            tuple[bool, str | None]: (is_valid, error_message)
-        """
         if not self.csv_loader.screen_exists(device):
             return False, f"Screen '{device}' not found in screens.csv for {tool_name} tool"
 
         return True, None
 
     def _validate_tool_args(self, tool_name: str, tool_args: dict) -> tuple[bool, str | None]:
-        """
-        Validate tool arguments against CSV data before execution.
-
-        Args:
-            tool_name: Name of the tool to validate
-            tool_args: Arguments for the tool
-
-        Returns:
-            tuple[bool, str | None]: (is_valid, error_message)
-        """
         try:
             if tool_name == "play_video":
                 target = tool_args.get("target", "")
@@ -296,21 +253,19 @@ class BaseLLMHandler(ABC):
                 return self._validate_device_args(device, tool_name)
 
             else:
-                # Unknown tool, let it proceed (will be handled by existing logic)
                 return True, None
 
         except Exception as e:
             logger.error(f"Error validating tool '{tool_name}' arguments: {e}")
             return False, f"Validation error: {str(e)}"
 
-    def create_error_response(self, reason: str, message: str | None = None, details: list[str] | None = None) -> str:
+    def create_error_response(self, reason: str, message: str | None = None) -> str:
         """
         创建错误响应。
 
         Args:
             reason: 错误原因
             message: 可选错误消息
-            details: 可选详细信息列表
 
         Returns:
             JSON格式的错误响应字符串
@@ -326,7 +281,34 @@ class BaseLLMHandler(ABC):
 
         if message:
             error_dict["message"] = message
-        if details:
-            error_dict["details"] = details
 
         return json.dumps([error_dict], ensure_ascii=False)
+
+    @staticmethod
+    def _get_prompt_from_documents(docs: list[Document]) -> str:
+        """
+        将检索到的Videos Document对象格式化为可以插入到Prompt中的字符串。
+
+        Args:
+            docs (list[Document]): 检索到的Document对象列表。
+
+        Returns:
+            str: 格式化后的知识库字符串，包含设备类型、名称、描述和文件名。
+        """
+        if not docs:
+            return ""
+
+        videos = []
+
+        for doc in docs:
+            meta = doc.metadata
+            filename = meta.get("filename", "")
+            description = meta.get("description", "")
+            aliases = meta.get("aliases", "")
+            video = {
+                "name": filename,
+                "description": f"{description}，也称为{aliases}",
+            }
+            videos.append(video)
+
+        return json.dumps(videos, ensure_ascii=False, indent=2)
