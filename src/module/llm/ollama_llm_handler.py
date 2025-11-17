@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import json
 
 from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from loguru import logger
 
 from src.config.config import LLMSettings
-from src.core.retry_strategies import exponential_backoff_retry
 from src.module.llm.base_llm_handler import BaseLLMHandler
 
 
@@ -50,11 +48,6 @@ class OllamaLLMHandler(BaseLLMHandler):
 
         logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.ollama_model)
 
-    @exponential_backoff_retry(
-        max_retries=3,
-        base_delay=1.0,
-        max_delay=10.0
-    )
     async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。

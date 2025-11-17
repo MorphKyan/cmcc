@@ -7,7 +7,6 @@ from langchain_openai import ChatOpenAI
 from loguru import logger
 
 from src.config.config import LLMSettings, VolcEngineSettings
-from src.core.retry_strategies import exponential_backoff_retry
 from src.module.llm.base_llm_handler import BaseLLMHandler
 
 
@@ -51,11 +50,6 @@ class ArkLLMHandler(BaseLLMHandler):
 
         logger.info("火山引擎Ark大语言模型处理器初始化完成，使用模型: {model}", model=volcengine_settings.llm_model_name)
 
-    @exponential_backoff_retry(
-        max_retries=3,
-        base_delay=1.0,
-        max_delay=10.0
-    )
     async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
