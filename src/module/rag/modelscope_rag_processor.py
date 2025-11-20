@@ -40,7 +40,7 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
             try:
                 await self._check_modelscope_connection()
                 self.embedding_model = OpenAIEmbeddings(
-                    model="text-embedding-v1",
+                    model=self.settings.modelscope_embedding_model,
                     base_url=self.settings.modelscope_base_url,
                     api_key=self.settings.modelscope_api_key.get_secret_value()
                 )

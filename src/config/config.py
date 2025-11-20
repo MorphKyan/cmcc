@@ -287,11 +287,22 @@ class FunASRSettings(BaseSettings):
 class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
+    # RAG Provider selection: "ollama" or "modelscope"
+    provider: str = "ollama"
+
+    # Common settings
     videos_data_path: str = os.path.join(data_dir, "videos.csv")
     chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
+    top_k_results: int = 3  # 检索返回的文档数
+
+    # Ollama-specific settings
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_embedding_model: str = "qwen3-embedding:0.6b"
-    top_k_results: int = 3  # 检索返回的文档数
+
+    # ModelScope-specific settings
+    modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
+    modelscope_api_key: SecretStr = SecretStr("")
+    modelscope_embedding_model: str = "text-embedding-v1"
 
 
 class LLMSettings(BaseSettings):

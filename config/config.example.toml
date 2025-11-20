@@ -17,11 +17,18 @@ merge_length_s = 15.0
 
 # RAG (检索增强生成) 配置
 [rag]
+# RAG 提供商选择: "ollama" 或 "modelscope"
+provider = "ollama"
 videos_data_path = "./data/videos.csv"
 chroma_db_dir = "./chroma_db"
+top_k_results = 3
+# Ollama 配置
 ollama_base_url = "http://127.0.0.1:11434"
 ollama_embedding_model = "qwen3-embedding:0.6b"
-top_k_results = 3
+# ModelScope 配置
+modelscope_base_url = "https://api-inference.modelscope.cn/v1"
+modelscope_api_key = ""
+modelscope_embedding_model = "text-embedding-v1"
 
 # 大语言模型 (LLM) 配置
 [llm]
