@@ -100,12 +100,17 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             recognized_text = await context.asr_output_queue.get()
             retrieved_docs = await dependencies.rag_processor.retrieve_context(recognized_text)
 
+            # 获取聊天历史
+            chat_history = await context.memory.aload_memory_variables({})
+            chat_history_messages = chat_history.get("history", [])
+
             # 执行指令重试
             retry_result = await retry_handler.execute_instruction_retry(
                 original_input=recognized_text,
                 llm_function=dependencies.llm_processor.get_response,
                 rag_docs=retrieved_docs,
-                user_location=context.location
+                user_location=context.location,
+                chat_history=chat_history_messages
             )
 
             # 记录重试统计信息
@@ -114,6 +119,9 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
 
             llm_response = retry_result.response
             logger.info("[大模型响应] {llm_response}", llm_response=llm_response)
+
+            # 保存对话上下文
+            await context.memory.asave_context({"input": recognized_text}, {"output": llm_response})
 
             # 处理位置更新
             try:

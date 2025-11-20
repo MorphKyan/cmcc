@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableSerializable
 from loguru import logger
 
@@ -35,6 +35,7 @@ class BaseLLMHandler(ABC):
         # 使用ChatPromptTemplate构建提示词
         self.prompt_template = ChatPromptTemplate.from_messages([
             ("system", settings.system_prompt_template),
+            MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{USER_INPUT}")
         ])
 
@@ -55,7 +56,7 @@ class BaseLLMHandler(ABC):
 
     @abstractmethod
     @abstractmethod
-    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区") -> str:
+    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区", chat_history: list = []) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
 
@@ -106,7 +107,7 @@ class BaseLLMHandler(ABC):
         """
         pass
 
-    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区") -> dict[str, Any]:
+    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区", chat_history: list = []) -> dict[str, Any]:
         """
         准备Prompt的输入变量，供子类使用。
         """
@@ -121,7 +122,8 @@ class BaseLLMHandler(ABC):
             "AREAS_INFO": areas_info_json,
             "rag_context": rag_context,
             "USER_INPUT": user_input,
-            "USER_LOCATION": user_location
+            "USER_LOCATION": user_location,
+            "chat_history": chat_history
         }
 
     def get_screens_info_for_prompt(self) -> list[dict[str, Any]]:
