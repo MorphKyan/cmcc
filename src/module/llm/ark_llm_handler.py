@@ -50,7 +50,7 @@ class ArkLLMHandler(BaseLLMHandler):
 
         logger.info("火山引擎Ark大语言模型处理器初始化完成，使用模型: {model}", model=volcengine_settings.llm_model_name)
 
-    async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
+    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区", chat_history: list = []) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
 
@@ -65,7 +65,7 @@ class ArkLLMHandler(BaseLLMHandler):
 
         try:
             # 准备Prompt的输入变量
-            chain_input = self._prepare_chain_input(user_input, rag_docs)
+            chain_input = self._prepare_chain_input(user_input, rag_docs, user_location=user_location, chat_history=chat_history)
 
             # 异步调用链
             response = await self.chain.ainvoke(chain_input)
