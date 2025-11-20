@@ -55,7 +55,6 @@ class BaseLLMHandler(ABC):
         }
 
     @abstractmethod
-    @abstractmethod
     async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区", chat_history: list = []) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
