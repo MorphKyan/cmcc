@@ -37,20 +37,6 @@
 7.  **API服务 (`src/api/main.py`)**: 提供基于FastAPI的RESTful API服务，支持RAG查询、数据库刷新和文件上传等功能。
 8.  **API路由器**:
     -   **音频 (`src/api/routers/audio.py`)**: 通过WebSocket接收实时音频流并进行处理。
-    -   **RAG (`src/api/routers/rag.py`)**: 提供RAG相关的RESTful端点。
-9.  **上下文管理 (`src/api/context.py`)**: 管理WebSocket连接的上下文，包括队列和处理器实例。
-10. **核心依赖 (`src/core/dependencies.py`)**: 管理全局的处理器单例（如ASR、RAG、LLM处理器）和活动上下文。
-
-### 数据源
-
--   `data/screens.csv`: 屏幕设备信息。
--   `data/doors.csv`: 门设备信息。
--   `data/videos.csv`: 视频信息。
-
-## 构建和运行
-
-### 环境准备
-
 在启动项目之前，需要确保已安装所有依赖项。
 
 ### 安装依赖

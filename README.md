@@ -31,7 +31,8 @@
 │       └── rag_api.py          # RESTful API服务，提供RAG数据库管理接口
 ├── data/
 │   ├── screens.csv             # 屏幕设备信息
-│   ├── doors.csv               # 门设备信息
+│   ├── doors.csv               # 门设备信息（包含 name, type, area1, area2, location 列）
+│   ├── areas.csv               # 区域信息（包含 name, aliases, description 列）
 │   └── videos.csv              # 视频信息
 ├── chroma_db/
 │   └── ...                     # (自动生成) 本地向量数据库文件

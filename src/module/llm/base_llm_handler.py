@@ -81,6 +81,7 @@ class BaseLLMHandler(ABC):
             health_check_input = {
                 "SCREENS_INFO": json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2),
                 "DOORS_INFO": json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2),
+                "AREAS_INFO": json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2),
                 "rag_context": "",
                 "USER_INPUT": "健康检查"
             }
@@ -111,10 +112,12 @@ class BaseLLMHandler(ABC):
         rag_context = self._get_prompt_from_documents(rag_docs)
         screens_info_json = json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2)
         doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
+        areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
 
         return {
             "SCREENS_INFO": screens_info_json,
             "DOORS_INFO": doors_info_json,
+            "AREAS_INFO": areas_info_json,
             "rag_context": rag_context,
             "USER_INPUT": user_input
         }
@@ -146,14 +149,43 @@ class BaseLLMHandler(ABC):
         for door_name in all_doors:
             door_info = self.csv_loader.get_door_info(door_name)
             if door_info:
-                aliases_str = door_info.get("aliases", "")
-                description_str = door_info.get("description", "")
-                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                door_type = door_info.get("type", "")
+                if door_type == "passage":
+                    # 通道门
+                    area1 = door_info.get("area1", "")
+                    area2 = door_info.get("area2", "")
+                    description = f"连接{area1}和{area2}的通道门"
+                elif door_type == "standalone":
+                    # 独立门
+                    location = door_info.get("location", "")
+                    description = f"位于{location}的独立门"
+                else:
+                    description = "门"
+                
                 doors_info.append({
                     "name": door_name,
-                    "description": f"{description_str}，也称为{aliases}"
+                    "type": door_type,
+                    "description": description
                 })
         return doors_info
+
+    def get_areas_info_for_prompt(self) -> list[dict[str, Any]]:
+        """
+        获取用于Prompt的区域信息列表
+        """
+        areas_info = []
+        all_areas = self.csv_loader.get_all_areas()
+        for area_name in all_areas:
+            area_info = self.csv_loader.get_area_info(area_name)
+            if area_info:
+                aliases_str = area_info.get("aliases", "")
+                description_str = area_info.get("description", "")
+                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                areas_info.append({
+                    "name": area_name,
+                    "description": f"{description_str}，也称为{aliases}"
+                })
+        return areas_info
 
     def _format_response(self, response) -> str:
         """

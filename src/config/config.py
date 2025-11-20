@@ -89,9 +89,15 @@ SYSTEM_PROMPT_TEMPLATE = """
 # 知识库 (Knowledge Base)
 你唯一可操作的设备和内容如下：
 
+"areas_info":{AREAS_INFO}
 "screens_info":{SCREENS_INFO}
 "doors_info":{DOORS_INFO}
 "videos_info":{rag_context}
+
+## 场景和区域理解
+展厅包含上述区域，每个区域都有名称、别名和描述。门分为两种类型：
+- **通道门（passage）**：连接两个区域，可以双向通行
+- **独立门（standalone）**：位于某个区域内的单独门，只控制开关
 
 # 核心指令理解与行为准则
 **重要总则**: 函数调用中的所有字符串值都必须严格从本提示词提供的"知识库"中选取。绝不允许创造任何列表中不存在的值。
@@ -152,9 +158,15 @@ SYSTEM_PROMPT_TEMPLATE_V2 = """
 # 知识库 (Knowledge Base)
 你唯一可操作的设备和内容如下：
 
+"areas_info":{AREAS_INFO}
 "screens_info":{SCREENS_INFO}
 "doors_info":{DOORS_INFO}
 {rag_context}
+
+## 场景和区域理解
+展厅包含上述区域，每个区域都有名称、别名和描述。门分为两种类型：
+- **通道门（passage）**：连接两个区域，可以双向通行
+- **独立门（standalone）**：位于某个区域内的单独门，只控制开关
 
 # 可用函数
 你只能从以下函数中选择调用，不要自己生成JSON格式的响应：

@@ -50,21 +50,6 @@ This is a real-time voice control center for China Mobile's smart exhibition hal
 │   │   └── audio_pipeline.py      # Core audio processing pipeline
 │   └── api/                       # RESTful API endpoints
 │       ├── __init__.py
-│       ├── context.py             # API request context
-│       ├── schemas.py             # API request/response schemas
-│       └── routers/               # API route handlers
-│           ├── __init__.py
-│           ├── audio.py           # Audio processing API endpoints
-│           └── rag.py             # RAG database management API endpoints
-├── data/
-│   ├── screens.csv                # Screen device information
-│   ├── doors.csv                  # Door device information
-│   └── videos.csv                 # Video information
-├── chroma_db/
-│   └── ...                        # (Auto-generated) Local vector database files
-├── main.py                        # FastAPI application entry point
-├── requirements.txt               # Project dependencies
-└── README.md                      # Project documentation
 ```
 
 ## Architecture
