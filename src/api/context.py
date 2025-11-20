@@ -23,3 +23,4 @@ class Context:
         self.audio_segment_queue: asyncio.Queue[npt.NDArray[np.float32]] = asyncio.Queue()
         self.asr_output_queue: asyncio.Queue[str] = asyncio.Queue()
         self.function_calling_queue: asyncio.Queue[Any] = asyncio.Queue()
+        self.location: str = "5G先锋体验区"  # 默认初始位置

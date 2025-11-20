@@ -54,7 +54,8 @@ class BaseLLMHandler(ABC):
         }
 
     @abstractmethod
-    async def get_response(self, user_input: str, rag_docs: list[Document]) -> str:
+    @abstractmethod
+    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区") -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
 
@@ -105,7 +106,7 @@ class BaseLLMHandler(ABC):
         """
         pass
 
-    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document]) -> dict[str, Any]:
+    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区") -> dict[str, Any]:
         """
         准备Prompt的输入变量，供子类使用。
         """
@@ -119,7 +120,8 @@ class BaseLLMHandler(ABC):
             "DOORS_INFO": doors_info_json,
             "AREAS_INFO": areas_info_json,
             "rag_context": rag_context,
-            "USER_INPUT": user_input
+            "USER_INPUT": user_input,
+            "USER_LOCATION": user_location
         }
 
     def get_screens_info_for_prompt(self) -> list[dict[str, Any]]:
@@ -283,6 +285,12 @@ class BaseLLMHandler(ABC):
             elif tool_name in ["seek_video", "set_volume", "adjust_volume"]:
                 device = tool_args.get("device", "")
                 return self._validate_device_args(device, tool_name)
+
+            elif tool_name == "update_location":
+                target = tool_args.get("target", "")
+                if not self.csv_loader.area_exists(target):
+                    return False, f"Area '{target}' not found in areas.csv"
+                return True, None
 
             else:
                 return True, None

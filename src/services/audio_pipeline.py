@@ -104,7 +104,8 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             retry_result = await retry_handler.execute_instruction_retry(
                 original_input=recognized_text,
                 llm_function=dependencies.llm_processor.get_response,
-                rag_docs=retrieved_docs
+                rag_docs=retrieved_docs,
+                user_location=context.location
             )
 
             # 记录重试统计信息
@@ -113,6 +114,21 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
 
             llm_response = retry_result.response
             logger.info("[大模型响应] {llm_response}", llm_response=llm_response)
+
+            # 处理位置更新
+            try:
+                import json
+                commands = json.loads(llm_response)
+                if isinstance(commands, list):
+                    for command in commands:
+                        if command.get("action") == "update_location":
+                            new_location = command.get("target")
+                            if new_location:
+                                logger.info(f"[位置更新] 用户位置从 '{context.location}' 更新为 '{new_location}'")
+                                context.location = new_location
+            except Exception as e:
+                logger.warning(f"解析LLM响应以更新位置时出错: {e}")
+
             await context.function_calling_queue.put(llm_response)
 
             # 通过WebSocket发送响应

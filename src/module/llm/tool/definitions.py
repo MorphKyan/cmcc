@@ -48,6 +48,11 @@ class AdjustVolumeInput(BaseModel):
     value: Literal["up", "down"] = Field(description="音量调整方向：up（提高）或down（降低）")
 
 
+class UpdateLocationInput(BaseModel):
+    """Input for update location command."""
+    target: str = Field(description="用户移动到的目标区域名称")
+
+
 @tool(args_schema=PlayVideoInput)
 def play_video(target: str, device: str) -> ExhibitionCommand:
     """播放指定的视频文件"""
@@ -103,6 +108,17 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
     )
 
 
+@tool(args_schema=UpdateLocationInput)
+def update_location(target: str) -> ExhibitionCommand:
+    """更新用户当前的位置"""
+    return ExhibitionCommand(
+        action="update_location",
+        target=target,
+        device=None,
+        value=None
+    )
+
+
 def get_tools():
     """获取LLM函数调用的工具列表（现代结构化输出方法）。"""
     return [
@@ -110,7 +126,8 @@ def get_tools():
         control_door,
         seek_video,
         set_volume,
-        adjust_volume
+        adjust_volume,
+        update_location
     ]
 
 

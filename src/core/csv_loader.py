@@ -96,7 +96,8 @@ class CSVLoader:
             screen_info = {
                 "name": name,
                 "aliases": str(row.get("aliases", "")),
-                "description": str(row.get("description", ""))
+                "description": str(row.get("description", "")),
+                "location": str(row.get("location", "")).strip()
             }
             screens_dict[name] = screen_info
 
