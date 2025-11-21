@@ -48,11 +48,15 @@ async def get_current_config() -> ConfigResponse:
 
         # RAG 配置
         config_data["rag"] = {
+            "provider": settings.rag.provider,
             "videos_data_path": settings.rag.videos_data_path,
             "chroma_db_dir": settings.rag.chroma_db_dir,
+            "top_k_results": settings.rag.top_k_results,
             "ollama_base_url": settings.rag.ollama_base_url,
             "ollama_embedding_model": settings.rag.ollama_embedding_model,
-            "top_k_results": settings.rag.top_k_results
+            "modelscope_embedding_model": settings.rag.modelscope_embedding_model,
+            "modelscope_base_url": settings.rag.modelscope_base_url,
+            "modelscope_api_key": "[REDACTED]" if settings.rag.modelscope_api_key else None,
         }
 
         # LLM 配置
@@ -62,6 +66,7 @@ async def get_current_config() -> ConfigResponse:
             "ollama_base_url": settings.llm.ollama_base_url,
             "modelscope_model": settings.llm.modelscope_model,
             "modelscope_base_url": settings.llm.modelscope_base_url,
+            "modelscope_api_key": "[REDACTED]" if settings.llm.modelscope_api_key else None,
             "max_validation_retries": settings.llm.max_validation_retries,
             "retry_delay": settings.llm.retry_delay,
             "request_timeout": settings.llm.request_timeout,

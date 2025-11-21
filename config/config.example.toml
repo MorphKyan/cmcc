@@ -43,6 +43,13 @@ modelscope_model = "Qwen/Qwen3-8B"
 modelscope_base_url = "https://api-inference.modelscope.cn/v1"
 modelscope_api_key = "ms-b5d21340-4551-4343-86e8-e1c1430ae1f9"
 
+# Validation and retry settings
+max_validation_retries = 2
+retry_delay = 0.1
+# Network timeout settings
+request_timeout = 10
+connection_timeout = 10
+
 # 火山引擎配置 (备用)
 [volcengine]
 ark_api_key = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
