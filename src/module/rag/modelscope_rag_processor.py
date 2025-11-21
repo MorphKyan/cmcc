@@ -42,7 +42,7 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
                 self.embedding_model = OpenAIEmbeddings(
                     model=self.settings.modelscope_embedding_model,
                     base_url=self.settings.modelscope_base_url,
-                    api_key=self.settings.modelscope_api_key.get_secret_value()
+                    api_key=self.settings.modelscope_api_key
                 )
                 if not os.path.exists(self.chroma_db_dir):
                     logger.info("未找到本地向量数据库，正在创建...")

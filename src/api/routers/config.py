@@ -1,8 +1,5 @@
-from typing import Any
-
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
-from pydantic import BaseModel
 
 from src.api.schemas import ConfigResponse
 from src.config.config import get_settings
@@ -11,13 +8,6 @@ router = APIRouter(
     prefix="/config",
     tags=["Configuration"]
 )
-
-
-class ConfigItem(BaseModel):
-    key: str
-    value: Any
-    category: str
-    description: str
 
 
 @router.get("/current", response_model=ConfigResponse)
@@ -42,7 +32,8 @@ async def get_current_config() -> ConfigResponse:
             "chunk_size": settings.vad.chunk_size,
             "sample_rate": settings.vad.sample_rate,
             "model": settings.vad.model,
-            "max_single_segment_time": settings.vad.max_single_segment_time
+            "max_single_segment_time": settings.vad.max_single_segment_time,
+            "save_audio_segments": settings.vad.save_audio_segments,
         }
 
         # ASR 配置
@@ -75,9 +66,6 @@ async def get_current_config() -> ConfigResponse:
             "retry_delay": settings.llm.retry_delay,
             "request_timeout": settings.llm.request_timeout,
             "connection_timeout": settings.llm.connection_timeout,
-            "max_network_retries": settings.llm.max_network_retries,
-            "base_retry_delay": settings.llm.base_retry_delay,
-            "max_retry_delay": settings.llm.max_retry_delay
         }
 
         # 火山引擎配置
@@ -87,9 +75,6 @@ async def get_current_config() -> ConfigResponse:
             "llm_model_name": settings.volcengine.llm_model_name,
             "request_timeout": settings.volcengine.request_timeout,
             "connection_timeout": settings.volcengine.connection_timeout,
-            "max_network_retries": settings.volcengine.max_network_retries,
-            "base_retry_delay": settings.volcengine.base_retry_delay,
-            "max_retry_delay": settings.volcengine.max_retry_delay
         }
 
         return ConfigResponse(

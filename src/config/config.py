@@ -288,7 +288,7 @@ class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
     # RAG Provider selection: "ollama" or "modelscope"
-    provider: str = "ollama"
+    provider: str = "modelscope"
 
     # Common settings
     videos_data_path: str = os.path.join(data_dir, "videos.csv")
@@ -296,27 +296,27 @@ class RAGSettings(BaseSettings):
     top_k_results: int = 3  # 检索返回的文档数
 
     # Ollama-specific settings
-    ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_embedding_model: str = "qwen3-embedding:0.6b"
+    ollama_base_url: str = "http://127.0.0.1:11434"
 
     # ModelScope-specific settings
+    modelscope_embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
     modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
-    modelscope_api_key: SecretStr = SecretStr("")
-    modelscope_embedding_model: str = "text-embedding-v1"
+    modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
 
 
 class LLMSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LLM_")
     system_prompt_template: str = SYSTEM_PROMPT_TEMPLATE
     # LLM Provider selection: "ollama" or "modelscope"
-    provider: str = "ollama"
+    provider: str = "modelscope"
 
     # ollama specific settings
     ollama_model: str = "qwen3:8b"
     ollama_base_url: str = "http://127.0.0.1:11434"
 
     # ModelScope specific settings
-    modelscope_model: str = "qwen3-8b"
+    modelscope_model: str = "Qwen/Qwen3-8B"
     modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
     modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
     # Validation and retry settings
@@ -325,13 +325,6 @@ class LLMSettings(BaseSettings):
     # Network timeout settings
     request_timeout: int = 10  # Request timeout in seconds
     connection_timeout: int = 10  # Connection timeout in seconds
-    # Network retry settings
-    max_network_retries: int = 3  # Maximum network retry attempts
-    base_retry_delay: float = 1.0  # Base delay for exponential backoff (seconds)
-    max_retry_delay: float = 10.0  # Maximum retry delay (seconds)
-    # Legacy retry settings (for backward compatibility)
-    max_retries: int = 3  # Legacy field, maps to max_network_retries
-    enable_reconnection: bool = True  # Legacy field, always enabled
 
 
 class VolcEngineSettings(BaseSettings):
@@ -343,10 +336,6 @@ class VolcEngineSettings(BaseSettings):
     # Network timeout settings (inherited from LLMSettings if not specified)
     request_timeout: int = 30  # Request timeout in seconds
     connection_timeout: int = 10  # Connection timeout in seconds
-    # Network retry settings (inherited from LLMSettings if not specified)
-    max_network_retries: int = 3  # Maximum network retry attempts
-    base_retry_delay: float = 1.0  # Base delay for exponential backoff (seconds)
-    max_retry_delay: float = 10.0  # Maximum retry delay (seconds)
 
 
 class AppSettings(BaseSettings):

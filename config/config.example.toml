@@ -5,6 +5,7 @@ sample_rate = 16000
 model = "fsmn-vad"
 # VAD 最大切割音频时长(ms)
 max_single_segment_time = 20000
+save_audio_segments = false
 
 # FunASR 语音识别配置
 [asr]
@@ -18,17 +19,17 @@ merge_length_s = 15.0
 # RAG (检索增强生成) 配置
 [rag]
 # RAG 提供商选择: "ollama" 或 "modelscope"
-provider = "ollama"
+provider = "modelscope"
 videos_data_path = "./data/videos.csv"
 chroma_db_dir = "./chroma_db"
 top_k_results = 3
 # Ollama 配置
-ollama_base_url = "http://127.0.0.1:11434"
 ollama_embedding_model = "qwen3-embedding:0.6b"
+ollama_base_url = "http://127.0.0.1:11434"
 # ModelScope 配置
+modelscope_embedding_model = "Qwen/Qwen3-Embedding-0.6B"
 modelscope_base_url = "https://api-inference.modelscope.cn/v1"
-modelscope_api_key = ""
-modelscope_embedding_model = "text-embedding-v1"
+modelscope_api_key = "ms-b5d21340-4551-4343-86e8-e1c1430ae1f9"
 
 # 大语言模型 (LLM) 配置
 [llm]
