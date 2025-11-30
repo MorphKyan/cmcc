@@ -92,6 +92,7 @@ SYSTEM_PROMPT_TEMPLATE = """
 "areas_info":{AREAS_INFO}
 "screens_info":{SCREENS_INFO}
 "doors_info":{DOORS_INFO}
+"devices_info":{DEVICES_INFO}
 "videos_info":{rag_context}
 
 ## 当前状态

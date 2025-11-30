@@ -42,6 +42,8 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
                 device_type = 'door'
             elif 'videos' in filename:
                 device_type = 'video'
+            elif 'devices' in filename:
+                device_type = 'device'
             else:
                 # 默认处理为通用类型
                 device_type = 'unknown'
@@ -75,6 +77,30 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
                         "area1": str(row.get("area1", "")),
                         "area2": str(row.get("area2", "")),
                         "location": str(row.get("location", "")),
+                        "filename": ""
+                    }
+                elif device_type == 'device':
+                    # 设备处理
+                    content_parts = [f"{row['name']}"]
+                    if pd.notna(row.get('type')):
+                        content_parts.append(f"类型为{row['type']}")
+                    if pd.notna(row.get('area')):
+                        content_parts.append(f"位于{row['area']}")
+                    if pd.notna(row.get('aliases')):
+                        content_parts.append(f"也称为{row['aliases']}")
+                    if pd.notna(row.get('description')):
+                        content_parts.append(f"内容描述了{row['description']}")
+
+                    content = "，".join(content_parts)
+
+                    # 构建metadata，包含所有可用字段
+                    metadata = {
+                        "type": device_type,
+                        "name": str(row.get("name", "")),
+                        "device_type": str(row.get("type", "")),
+                        "area": str(row.get("area", "")),
+                        "aliases": str(row.get("aliases", "")),
+                        "description": str(row.get("description", "")),
                         "filename": ""
                     }
                 else:

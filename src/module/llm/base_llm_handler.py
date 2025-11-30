@@ -82,6 +82,7 @@ class BaseLLMHandler(ABC):
             health_check_input = {
                 "SCREENS_INFO": json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2),
                 "DOORS_INFO": json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2),
+                "DEVICES_INFO": json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2),
                 "AREAS_INFO": json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2),
                 "rag_context": "",
                 "USER_INPUT": "健康检查"
@@ -113,11 +114,13 @@ class BaseLLMHandler(ABC):
         rag_context = self._get_prompt_from_documents(rag_docs)
         screens_info_json = json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2)
         doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
+        devices_info_json = json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2)
         areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
 
         return {
             "SCREENS_INFO": screens_info_json,
             "DOORS_INFO": doors_info_json,
+            "DEVICES_INFO": devices_info_json,
             "AREAS_INFO": areas_info_json,
             "rag_context": rag_context,
             "USER_INPUT": user_input,
@@ -190,6 +193,28 @@ class BaseLLMHandler(ABC):
                 })
         return areas_info
 
+    def get_devices_info_for_prompt(self) -> list[dict[str, Any]]:
+        """
+        获取用于Prompt的设备信息列表
+        """
+        devices_info = []
+        all_devices = self.csv_loader.get_all_devices()
+        for device_name in all_devices:
+            device_info = self.csv_loader.get_device_info(device_name)
+            if device_info:
+                aliases_str = device_info.get("aliases", "")
+                description_str = device_info.get("description", "")
+                device_type = device_info.get("type", "")
+                area = device_info.get("area", "")
+                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                devices_info.append({
+                    "name": device_name,
+                    "type": device_type,
+                    "area": area,
+                    "description": f"{description_str}，也称为{aliases}"
+                })
+        return devices_info
+
     def _format_response(self, response) -> str:
         """
         将结构化响应格式化为JSON字符串。
@@ -251,8 +276,8 @@ class BaseLLMHandler(ABC):
         if not self.csv_loader.video_exists(target):
             return False, f"Video '{target}' not found in videos.csv"
 
-        if not self.csv_loader.screen_exists(device):
-            return False, f"Screen '{device}' not found in screens.csv"
+        if not (self.csv_loader.screen_exists(device) or self.csv_loader.device_exists(device)):
+            return False, f"Device '{device}' not found in screens.csv or devices.csv"
 
         return True, None
 
@@ -266,8 +291,8 @@ class BaseLLMHandler(ABC):
         return True, None
 
     def _validate_device_args(self, device: str, tool_name: str) -> tuple[bool, str | None]:
-        if not self.csv_loader.screen_exists(device):
-            return False, f"Screen '{device}' not found in screens.csv for {tool_name} tool"
+        if not (self.csv_loader.screen_exists(device) or self.csv_loader.device_exists(device)):
+            return False, f"Device '{device}' not found in screens.csv or devices.csv for {tool_name} tool"
 
         return True, None
 

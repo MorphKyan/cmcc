@@ -33,6 +33,7 @@ class CSVLoader:
         self._videos_cache: dict[str, dict[str, Any]] = {}
         self._doors_cache: dict[str, dict[str, Any]] = {}
         self._screens_cache: dict[str, dict[str, Any]] = {}
+        self._devices_cache: dict[str, dict[str, Any]] = {}
         self._areas_cache: dict[str, dict[str, Any]] = {}
         self._initialized = True
 
@@ -119,6 +120,24 @@ class CSVLoader:
 
         return areas_dict
 
+    def _process_devices_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
+        devices_dict = {}
+        for _, row in df.iterrows():
+            name = str(row.get("name", "")).strip()
+            if not name:
+                continue
+
+            device_info = {
+                "name": name,
+                "type": str(row.get("type", "")),
+                "area": str(row.get("area", "")),
+                "aliases": str(row.get("aliases", "")),
+                "description": str(row.get("description", ""))
+            }
+            devices_dict[name] = device_info
+
+        return devices_dict
+
     def reload(self) -> bool:
         try:
             settings = get_settings()
@@ -126,6 +145,7 @@ class CSVLoader:
             if not (os.path.exists(os.path.join(data_dir, "videos.csv")) and
                     os.path.exists(os.path.join(data_dir, "doors.csv")) and
                     os.path.exists(os.path.join(data_dir, "screens.csv")) and
+                    os.path.exists(os.path.join(data_dir, "devices.csv")) and
                     os.path.exists(os.path.join(data_dir, "areas.csv"))):
                 raise FileNotFoundError("CSV files not found in settings directory")
         except Exception:
@@ -136,6 +156,7 @@ class CSVLoader:
         videos_path = os.path.join(data_dir, "videos.csv")
         doors_path = os.path.join(data_dir, "doors.csv")
         screens_path = os.path.join(data_dir, "screens.csv")
+        devices_path = os.path.join(data_dir, "devices.csv")
         areas_path = os.path.join(data_dir, "areas.csv")
 
         try:
@@ -151,6 +172,10 @@ class CSVLoader:
                 screens_df = self._load_csv_file(screens_path)
                 self._screens_cache = self._process_screens_data(screens_df)
                 logger.info(f"Loaded {len(self._screens_cache)} screens from {screens_path}")
+
+                devices_df = self._load_csv_file(devices_path)
+                self._devices_cache = self._process_devices_data(devices_df)
+                logger.info(f"Loaded {len(self._devices_cache)} devices from {devices_path}")
 
                 areas_df = self._load_csv_file(areas_path)
                 self._areas_cache = self._process_areas_data(areas_df)
@@ -209,3 +234,15 @@ class CSVLoader:
     def get_all_areas(self) -> list[str]:
         with self._data_lock:
             return list(self._areas_cache.keys())
+
+    def device_exists(self, name: str) -> bool:
+        with self._data_lock:
+            return name in self._devices_cache
+
+    def get_device_info(self, name: str) -> dict[str, Any] | None:
+        with self._data_lock:
+            return self._devices_cache.get(name)
+
+    def get_all_devices(self) -> list[str]:
+        with self._data_lock:
+            return list(self._devices_cache.keys())
