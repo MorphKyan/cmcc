@@ -7,11 +7,7 @@ from loguru import logger
 from src.config.config import get_settings
 from src.core import dependencies
 from src.module.asr.asr_processor import ASRProcessor
-from src.module.llm.ark_llm_handler import ArkLLMHandler
-from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
-from src.module.llm.ollama_llm_handler import OllamaLLMHandler
-from src.module.rag.ollama_rag_processor import OllamaRAGProcessor
-from src.module.rag.modelscope_rag_processor import ModelScopeRAGProcessor
+
 from src.module.vad.vad_core import VADCore
 
 
@@ -32,20 +28,25 @@ async def lifespan(app: FastAPI):
 
         # Initialize RAG processor based on provider configuration
         if rag_config.provider.lower() == "modelscope":
+            from src.module.rag.modelscope_rag_processor import ModelScopeRAGProcessor
             dependencies.rag_processor = ModelScopeRAGProcessor(rag_config)
             logger.info("使用ModelScope RAG处理器")
         else:
+            from src.module.rag.ollama_rag_processor import OllamaRAGProcessor
             dependencies.rag_processor = OllamaRAGProcessor(rag_config)
             logger.info("使用Ollama RAG处理器")
 
         # Initialize LLM processor based on provider configuration
         if llm_config.provider.lower() == "modelscope":
+            from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
             dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
             logger.info("使用ModelScope LLM处理器")
         elif llm_config.provider.lower() == "ark":
+            from src.module.llm.ark_llm_handler import ArkLLMHandler
             dependencies.llm_processor = ArkLLMHandler(llm_config, settings.volcengine)
             logger.info("使用火山引擎Ark LLM处理器")
         else:
+            from src.module.llm.ollama_llm_handler import OllamaLLMHandler
             dependencies.llm_processor = OllamaLLMHandler(llm_config)
             logger.info("使用Ollama LLM处理器")
 
