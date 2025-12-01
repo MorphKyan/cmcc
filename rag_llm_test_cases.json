@@ -1531,7 +1531,7 @@
         "action": "error",
         "target": null,
         "device": null,
-        "value": "validation_failed: Screen device not found in screens.csv"
+        "value": "validation_failed: Device '不存在的屏幕' not found in devices.csv"
       }
     ]
   },

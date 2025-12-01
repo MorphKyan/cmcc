@@ -30,7 +30,7 @@
 │   └── api/
 │       └── rag_api.py          # RESTful API服务，提供RAG数据库管理接口
 ├── data/
-│   ├── screens.csv             # 屏幕设备信息
+│   ├── devices.csv             # 设备信息（包含 name, type, area, aliases, description 列，type 可以为 screen, terminal, projector, phone 等）
 │   ├── doors.csv               # 门设备信息（包含 name, type, area1, area2, location 列）
 │   ├── areas.csv               # 区域信息（包含 name, aliases, description 列）
 │   └── videos.csv              # 视频信息

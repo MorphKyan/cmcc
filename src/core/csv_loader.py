@@ -32,7 +32,6 @@ class CSVLoader:
         self._data_lock = threading.Lock()
         self._videos_cache: dict[str, dict[str, Any]] = {}
         self._doors_cache: dict[str, dict[str, Any]] = {}
-        self._screens_cache: dict[str, dict[str, Any]] = {}
         self._devices_cache: dict[str, dict[str, Any]] = {}
         self._areas_cache: dict[str, dict[str, Any]] = {}
         self._initialized = True
@@ -87,22 +86,7 @@ class CSVLoader:
 
         return doors_dict
 
-    def _process_screens_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
-        screens_dict = {}
-        for _, row in df.iterrows():
-            name = str(row.get("name", "")).strip()
-            if not name:
-                continue
 
-            screen_info = {
-                "name": name,
-                "aliases": str(row.get("aliases", "")),
-                "description": str(row.get("description", "")),
-                "location": str(row.get("location", "")).strip()
-            }
-            screens_dict[name] = screen_info
-
-        return screens_dict
 
     def _process_areas_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         areas_dict = {}
@@ -144,7 +128,6 @@ class CSVLoader:
             data_dir = settings.data_dir
             if not (os.path.exists(os.path.join(data_dir, "videos.csv")) and
                     os.path.exists(os.path.join(data_dir, "doors.csv")) and
-                    os.path.exists(os.path.join(data_dir, "screens.csv")) and
                     os.path.exists(os.path.join(data_dir, "devices.csv")) and
                     os.path.exists(os.path.join(data_dir, "areas.csv"))):
                 raise FileNotFoundError("CSV files not found in settings directory")
@@ -155,7 +138,6 @@ class CSVLoader:
 
         videos_path = os.path.join(data_dir, "videos.csv")
         doors_path = os.path.join(data_dir, "doors.csv")
-        screens_path = os.path.join(data_dir, "screens.csv")
         devices_path = os.path.join(data_dir, "devices.csv")
         areas_path = os.path.join(data_dir, "areas.csv")
 
@@ -168,10 +150,6 @@ class CSVLoader:
                 doors_df = self._load_csv_file(doors_path)
                 self._doors_cache = self._process_doors_data(doors_df)
                 logger.info(f"Loaded {len(self._doors_cache)} doors from {doors_path}")
-
-                screens_df = self._load_csv_file(screens_path)
-                self._screens_cache = self._process_screens_data(screens_df)
-                logger.info(f"Loaded {len(self._screens_cache)} screens from {screens_path}")
 
                 devices_df = self._load_csv_file(devices_path)
                 self._devices_cache = self._process_devices_data(devices_df)
@@ -195,10 +173,6 @@ class CSVLoader:
         with self._data_lock:
             return name in self._doors_cache
 
-    def screen_exists(self, name: str) -> bool:
-        with self._data_lock:
-            return name in self._screens_cache
-
     def get_video_info(self, filename: str) -> dict[str, Any] | None:
         with self._data_lock:
             return self._videos_cache.get(filename)
@@ -207,10 +181,6 @@ class CSVLoader:
         with self._data_lock:
             return self._doors_cache.get(name)
 
-    def get_screen_info(self, name: str) -> dict[str, Any] | None:
-        with self._data_lock:
-            return self._screens_cache.get(name)
-
     def get_all_videos(self) -> list[str]:
         with self._data_lock:
             return list(self._videos_cache.keys())
@@ -218,10 +188,6 @@ class CSVLoader:
     def get_all_doors(self) -> list[str]:
         with self._data_lock:
             return list(self._doors_cache.keys())
-
-    def get_all_screens(self) -> list[str]:
-        with self._data_lock:
-            return list(self._screens_cache.keys())
 
     def area_exists(self, name: str) -> bool:
         with self._data_lock:

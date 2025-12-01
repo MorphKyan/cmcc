@@ -13,7 +13,7 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
     从多个CSV文件加载数据并转换为LangChain的Document对象。
 
     支持以下CSV文件类型：
-    - screens.csv: 屏幕设备信息（包含name, aliases, description列）
+    - devices.csv: 设备信息（包含name, type, area, aliases, description列，其中type可为screen, terminal, projector, phone等）
     - doors.csv: 门设备信息（包含name, type, area1, area2, location列）
     - videos.csv: 视频信息（包含name, aliases, description, filename列）
 
@@ -36,9 +36,7 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
 
             # 根据文件名推断设备类型
             filename = os.path.basename(file_path).lower()
-            if 'screens' in filename:
-                device_type = 'screen'
-            elif 'doors' in filename:
+            if 'doors' in filename:
                 device_type = 'door'
             elif 'videos' in filename:
                 device_type = 'video'
@@ -104,7 +102,7 @@ def load_documents_from_csvs(file_paths: list[str]) -> list[Document]:
                         "filename": ""
                     }
                 else:
-                    # 其他设备类型（screens, videos）
+                    # 其他设备类型（videos）
                     content_parts = [f"{row['name']}"]
                     if pd.notna(row.get('aliases')):
                         content_parts.append(f"也称为{row['aliases']}")

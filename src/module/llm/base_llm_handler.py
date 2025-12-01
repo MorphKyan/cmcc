@@ -80,9 +80,8 @@ class BaseLLMHandler(ABC):
 
             # 使用简单的健康检查提示
             health_check_input = {
-                "SCREENS_INFO": json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2),
-                "DOORS_INFO": json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2),
                 "DEVICES_INFO": json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2),
+                "DOORS_INFO": json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2),
                 "AREAS_INFO": json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2),
                 "rag_context": "",
                 "USER_INPUT": "健康检查"
@@ -112,15 +111,13 @@ class BaseLLMHandler(ABC):
         准备Prompt的输入变量，供子类使用。
         """
         rag_context = self._get_prompt_from_documents(rag_docs)
-        screens_info_json = json.dumps(self.get_screens_info_for_prompt(), ensure_ascii=False, indent=2)
-        doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
         devices_info_json = json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2)
+        doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
         areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
 
         return {
-            "SCREENS_INFO": screens_info_json,
-            "DOORS_INFO": doors_info_json,
             "DEVICES_INFO": devices_info_json,
+            "DOORS_INFO": doors_info_json,
             "AREAS_INFO": areas_info_json,
             "rag_context": rag_context,
             "USER_INPUT": user_input,
@@ -128,23 +125,7 @@ class BaseLLMHandler(ABC):
             "chat_history": chat_history
         }
 
-    def get_screens_info_for_prompt(self) -> list[dict[str, Any]]:
-        """
-        获取用于Prompt的屏幕信息列表
-        """
-        screens_info = []
-        all_screens = self.csv_loader.get_all_screens()
-        for screen_name in all_screens:
-            screen_info = self.csv_loader.get_screen_info(screen_name)
-            if screen_info:
-                aliases_str = screen_info.get("aliases", "")
-                description_str = screen_info.get("description", "")
-                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
-                screens_info.append({
-                    "name": screen_name,
-                    "description": f"{description_str}，也称为{aliases}"
-                })
-        return screens_info
+
 
     def get_doors_info_for_prompt(self) -> list[dict[str, Any]]:
         """
@@ -276,8 +257,8 @@ class BaseLLMHandler(ABC):
         if not self.csv_loader.video_exists(target):
             return False, f"Video '{target}' not found in videos.csv"
 
-        if not (self.csv_loader.screen_exists(device) or self.csv_loader.device_exists(device)):
-            return False, f"Device '{device}' not found in screens.csv or devices.csv"
+        if not self.csv_loader.device_exists(device):
+            return False, f"Device '{device}' not found in devices.csv"
 
         return True, None
 
@@ -291,8 +272,8 @@ class BaseLLMHandler(ABC):
         return True, None
 
     def _validate_device_args(self, device: str, tool_name: str) -> tuple[bool, str | None]:
-        if not (self.csv_loader.screen_exists(device) or self.csv_loader.device_exists(device)):
-            return False, f"Device '{device}' not found in screens.csv or devices.csv for {tool_name} tool"
+        if not self.csv_loader.device_exists(device):
+            return False, f"Device '{device}' not found in devices.csv for {tool_name} tool"
 
         return True, None
 

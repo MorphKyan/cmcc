@@ -90,9 +90,8 @@ SYSTEM_PROMPT_TEMPLATE = """
 你唯一可操作的设备和内容如下：
 
 "areas_info":{AREAS_INFO}
-"screens_info":{SCREENS_INFO}
-"doors_info":{DOORS_INFO}
 "devices_info":{DEVICES_INFO}
+"doors_info":{DOORS_INFO}
 "videos_info":{rag_context}
 
 ## 当前状态
@@ -116,7 +115,7 @@ SYSTEM_PROMPT_TEMPLATE = """
 
 *   **播放视频**:
     *   利用知识库中的`aliases`和`description`来匹配视频。例如，"放一下关于智慧城市的视频"应匹配到`Smart_City_Vision.mp4`。
-    *   **智能设备选择**: 如果用户未明确指定屏幕，优先选择**用户当前位置**（{USER_LOCATION}）内的屏幕。如果当前位置没有合适的屏幕，再默认使用`主屏幕`。
+    *   **智能设备选择**: 如果用户未明确指定设备，优先选择**用户当前位置**（{USER_LOCATION}）内的设备。
 
 *   **控制门**:
     *   准确识别开门和关门的意图。
@@ -182,7 +181,7 @@ SYSTEM_PROMPT_TEMPLATE_V2 = """
 你唯一可操作的设备和内容如下：
 
 "areas_info":{AREAS_INFO}
-"screens_info":{SCREENS_INFO}
+"devices_info":{DEVICES_INFO}
 "doors_info":{DOORS_INFO}
 {rag_context}
 
@@ -206,7 +205,7 @@ SYSTEM_PROMPT_TEMPLATE_V2 = """
 ## 语义理解与函数映射
 *   **播放视频**:
     *   利用知识库中的`aliases`和`description`来匹配视频。例如，"放一下关于智慧城市的视频"应匹配到`Smart_City_Vision.mp4`。
-    *   对于播放操作，如果用户未明确指定屏幕，`device`默认为`主屏幕`。
+    *   对于播放操作，如果用户未明确指定设备，`device`默认为`主屏幕`
 *   **控制门**:
     *   识别"打开/关闭...的门"等指令。
 *   **跳转进度**:
@@ -397,7 +396,7 @@ SYSTEM_PROMPT_TEMPLATE_V1 = """
     *   如果`action`是`play`，`target`必须是知识库中`videos`列表里对应视频的`filename`。你需要根据用户描述的语义来匹配最相关的视频。
     *   如果`action`是`open`或`close`，`target`必须是知识库中`doors`列表里对应门的全称，即`xxx的门`。
 4.  **设备 (device)**:
-    *   如果`action`是`play`，`device`必须是知识库中`screens`列表里对应屏幕的`name`。如果用户没有明确指定屏幕，默认使用`主屏幕`。
+    *   如果`action`是`play`，`device`必须是知识库中`devices`列表里对应设备的`name`。
     *   如果`action`是`open`或`close`，`device`字段的值必须是`null`。
 5.  **歧义与错误处理**:
     *   利用知识库中的`aliases`和`description`来最大程度地理解用户的意图。例如，用户说"放一下关于智慧城市的视频"，你应该匹配到`Smart_City_Vision.mp4`。
