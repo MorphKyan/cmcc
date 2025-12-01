@@ -5,7 +5,7 @@ import pandas as pd
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 
 from src.api.schemas import UploadResponse
-from src.config.config import settings
+from src.config.config import get_settings
 from src.core import dependencies
 from src.core.csv_loader import CSVLoader
 
@@ -18,6 +18,7 @@ router = APIRouter(
 @router.post("/upload-videos", response_model=UploadResponse)
 async def upload_videos_csv(file: UploadFile = File(...)) -> UploadResponse:
     """上传videos.csv文件并更新RAG数据库"""
+    settings = get_settings()
     try:
         # 检查文件类型
         if not file.filename or not file.filename.endswith('.csv'):

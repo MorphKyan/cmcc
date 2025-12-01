@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from loguru import logger
 
-from src.config.config import settings
+from src.config.config import get_settings
 from src.core import dependencies
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.llm.ark_llm_handler import ArkLLMHandler
@@ -20,6 +20,7 @@ async def lifespan(app: FastAPI):
     # --- 应用启动时执行 ---
     logger.info("应用启动... 正在初始化处理器...")
 
+    settings = get_settings()
     vad_config = settings.vad
     asr_config = settings.asr
     rag_config = settings.rag

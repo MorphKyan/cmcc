@@ -374,17 +374,6 @@ def get_settings():
     return _settings
 
 
-# 为了向后兼容，仍然提供 settings 属性
-# 但建议使用 get_settings() 函数
-class SettingsProxy:
-    def __getattr__(self, name):
-        return getattr(get_settings(), name)
-
-    def __setattr__(self, name, value):
-        setattr(get_settings(), name, value)
-
-
-settings = SettingsProxy()
 
 # --- Audio Settings ---
 # FORMAT = pyaudio.paInt16
