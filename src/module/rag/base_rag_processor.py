@@ -30,6 +30,7 @@ class BaseRAGProcessor(ABC):
         """
         self.settings: RAGSettings = settings
         self.videos_data_path = settings.videos_data_path
+        self.devices_data_path = settings.devices_data_path
         self.chroma_db_dir = settings.chroma_db_dir
         self.vector_store: Chroma | None = None
         self.retriever = None
@@ -57,7 +58,10 @@ class BaseRAGProcessor(ABC):
             self.status = RAGStatus.UNINITIALIZED
             self.vector_store.reset_collection()
 
-            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
+            documents = await asyncio.to_thread(
+                load_documents_from_csvs, 
+                [self.settings.videos_data_path, self.settings.devices_data_path]
+            )
 
             if not documents:
                 raise ValueError("从CSV加载的文档为空，无法创建数据库。")
@@ -86,8 +90,11 @@ class BaseRAGProcessor(ABC):
         从CSV加载文档，创建向量数据库并持久化到磁盘。
         """
         try:
-            # 只加载videos数据
-            documents = await asyncio.to_thread(load_documents_from_csvs, [self.settings.videos_data_path])
+            # 加载videos和devices数据
+            documents = await asyncio.to_thread(
+                load_documents_from_csvs, 
+                [self.settings.videos_data_path, self.settings.devices_data_path]
+            )
 
             if not documents:
                 raise ValueError("从CSV加载的文档为空，无法创建数据库。")

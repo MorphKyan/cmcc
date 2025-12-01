@@ -292,6 +292,7 @@ class RAGSettings(BaseSettings):
 
     # Common settings
     videos_data_path: str = os.path.join(data_dir, "videos.csv")
+    devices_data_path: str = os.path.join(data_dir, "devices.csv")
     chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
     top_k_results: int = 3  # 检索返回的文档数
 
