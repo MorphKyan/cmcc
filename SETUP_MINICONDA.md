@@ -88,6 +88,12 @@ conda activate cmcc_env
 pip install -r requirements.txt --upgrade
 ```
 
+### 更新环境配置（如果 environment.yml 有变化）
+```cmd
+conda env update --file environment.yml --prune
+```
+此命令会根据 `environment.yml` 更新当前环境的依赖，`--prune` 选项会移除不再需要的包。
+
 ## 故障排除
 
 ### 问题：`conda` 命令不可用

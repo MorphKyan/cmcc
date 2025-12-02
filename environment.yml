@@ -21,6 +21,7 @@ dependencies:
     - langchain-community
     - langchain-openai
     - langchain-ollama
+    - langchain-chroma
     - ollama
     - fastapi
     - uvicorn[standard]
