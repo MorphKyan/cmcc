@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: cmcc-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    container_name: cmcc-frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend/morph_icu.pem:/etc/nginx/certs/morph_icu.pem:ro
+      - ./frontend/morph_icu.key:/etc/nginx/certs/morph_icu.key:ro
+    depends_on:
+      - backend
+
+networks:
+  default:
+    name: cmcc-network
