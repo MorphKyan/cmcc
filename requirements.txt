@@ -5,7 +5,7 @@ numpy
 funasr
 torch
 pandas
-pydantic_settings
+pydantic-settings
 openpyxl
 chromadb
 sentence-transformers
@@ -20,3 +20,4 @@ python-multipart
 av
 httpx
 requests
+modelscope

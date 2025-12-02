@@ -1,0 +1,31 @@
+name: cmcc_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+    - contextvars
+    - loguru
+    - pyaudio
+    - numpy
+    - funasr
+    - torch
+    - pandas
+    - pydantic-settings
+    - openpyxl
+    - chromadb
+    - sentence-transformers
+    - langchain
+    - langchain-community
+    - langchain-openai
+    - langchain-ollama
+    - ollama
+    - fastapi
+    - uvicorn[standard]
+    - python-multipart
+    - av
+    - httpx
+    - requests
+    - modelscope

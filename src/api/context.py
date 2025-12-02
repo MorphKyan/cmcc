@@ -4,7 +4,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from langchain.memory import ConversationBufferWindowMemory
+from langgraph.checkpoint.memory import InMemorySaver
 
 from src.module.input.stream_decoder import StreamDecoder
 from src.module.vad.vad_core import VADCore
@@ -26,4 +26,4 @@ class Context:
         self.asr_output_queue: asyncio.Queue[str] = asyncio.Queue()
         self.function_calling_queue: asyncio.Queue[Any] = asyncio.Queue()
         self.location: str = "5G先锋体验区"  # 默认初始位置
-        self.memory: ConversationBufferWindowMemory = ConversationBufferWindowMemory(k=5, return_messages=True)  # 短期记忆，保留最近5轮
+        self.memory: InMemorySaver = InMemorySaver(k=5, return_messages=True)  # 短期记忆，保留最近5轮
