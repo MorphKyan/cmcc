@@ -16,7 +16,7 @@ src_dir = os.path.dirname(os.path.dirname(current_file))
 # 项目根目录：.../funasr
 project_dir = os.path.dirname(src_dir)
 config_dir = os.path.join(project_dir, "config")
-data_dir = os.path.join(os.path.dirname(project_dir), "data")
+data_dir = os.path.join(project_dir, "data")
 
 
 def load_config_from_toml(config_path: str = None) -> dict:

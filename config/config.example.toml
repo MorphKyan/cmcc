@@ -21,8 +21,9 @@ merge_length_s = 15.0
 # RAG 提供商选择: "ollama" 或 "modelscope"
 provider = "modelscope"
 videos_data_path = "./data/videos.csv"
+devices_data_path = "./data/devices.csv"
 chroma_db_dir = "./chroma_db"
-top_k_results = 3
+top_k_results = 10
 # Ollama 配置
 ollama_embedding_model = "qwen3-embedding:0.6b"
 ollama_base_url = "http://127.0.0.1:11434"

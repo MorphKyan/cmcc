@@ -49,11 +49,11 @@ async def lifespan(app: FastAPI):
             from src.module.llm.ollama_llm_handler import OllamaLLMHandler
             dependencies.llm_processor = OllamaLLMHandler(llm_config)
             logger.info("使用Ollama LLM处理器")
-
-        # Start async initialization for VAD, RAG and LLM processors
-        asyncio.create_task(dependencies.vad_core.initialize())
+        # Start async initialization for VAD, RAG, LLM and ASR processors
         asyncio.create_task(dependencies.rag_processor.initialize())
         asyncio.create_task(dependencies.llm_processor.initialize())
+        asyncio.create_task(dependencies.vad_core.initialize())
+        asyncio.create_task(dependencies.asr_processor.initialize())
 
         logger.info("应用启动序列已开始，VAD、RAG和LLM处理器正在后台初始化。")
     except Exception as e:

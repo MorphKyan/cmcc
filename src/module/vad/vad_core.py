@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy.typing as npt
-from funasr import AutoModel
 from loguru import logger
 
 from src.config.config import VADSettings
@@ -39,6 +38,7 @@ class VADCore(BaseVADProcessor):
             try:
                 # 初始化VAD模型
                 logger.info("正在加载VAD模型...")
+                from funasr import AutoModel
                 self.model = AutoModel(model=self.settings.model, model_revision="v2.0.4")
                 logger.info("VAD模型加载完成。")
 
