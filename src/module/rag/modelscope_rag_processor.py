@@ -3,9 +3,7 @@
 
 import asyncio
 import os
-from urllib.parse import urljoin
 
-import httpx
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
@@ -25,11 +23,10 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
         super().__init__(settings)
         self.embedding_model: OpenAIEmbeddings | None = None
         self._init_lock = asyncio.Lock()
-        self._http_client = httpx.AsyncClient(timeout=10.0)
         logger.info("ModelScopeRAGProcessor已创建，状态: UNINITIALIZED。")
 
     async def initialize(self) -> None:
-        """初始化ModelScope RAG处理器：检查连接、加载模型、创建或加载数据库。"""
+        """初始化ModelScope RAG处理器：加载模型、创建或加载数据库。"""
         async with self._init_lock:
             if self.status == RAGStatus.INITIALIZING:
                 logger.warning("初始化已在进行中，请等待。")
@@ -38,7 +35,6 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
             logger.info("开始初始化ModelScope RAG处理器...")
 
             try:
-                await self._check_modelscope_connection()
                 self.embedding_model = OpenAIEmbeddings(
                     model=self.settings.modelscope_embedding_model,
                     base_url=self.settings.modelscope_base_url,
@@ -67,26 +63,6 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
                 logger.exception(self.error_message)
                 raise
 
-    async def _check_modelscope_connection(self) -> None:
-        logger.info("正在检查ModelScope服务连接: {url}", url=self.settings.modelscope_base_url)
-        try:
-            response = await self._http_client.get(self.settings.modelscope_base_url)
-            response.raise_for_status()
-
-            api_url = urljoin(self.settings.modelscope_base_url, "models")
-            headers = {
-                "Authorization": f"Bearer {self.settings.modelscope_api_key.get_secret_value()}"
-            }
-            response = await self._http_client.get(api_url, headers=headers)
-            response.raise_for_status()
-
-            logger.info("ModelScope服务连接成功，API密钥验证通过。")
-
-        except httpx.RequestError as e:
-            raise ConnectionError(f"无法连接到ModelScope服务: {self.settings.modelscope_base_url}。请确保服务地址正确。") from e
-        except Exception as e:
-            raise RuntimeError(f"检查ModelScope时发生未知错误: {e}") from e
-
     async def retrieve_context(self, query: str) -> list[Document]:
         """根据用户查询异步检索相关上下文。"""
         if self.status != RAGStatus.READY:
@@ -97,4 +73,4 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
         return docs
 
     async def close(self) -> None:
-        await self._http_client.aclose()
+        pass
