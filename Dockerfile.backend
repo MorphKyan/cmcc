@@ -24,5 +24,8 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 8000
 
+# Create logs directory with proper permissions
+RUN mkdir -p /app/logs && chmod 755 /app/logs
+
 # Command to run the application
 CMD ["python", "main.py"]

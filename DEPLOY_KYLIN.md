@@ -67,7 +67,32 @@ Required files/directories:
         docker compose up -d --build
         ```
 
+## Logs Management
+
+Application logs are persisted to the host filesystem for debugging and monitoring.
+
+*   **Backend Logs**: Located in `./logs/` directory
+    *   Main application logs: `./logs/app_YYYY-MM-DD.log` (rotated daily)
+    *   Error logs: `./logs/error_YYYY-MM-DD.log` (ERROR level and above)
+    *   View today's logs: `tail -f logs/app_$(date +%Y-%m-%d).log`
+    *   View error logs: `tail -f logs/error_$(date +%Y-%m-%d).log`
+    *   Logs are automatically compressed after rotation (`.zip` files)
+    *   Retention: 30 days for main logs, 60 days for error logs
+    
+*   **Nginx Access/Error Logs**: Located in `./logs/nginx/`
+    *   Access log: `./logs/nginx/access.log`
+    *   Error log: `./logs/nginx/error.log`
+    *   View real-time access logs: `tail -f logs/nginx/access.log`
+    
+*   **Container Logs** (Docker logs):
+    *   View backend logs: `docker compose logs -f backend`
+    *   View frontend logs: `docker compose logs -f frontend`
+    *   View all logs: `docker compose logs -f`
+
+**Log Rotation**: Consider setting up log rotation to prevent logs from consuming too much disk space. You can use `logrotate` on the host system.
+
 ## Troubleshooting
 
 *   **Permission Issues**: If you encounter permission errors with Docker, try running with `sudo` or add your user to the `docker` group.
 *   **Port Conflicts**: Ensure ports 80 and 8000 are not in use. You can change the host ports in `docker-compose.yml` if necessary.
+*   **Log Files Not Created**: Ensure the `logs/` and `logs/nginx/` directories exist and have proper permissions. Docker will create them automatically if the parent directory is writable.

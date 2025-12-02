@@ -27,14 +27,26 @@ def setup_logging(log_level: str = "INFO"):
     )
     # 添加一个输出到文件的 Sink，用于持久化日志
     logger.add(
-        "logs/app.log",
+        "logs/app_{time:YYYY-MM-DD}.log",
         level=log_level.upper(),
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
-        rotation="100 MB",  # 当文件达到 100MB 时进行轮转
-        retention="7 days",  # 保留7天的日志
+        rotation="00:00",  # 每天午夜轮转
+        retention="10 days",
         compression="zip",  # 压缩旧日志
         enqueue=True,  # 【核心】使日志写入非阻塞且进程安全
         serialize=False  # 在多进程场景下，设置为 True 可以保证日志消息的原子性，但通常 enqueue 足够
+    )
+    # 添加一个错误日志文件，只记录 ERROR 及以上级别
+    logger.add(
+        "logs/error_{time:YYYY-MM-DD}.log",
+        level="ERROR",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
+        rotation="00:00",
+        retention="30 days",
+        compression="zip",
+        enqueue=True,
+        backtrace=True,
+        diagnose=True
     )
     logger.patch(lambda record: record["extra"].update(request_id=request_id_var.get()))
     logger.info("Loguru 日志系统配置完成。")

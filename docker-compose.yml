@@ -10,6 +10,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./config:/app/config
+      - ./logs:/app/logs
     environment:
       - PYTHONUNBUFFERED=1
 
@@ -25,6 +26,7 @@ services:
     volumes:
       - ./frontend/morph_icu.pem:/etc/nginx/certs/morph_icu.pem:ro
       - ./frontend/morph_icu.key:/etc/nginx/certs/morph_icu.key:ro
+      - ./logs/nginx:/var/log/nginx
     depends_on:
       - backend
 
