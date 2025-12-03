@@ -8,6 +8,7 @@ from typing import Any
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableSerializable
+from langchain_core.messages import ToolMessage, AIMessage
 from loguru import logger
 
 from src.config.config import LLMSettings
@@ -28,7 +29,6 @@ class BaseLLMHandler(ABC):
         self.model_with_tools = None
         self.chain: RunnableSerializable[dict, Any] | None = None
 
-        # Get modern tools and structured output schema
         self.tools = get_tools()
         self._tool_map = {tool.name: tool for tool in self.tools}
 
@@ -192,59 +192,135 @@ class BaseLLMHandler(ABC):
     def _format_response(self, response) -> str:
         """
         将结构化响应格式化为JSON字符串。
-
+        
         Args:
             response: 结构化响应对象
-
+            
         Returns:
             JSON格式的响应字符串
         """
-        commands = []
-        for tool_call in response.tool_calls:
-            tool_name = tool_call.get("name")
-            tool_args = tool_call.get("args")
+        if isinstance(response, AIMessage) and response.tool_calls:
+            commands = []
+            for tool_call in response.tool_calls:
+                # 这里的tool_call已经是执行后的结果或者是模型生成的调用意图
+                # 在新的流程中，我们实际上是在get_response_with_retries中处理执行
+                # 这里主要用于最后格式化给前端
+                
+                # 从tool_call中提取信息
+                cmd = ExhibitionCommand(
+                    action=tool_call["name"], # 假设工具名即动作名，或者需要映射
+                    target=tool_call["args"].get("target"),
+                    device=tool_call["args"].get("device"),
+                    value=tool_call["args"].get("value")
+                )
+                commands.append(cmd.model_dump())
+            return json.dumps(commands, ensure_ascii=False, indent=2)
+            
+        return json.dumps([], ensure_ascii=False)
 
-            if tool_function := self._tool_map.get(tool_name):
+    async def get_response_with_retries(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> str:
+        """
+        带重试机制的响应获取方法。
+        使用LangChain的bind_tools和自定义循环来处理工具调用和错误恢复。
+        """
+        # 1. 准备输入
+        chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
+        
+        # 2. 绑定工具到模型 (如果尚未绑定)
+        # 注意：子类应该在初始化时或此处确保 self.model_with_tools 已设置
+        # 如果子类没有设置 model_with_tools，尝试使用 self.chain.get_prompts()[0] 对应的模型
+        # 这里假设子类会正确设置 self.model_with_tools 或者 self.chain 已经包含了绑定工具的模型
+        
+        # 为了通用性，我们构建一个新的 runnable
+        if not self.model_with_tools:
+             raise ValueError("Model with tools not initialized. Subclasses must set self.model_with_tools.")
+
+        # 构建运行链：Prompt -> ModelWithTools
+        runnable = self.prompt_template | self.model_with_tools
+        
+        messages = [] # 这里的messages主要用于在循环中累积工具交互，实际prompt template会处理chat_history
+        
+        # 初始调用
+        try:
+            ai_msg = await runnable.ainvoke(chain_input)
+        except Exception as e:
+            logger.error(f"Initial LLM call failed: {e}")
+            return self.create_error_response("llm_error", str(e))
+
+        messages.append(ai_msg)
+        
+        # 3. 进入重试/执行循环
+        max_retries = getattr(self.settings, 'max_validation_retries', 3)
+        
+        for attempt in range(max_retries):
+            if not ai_msg.tool_calls:
+                # 没有工具调用，直接结束（可能是闲聊或无法处理）
+                break
+                
+            # 执行工具
+            tool_outputs = []
+            has_error = False
+            
+            for tool_call in ai_msg.tool_calls:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                tool_call_id = tool_call["id"]
+                
+                tool_function = self._tool_map.get(tool_name)
+                if not tool_function:
+                    # 未知工具
+                    error_msg = f"Error: Unknown tool '{tool_name}'"
+                    tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id))
+                    has_error = True
+                    continue
+                    
                 try:
-                    # 预执行验证：在执行工具前验证参数
+                    # Semantic Validation
                     is_valid, error_message = self._validate_tool_args(tool_name, tool_args)
                     if not is_valid:
-                        logger.warning("工具 '{name}' 参数验证失败: {error}", name=tool_name, error=error_message)
-                        # 创建验证错误响应而不是执行无效工具
-                        error_command = ExhibitionCommand(
-                            action="error",
-                            target=tool_args.get("target"),
-                            device=tool_args.get("device"),
-                            value=f"validation_failed: {error_message}"
-                        )
-                        commands.append(error_command.model_dump())
-                        continue
+                        raise ValueError(f"Validation failed: {error_message}")
 
-                    # 直接调用工具函数
-                    command_result: ExhibitionCommand = tool_function.invoke(tool_args)
-                    commands.append(command_result.model_dump())
+                    # Execute tool
+                    result = tool_function.invoke(tool_args)
+                    
+                    if isinstance(result, ExhibitionCommand) and result.action == "error":
+                         tool_outputs.append(ToolMessage(content=f"Error: {result.value}", tool_call_id=tool_call_id))
+                         has_error = True
+                    else:
+                        tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id))
+                        
                 except Exception as e:
-                    logger.error("执行工具 '{name}' 时出错: {error}", name=tool_name, error=e)
-                    # 创建执行错误响应
-                    error_command = ExhibitionCommand(
-                        action="error",
-                        target=tool_args.get("target") if tool_args else None,
-                        device=tool_args.get("device") if tool_args else None,
-                        value=f"execution_failed: {str(e)}"
-                    )
-                    commands.append(error_command.model_dump())
-            else:
-                logger.warning("使用了未知的工具: {name}", name=tool_name)
-                # 创建未知工具错误响应
-                error_command = ExhibitionCommand(
-                    action="error",
-                    target=tool_args.get("target") if tool_args else None,
-                    device=tool_args.get("device") if tool_args else None,
-                    value=f"unknown_tool: {tool_name}"
-                )
-                commands.append(error_command.model_dump())
+                    # Catch execution/validation errors
+                    error_msg = f"Error executing {tool_name}: {str(e)}. Please correct the arguments."
+                    tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id))
+                    has_error = True
+            
+            if not has_error:
+                # 所有工具执行成功，返回当前的 ai_msg (包含正确的 tool_calls)
+                return self._format_response(ai_msg)
+                
+            # 如果有错误，我们需要把 tool_outputs 反馈给模型，让其修正
+            # 更新 chain_input 中的 chat_history 或者 messages            
+            # 将 ai_msg 和 tool_outputs 追加到 messages
+            # 然后再次调用模型
 
-        return json.dumps(commands, ensure_ascii=False, indent=2)
+            current_history = chain_input.get("chat_history", [])
+            current_history.append(ai_msg)
+            current_history.extend(tool_outputs)
+            
+            chain_input["chat_history"] = current_history
+            
+            logger.info(f"Retry attempt {attempt + 1}/{max_retries} due to tool errors.")
+            
+            try:
+                ai_msg = await runnable.ainvoke(chain_input)
+                messages.append(ai_msg)
+            except Exception as e:
+                logger.error(f"LLM retry call failed: {e}")
+                return self.create_error_response("llm_retry_error", str(e))
+
+        # 循环结束（达到最大重试次数或最后一次仍有错）        
+        return self._format_response(ai_msg)
 
     def _validate_play_video_args(self, target: str, device: str) -> tuple[bool, str | None]:
         if not self.csv_loader.video_exists(target):

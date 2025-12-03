@@ -23,7 +23,6 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         super().__init__(settings)
         # Keep __init__ lightweight - defer heavy initialization to async initialize()
         self.model = None
-        self.model_with_tools = None
         
         self.prompt_template = ChatPromptTemplate.from_messages([
             ("system", self.settings.system_prompt_template),

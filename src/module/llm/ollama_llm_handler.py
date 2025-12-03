@@ -20,7 +20,6 @@ class OllamaLLMHandler(BaseLLMHandler):
         super().__init__(settings)
         # Keep __init__ lightweight - defer heavy initialization to async initialize()
         self.model = None
-        self.model_with_tools = None
         logger.info("异步Ollama大语言模型处理器已创建，等待异步初始化...")
 
     async def initialize(self) -> None:
