@@ -308,7 +308,7 @@ class RAGSettings(BaseSettings):
     # Bailian-specific settings (using OpenAI Compatible API)
     bailian_embedding_model: str = "text-embedding-v3"
     bailian_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    bailian_api_key: SecretStr = SecretStr("")  # 请手动填写百炼平台的 API Key
+    bailian_api_key: SecretStr = SecretStr("sk-5d29b7ca2f074ffea3b7de63c9348ee5")  # 请手动填写百炼平台的 API Key
 
 
 class LLMSettings(BaseSettings):
