@@ -48,16 +48,9 @@ class OllamaLLMHandler(BaseLLMHandler):
 
         logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.ollama_model)
 
-    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区", chat_history: list = []) -> str:
+    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
-
-        Args:
-            user_input (str): 用户的原始输入文本。
-            rag_docs (list[Document]): RAG检索器返回的文档列表。
-
-        Returns:
-            str: 大模型返回的JSON格式指令或错误信息。
         """
         # Ensure the handler is initialized before use
         if self.chain is None:

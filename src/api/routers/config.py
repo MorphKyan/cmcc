@@ -73,15 +73,6 @@ async def get_current_config() -> ConfigResponse:
             "connection_timeout": settings.llm.connection_timeout,
         }
 
-        # 火山引擎配置
-        config_data["volcengine"] = {
-            "ark_api_key": "[REDACTED]",  # 不显示API密钥
-            "ark_base_url": settings.volcengine.ark_base_url,
-            "llm_model_name": settings.volcengine.llm_model_name,
-            "request_timeout": settings.volcengine.request_timeout,
-            "connection_timeout": settings.volcengine.connection_timeout,
-        }
-
         return ConfigResponse(
             status="success",
             data=config_data,

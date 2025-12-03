@@ -55,16 +55,9 @@ class BaseLLMHandler(ABC):
         }
 
     @abstractmethod
-    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区", chat_history: list = []) -> str:
+    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
-
-        Args:
-            user_input (str): 用户的原始输入文本。
-            rag_docs (list[Document]): RAG检索器返回的文档列表。
-
-        Returns:
-            str: 大模型返回的JSON格式指令或错误信息。
         """
         pass
 
@@ -83,7 +76,7 @@ class BaseLLMHandler(ABC):
                 "DEVICES_INFO": json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2),
                 "DOORS_INFO": json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2),
                 "AREAS_INFO": json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2),
-                "rag_context": "",
+                "VIDEOS_INFO": "",
                 "USER_INPUT": "健康检查"
             }
 
@@ -106,11 +99,11 @@ class BaseLLMHandler(ABC):
         """
         pass
 
-    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区", chat_history: list = []) -> dict[str, Any]:
+    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> dict[str, Any]:
         """
         准备Prompt的输入变量，供子类使用。
         """
-        rag_context = self._get_prompt_from_documents(rag_docs)
+        videos_info = self._get_prompt_from_documents(rag_docs)
         devices_info_json = json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2)
         doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
         areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
@@ -119,7 +112,7 @@ class BaseLLMHandler(ABC):
             "DEVICES_INFO": devices_info_json,
             "DOORS_INFO": doors_info_json,
             "AREAS_INFO": areas_info_json,
-            "rag_context": rag_context,
+            "VIDEOS_INFO": videos_info,
             "USER_INPUT": user_input,
             "USER_LOCATION": user_location,
             "chat_history": chat_history

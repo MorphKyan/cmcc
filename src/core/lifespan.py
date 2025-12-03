@@ -7,7 +7,6 @@ from loguru import logger
 from src.config.config import get_settings
 from src.core import dependencies
 from src.module.asr.asr_processor import ASRProcessor
-
 from src.module.vad.vad_core import VADCore
 
 
@@ -45,10 +44,6 @@ async def lifespan(app: FastAPI):
             from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
             dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
             logger.info("使用ModelScope LLM处理器")
-        elif llm_config.provider.lower() == "ark":
-            from src.module.llm.ark_llm_handler import ArkLLMHandler
-            dependencies.llm_processor = ArkLLMHandler(llm_config, settings.volcengine)
-            logger.info("使用火山引擎Ark LLM处理器")
         else:
             from src.module.llm.ollama_llm_handler import OllamaLLMHandler
             dependencies.llm_processor = OllamaLLMHandler(llm_config)

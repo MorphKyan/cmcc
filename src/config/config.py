@@ -150,7 +150,7 @@ USER_CONTEXT_TEMPLATE = """
 "areas_info":{AREAS_INFO}
 "devices_info":{DEVICES_INFO}
 "doors_info":{DOORS_INFO}
-{rag_context}
+"videos":{VIDEOS_INFO}
 
 ## 当前状态
 *   **用户当前位置**: {USER_LOCATION}
@@ -412,18 +412,6 @@ class LLMSettings(BaseSettings):
     request_timeout: int = 10  # Request timeout in seconds
     connection_timeout: int = 10  # Connection timeout in seconds
 
-
-class VolcEngineSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="VOLCENGINE_")
-
-    ark_api_key: SecretStr = SecretStr("aabd9362-9ca8-43ac-bb4d-828f0ba98f4d")
-    ark_base_url: str = "https://ark.cn-beijing.volces.com/api/v3"
-    llm_model_name: str = "doubao-seed-1-6-flash-250715"
-    # Network timeout settings (inherited from LLMSettings if not specified)
-    request_timeout: int = 30  # Request timeout in seconds
-    connection_timeout: int = 10  # Connection timeout in seconds
-
-
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_nested_delimiter='_',
@@ -435,7 +423,6 @@ class AppSettings(BaseSettings):
     asr: FunASRSettings = FunASRSettings()
     rag: RAGSettings = RAGSettings()
     llm: LLMSettings = LLMSettings()
-    volcengine: VolcEngineSettings = VolcEngineSettings()
 
     def __init__(self, **kwargs):
         # 加载 TOML 配置 (自动检测优先级)

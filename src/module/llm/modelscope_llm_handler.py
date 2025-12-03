@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import json
 
 from langchain_core.documents import Document
 from langchain_core.messages import trim_messages
@@ -82,7 +83,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
 
         logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.modelscope_model)
 
-    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str = "5G先锋体验区", chat_history: list = []) -> str:
+    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> str:
         """
         结合RAG上下文，异步获取大模型的响应 - 现代结构化输出版本。
 
@@ -104,16 +105,19 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         try:
             # 准备Prompt的输入变量
             # 1. 准备上下文信息
-            rag_context = self._get_prompt_from_documents(rag_docs)
-            devices_info_json = self._get_json_info(self.get_devices_info_for_prompt())
-            doors_info_json = self._get_json_info(self.get_doors_info_for_prompt())
-            areas_info_json = self._get_json_info(self.get_areas_info_for_prompt())
+            videos_info = self._get_prompt_from_documents(rag_docs)
+            info_list = self.get_devices_info_for_prompt()
+            devices_info_json = json.dumps(info_list, ensure_ascii=False, indent=2)
+            doot_list = self.get_doors_info_for_prompt()
+            doors_info_json = json.dumps(doot_list, ensure_ascii=False, indent=2)
+            area_list = self.get_areas_info_for_prompt()
+            areas_info_json = json.dumps(area_list, ensure_ascii=False, indent=2)
             
             context = self.settings.user_context_template.format(
                 AREAS_INFO=areas_info_json,
                 DEVICES_INFO=devices_info_json,
                 DOORS_INFO=doors_info_json,
-                rag_context=rag_context,
+                VIDEOS_INFO=videos_info,
                 USER_LOCATION=user_location
             )
             
@@ -134,8 +138,3 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             logger.exception("调用ModelScope API或处理链时出错: {error}", error=str(api_error))
             # Use the modern error response method
             return self.create_error_response("api_failure", str(api_error))
-            
-    def _get_json_info(self, info_list: list) -> str:
-        """Helper to dump json with ensure_ascii=False"""
-        import json
-        return json.dumps(info_list, ensure_ascii=False, indent=2)
