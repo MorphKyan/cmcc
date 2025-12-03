@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from langchain_core.documents import Document
+from langchain_core.messages import trim_messages
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from loguru import logger
 
@@ -21,6 +23,13 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         # Keep __init__ lightweight - defer heavy initialization to async initialize()
         self.model = None
         self.model_with_tools = None
+        
+        self.prompt_template = ChatPromptTemplate.from_messages([
+            ("system", self.settings.system_prompt_template),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{context}\n\n用户指令: {user_input}")
+        ])
+        
         logger.info("ModelScope大语言模型处理器已创建，等待异步初始化...")
 
     async def initialize(self) -> None:
@@ -53,8 +62,23 @@ class ModelScopeLLMHandler(BaseLLMHandler):
 
         # 2. 将工具绑定到模型
         self.model_with_tools = self.model.bind_tools(self.tools)
-        # 3. 构建处理链
-        self.chain = self.prompt_template | self.model_with_tools
+        
+        # 3. 创建消息修剪器 (Trimmer)
+        # strategy="last": 保留最后的消息
+        # max_tokens=5: 保留5条消息 (token_counter=len 表示按消息数量计数)
+        # include_system=False: 不修剪系统消息 (保持系统提示词静态)
+        # start_on="human": 确保保留的消息从用户消息开始
+        trimmer = trim_messages(
+            strategy="last",
+            max_tokens=5,
+            token_counter=len,
+            include_system=False,
+            allow_partial=False,
+            start_on="human"
+        )
+        
+        # 4. 构建处理链
+        self.chain = self.prompt_template | trimmer | self.model_with_tools
 
         logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.modelscope_model)
 
@@ -65,6 +89,8 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         Args:
             user_input (str): 用户的原始输入文本。
             rag_docs (list[Document]): RAG检索器返回的文档列表。
+            user_location (str): 用户当前位置。
+            chat_history (list): 聊天记录。
 
         Returns:
             str: 大模型返回的JSON格式指令或错误信息。
@@ -77,7 +103,26 @@ class ModelScopeLLMHandler(BaseLLMHandler):
 
         try:
             # 准备Prompt的输入变量
-            chain_input = self._prepare_chain_input(user_input, rag_docs, user_location=user_location, chat_history=chat_history)
+            # 1. 准备上下文信息
+            rag_context = self._get_prompt_from_documents(rag_docs)
+            devices_info_json = self._get_json_info(self.get_devices_info_for_prompt())
+            doors_info_json = self._get_json_info(self.get_doors_info_for_prompt())
+            areas_info_json = self._get_json_info(self.get_areas_info_for_prompt())
+            
+            context = self.settings.user_context_template.format(
+                AREAS_INFO=areas_info_json,
+                DEVICES_INFO=devices_info_json,
+                DOORS_INFO=doors_info_json,
+                rag_context=rag_context,
+                USER_LOCATION=user_location
+            )
+            
+            # 2. 构造Chain输入
+            chain_input = {
+                "context": context,
+                "user_input": user_input,
+                "chat_history": chat_history
+            }
 
             # 异步调用现代化处理链 - 直接获得结构化输出
             response = await self.chain.ainvoke(chain_input)
@@ -89,3 +134,8 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             logger.exception("调用ModelScope API或处理链时出错: {error}", error=str(api_error))
             # Use the modern error response method
             return self.create_error_response("api_failure", str(api_error))
+            
+    def _get_json_info(self, info_list: list) -> str:
+        """Helper to dump json with ensure_ascii=False"""
+        import json
+        return json.dumps(info_list, ensure_ascii=False, indent=2)
