@@ -6,20 +6,20 @@ import os
 # Ensure src is in python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.module.rag.bailian_rag_processor import BailianRAGProcessor, RAGStatus
+from src.module.rag.dashscope_rag_processor import DashScopeRAGProcessor, RAGStatus
 from src.config.config import RAGSettings
 from langchain_core.documents import Document
 
-class TestBailianRAGIntegration(unittest.IsolatedAsyncioTestCase):
+class TestDashscopeRAGIntegration(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         # Use real settings from config
         self.settings = RAGSettings()
         # Override any necessary settings here if needed
         
-        self.processor = BailianRAGProcessor(self.settings)
+        self.processor = DashScopeRAGProcessor(self.settings)
 
     async def asyncSetUp(self):
-        # Initialize the processor with real Bailian API
+        # Initialize the processor with real dashscope API
         await self.processor.initialize()
         self.assertEqual(self.processor.status, RAGStatus.READY, "Processor should be ready after initialization")
 
@@ -29,8 +29,8 @@ class TestBailianRAGIntegration(unittest.IsolatedAsyncioTestCase):
 
     async def test_integration_retrieve_context(self):
         """
-        Integration test cases for Bailian RAG Processor.
-        These tests call the actual Bailian API to retrieve context.
+        Integration test cases for dashscope RAG Processor.
+        These tests call the actual dashscope API to retrieve context.
         """
         
         # Test cases based on data files: areas.csv, devices.csv, doors.csv, videos.csv

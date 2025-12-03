@@ -19,7 +19,7 @@ merge_length_s = 15.0
 # RAG (检索增强生成) 配置
 [rag]
 # RAG 提供商选择: "ollama" 或 "modelscope"
-provider = "bailian"
+provider = "dashscope"
 videos_data_path = "./data/videos.csv"
 devices_data_path = "./data/devices.csv"
 chroma_db_dir = "./chroma_db"
@@ -31,10 +31,10 @@ ollama_base_url = "http://127.0.0.1:11434"
 modelscope_embedding_model = "Qwen/Qwen3-Embedding-0.6B"
 modelscope_base_url = "https://api-inference.modelscope.cn/v1"
 modelscope_api_key = "ms-b5d21340-4551-4343-86e8-e1c1430ae1f9"
-# 百炼配置
-bailian_embedding_model = "text-embedding-v4"
-bailian_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-bailian_api_key = "sk-5d29b7ca2f074ffea3b7de63c9348ee5"
+# DashScope 配置
+dashscope_embedding_model = "text-embedding-v4"
+dashscope_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+dashscope_api_key = "sk-5d29b7ca2f074ffea3b7de63c9348ee5"
 
 # 大语言模型 (LLM) 配置
 [llm]

@@ -30,10 +30,10 @@ async def lifespan(app: FastAPI):
             from src.module.rag.modelscope_rag_processor import ModelScopeRAGProcessor
             dependencies.rag_processor = ModelScopeRAGProcessor(rag_config)
             logger.info("使用ModelScope RAG处理器")
-        elif rag_config.provider.lower() == "bailian":
-            from src.module.rag.bailian_rag_processor import BailianRAGProcessor
-            dependencies.rag_processor = BailianRAGProcessor(rag_config)
-            logger.info("使用百炼（Bailian）RAG处理器")
+        elif rag_config.provider.lower() == "dashscope":
+            from src.module.rag.dashscope_rag_processor import DashScopeRAGProcessor
+            dependencies.rag_processor = DashScopeRAGProcessor(rag_config)
+            logger.info("使用百炼RAG处理器")
         else:
             from src.module.rag.ollama_rag_processor import OllamaRAGProcessor
             dependencies.rag_processor = OllamaRAGProcessor(rag_config)

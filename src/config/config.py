@@ -366,7 +366,7 @@ class FunASRSettings(BaseSettings):
 class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
-    # RAG Provider selection: "ollama", "modelscope", or "bailian"
+    # RAG Provider selection: "ollama", "modelscope", or "dashscope"
     provider: str = "modelscope"
 
     # Common settings
@@ -384,10 +384,10 @@ class RAGSettings(BaseSettings):
     modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
     modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
 
-    # Bailian-specific settings (using OpenAI Compatible API)
-    bailian_embedding_model: str = "text-embedding-v3"
-    bailian_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    bailian_api_key: SecretStr = SecretStr("sk-5d29b7ca2f074ffea3b7de63c9348ee5")  # 请手动填写百炼平台的 API Key
+    # dashscope-specific settings (using OpenAI Compatible API)
+    dashscope_embedding_model: str = "text-embedding-v3"
+    dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    dashscope_api_key: SecretStr = SecretStr("sk-5d29b7ca2f074ffea3b7de63c9348ee5")  # 请手动填写百炼平台的 API Key
 
 
 class LLMSettings(BaseSettings):

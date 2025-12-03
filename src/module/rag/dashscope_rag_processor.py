@@ -13,9 +13,9 @@ from src.config.config import RAGSettings
 from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus
 
 
-class BailianRAGProcessor(BaseRAGProcessor):
+class DashScopeRAGProcessor(BaseRAGProcessor):
     def __init__(self, settings: RAGSettings) -> None:
-        """初始化百炼（Bailian）RAG处理器。
+        """初始化百炼（DashScope）RAG处理器。
 
         Args:
             settings: RAG配置
@@ -23,7 +23,7 @@ class BailianRAGProcessor(BaseRAGProcessor):
         super().__init__(settings)
         self.embedding_model: OpenAIEmbeddings | None = None
         self._init_lock = asyncio.Lock()
-        logger.info("BailianRAGProcessor已创建，状态: UNINITIALIZED。")
+        logger.info("DashScopeRAGProcessor已创建，状态: UNINITIALIZED。")
 
     async def initialize(self) -> None:
         """初始化百炼 RAG处理器：加载模型、创建或加载数据库。"""
@@ -37,9 +37,9 @@ class BailianRAGProcessor(BaseRAGProcessor):
             try:
                 # 使用 OpenAI Compatible API 方式调用百炼平台
                 self.embedding_model = OpenAIEmbeddings(
-                    model=self.settings.bailian_embedding_model,
-                    base_url=self.settings.bailian_base_url,
-                    api_key=self.settings.bailian_api_key.get_secret_value(),
+                    model=self.settings.dashscope_embedding_model,
+                    base_url=self.settings.dashscope_base_url,
+                    api_key=self.settings.dashscope_api_key,
                     check_embedding_ctx_length=False,
                     chunk_size=10  # API doesn't handle batching correctly
                 )
