@@ -38,7 +38,6 @@ class BailianRAGProcessor(BaseRAGProcessor):
                 # 使用 OpenAI Compatible API 方式调用百炼平台
                 self.embedding_model = OpenAIEmbeddings(
                     model=self.settings.bailian_embedding_model,
-                    dimension=1024,
                     base_url=self.settings.bailian_base_url,
                     api_key=self.settings.bailian_api_key.get_secret_value(),
                     check_embedding_ctx_length=False,
