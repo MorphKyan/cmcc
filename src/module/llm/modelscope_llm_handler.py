@@ -26,7 +26,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         
         self.prompt_template = ChatPromptTemplate.from_messages([
             ("system", self.settings.system_prompt_template),
-            MessagesPlaceholder(variable_name="chat_history"),
+            MessagesPlaceholder(variable_name="chat_history", optional=True),
             ("user", "{context}\n\n用户指令: {user_input}")
         ])
         

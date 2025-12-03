@@ -4,8 +4,6 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from langgraph.checkpoint.memory import InMemorySaver
-
 from src.module.input.stream_decoder import StreamDecoder
 from src.module.vad.vad_core import VADCore
 from src.module.vad.vad_processor import VADProcessor
@@ -26,4 +24,4 @@ class Context:
         self.asr_output_queue: asyncio.Queue[str] = asyncio.Queue()
         self.function_calling_queue: asyncio.Queue[Any] = asyncio.Queue()
         self.location: str = "5G先锋体验区"  # 默认初始位置
-        self.memory: InMemorySaver = InMemorySaver()  # 短期记忆，保留最近5轮
+        self.chat_history: list = []  # 聊天历史消息列表，存储 LangChain Message 对象

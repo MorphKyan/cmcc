@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from fastapi import WebSocket
 from loguru import logger
+from langchain_core.messages import HumanMessage, AIMessage
 
 from src.api.context import Context
 from src.core import dependencies
@@ -97,8 +98,7 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             retrieved_docs = await dependencies.rag_processor.retrieve_context(recognized_text)
 
             # 获取聊天历史
-            chat_history = await context.memory.aload_memory_variables({})
-            chat_history_messages = chat_history.get("history", [])
+            chat_history_messages = context.chat_history
 
             # 执行指令重试
             llm_response = await dependencies.llm_processor.get_response_with_retries(
@@ -110,8 +110,9 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             
             logger.info("[大模型响应] {llm_response}", llm_response=llm_response)
 
-            # 保存对话上下文
-            await context.memory.asave_context({"input": recognized_text}, {"output": llm_response})
+            # 自动保存对话到历史（添加用户消息和AI响应）
+            context.chat_history.append(HumanMessage(content=recognized_text))
+            context.chat_history.append(AIMessage(content=llm_response))
 
             # 处理位置更新
             try:

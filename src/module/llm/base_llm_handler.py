@@ -35,7 +35,7 @@ class BaseLLMHandler(ABC):
         # 使用ChatPromptTemplate构建提示词
         self.prompt_template = ChatPromptTemplate.from_messages([
             ("system", settings.system_prompt_template),
-            MessagesPlaceholder(variable_name="chat_history"),
+            MessagesPlaceholder(variable_name="chat_history", optional=True),
             ("user", "{USER_INPUT}")
         ])
 
