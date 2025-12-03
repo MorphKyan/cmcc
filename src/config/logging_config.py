@@ -22,8 +22,8 @@ def setup_logging(log_level: str = "INFO"):
                "<bold>{name}</bold>:<bold>{function}</bold>:<bold>{line}</bold> - "
                "<level>{message}</level>",
         colorize=True,
-        backtrace=True,  # 在异常时显示完整的堆栈跟踪
-        diagnose=True  # 添加异常变量的详细诊断信息
+        # backtrace=True,  # 在异常时显示完整的堆栈跟踪
+        # diagnose=True  # 添加异常变量的详细诊断信息
     )
     # 添加一个输出到文件的 Sink，用于持久化日志
     logger.add(
@@ -45,8 +45,8 @@ def setup_logging(log_level: str = "INFO"):
         retention="30 days",
         compression="zip",
         enqueue=True,
-        backtrace=True,
-        diagnose=True
+        # backtrace=True,
+        # diagnose=True
     )
     logger.patch(lambda record: record["extra"].update(request_id=request_id_var.get()))
     logger.info("Loguru 日志系统配置完成。")

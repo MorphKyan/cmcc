@@ -39,7 +39,8 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
                     model=self.settings.modelscope_embedding_model,
                     base_url=self.settings.modelscope_base_url,
                     api_key=self.settings.modelscope_api_key,
-                    check_embedding_ctx_length=False
+                    check_embedding_ctx_length=False,
+                    chunk_size=1  # ModelScope API doesn't handle batching correctly
                 )
                 if not os.path.exists(self.chroma_db_dir):
                     logger.info("未找到本地向量数据库，正在创建...")

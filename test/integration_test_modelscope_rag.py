@@ -123,6 +123,11 @@ class TestModelScopeRAGIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"\nRunning {len(test_cases)} integration test cases...")
         
         for i, test_case in enumerate(test_cases, 1):
+            # Rate limiting: 2s per request
+            if i > 1:
+                print("Waiting 2s for rate limiting...")
+                await asyncio.sleep(2)
+
             with self.subTest(case=f"Case {i}: {test_case['description']}"):
                 query = test_case["query"]
                 expected_keywords = test_case["expected_keywords"]
