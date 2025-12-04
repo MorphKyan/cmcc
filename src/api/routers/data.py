@@ -85,3 +85,48 @@ async def get_videos() -> List[Dict[str, Any]]:
     
     videos = dependencies.data_service.get_all_videos()
     return [dependencies.data_service.get_video_info(v) for v in videos if dependencies.data_service.get_video_info(v)]
+
+
+@router.delete("/devices", response_model=UploadResponse)
+async def clear_devices() -> UploadResponse:
+    """清空所有设备数据"""
+    if dependencies.data_service is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
+    
+    try:
+        await dependencies.data_service.clear_devices()
+        if dependencies.rag_processor:
+             await dependencies.rag_processor.refresh_database()
+        return UploadResponse(status="success", message="设备数据已清空")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"清空设备数据失败: {str(e)}")
+
+
+@router.delete("/areas", response_model=UploadResponse)
+async def clear_areas() -> UploadResponse:
+    """清空所有区域数据"""
+    if dependencies.data_service is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
+    
+    try:
+        await dependencies.data_service.clear_areas()
+        if dependencies.rag_processor:
+             await dependencies.rag_processor.refresh_database()
+        return UploadResponse(status="success", message="区域数据已清空")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"清空区域数据失败: {str(e)}")
+
+
+@router.delete("/videos", response_model=UploadResponse)
+async def clear_videos() -> UploadResponse:
+    """清空所有视频数据"""
+    if dependencies.data_service is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
+    
+    try:
+        await dependencies.data_service.clear_videos()
+        if dependencies.rag_processor:
+             await dependencies.rag_processor.refresh_database()
+        return UploadResponse(status="success", message="视频数据已清空")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"清空视频数据失败: {str(e)}")

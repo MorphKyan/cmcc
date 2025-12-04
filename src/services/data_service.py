@@ -238,3 +238,44 @@ class DataService:
             if os.path.exists(file_path + '.backup'):
                 shutil.move(file_path + '.backup', file_path)
             raise e
+
+    async def clear_devices(self) -> None:
+        """Clear all device data."""
+        settings = get_settings()
+        await self._clear_csv_file(settings.data.devices_data_path, ['name', 'type', 'area', 'aliases', 'description'])
+        self.reload()
+
+    async def clear_areas(self) -> None:
+        """Clear all area data."""
+        settings = get_settings()
+        await self._clear_csv_file(settings.data.areas_data_path, ['name', 'aliases', 'description'])
+        self.reload()
+
+    async def clear_videos(self) -> None:
+        """Clear all video data."""
+        settings = get_settings()
+        await self._clear_csv_file(settings.data.videos_data_path, ['name', 'aliases', 'description', 'filename'])
+        self.reload()
+
+    async def _clear_csv_file(self, file_path: str, columns: List[str]) -> None:
+        """Clear a CSV file by writing only headers."""
+        backup_path = file_path + '.backup'
+        try:
+            # Backup existing file
+            if os.path.exists(file_path):
+                shutil.copy2(file_path, backup_path)
+            
+            # Write empty DataFrame with headers
+            empty_df = pd.DataFrame(columns=columns)
+            empty_df.to_csv(file_path, index=False, quoting=1)
+            
+            # Remove backup if successful
+            if os.path.exists(backup_path):
+                os.remove(backup_path)
+                
+        except Exception as e:
+            logger.error(f"Error clearing CSV file {file_path}: {e}")
+            # Restore backup if exists
+            if os.path.exists(backup_path):
+                shutil.move(backup_path, file_path)
+            raise e
