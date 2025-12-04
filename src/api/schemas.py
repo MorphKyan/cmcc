@@ -57,3 +57,24 @@ class ConfigResponse(BaseModel):
     status: str
     data: dict[str, Any]
     message: Optional[str] = None
+
+
+class DeviceItem(BaseModel):
+    name: str
+    type: str
+    area: str
+    aliases: Optional[str] = None
+    description: Optional[str] = None
+
+
+class AreaItem(BaseModel):
+    name: str
+    aliases: Optional[str] = None
+    description: Optional[str] = None
+
+
+class VideoItem(BaseModel):
+    name: str
+    aliases: Optional[str] = None
+    description: Optional[str] = None
+    filename: str

@@ -2,72 +2,109 @@
   <div id="app">
     <header>
       <h1>智能控制系统</h1>
+      <nav class="tabs">
+        <button 
+          :class="{ active: activeTab === 'home' }" 
+          @click="activeTab = 'home'"
+        >主页</button>
+        <button 
+          :class="{ active: activeTab === 'devices' }" 
+          @click="activeTab = 'devices'"
+        >设备管理</button>
+        <button 
+          :class="{ active: activeTab === 'resources' }" 
+          @click="activeTab = 'resources'"
+        >资源管理</button>
+        <button 
+          :class="{ active: activeTab === 'areas' }" 
+          @click="activeTab = 'areas'"
+        >区域管理</button>
+      </nav>
     </header>
     
     <main>
       <div class="container">
-        <!-- 音频录制组件 -->
-        <section class="audio-section">
-          <AudioRecorder />
-        </section>
-        
-        <!-- 健康检查和状态显示 -->
-        <section class="status-section">
-          <h2>系统状态</h2>
-          <div class="status-content">
-            <p>健康检查: {{ healthStatus }}</p>
-            <p>VAD 状态: {{ vadStatusInfo }}</p>
-            <p>RAG 状态: {{ ragStatusInfo }}</p>
-            <p>LLM 健康: {{ llmHealthStatus }}</p>
-            <button @click="checkHealth">检查健康</button>
-            <button @click="getVadStatus">获取 VAD 状态</button>
-            <button @click="reinitializeVad">重启 VAD</button>
-            <button @click="getRagStatus">获取 RAG 状态</button>
-            <button @click="refreshRag">刷新 RAG</button>
-            <button @click="checkLLMHealth">检查 LLM 健康</button>
-          </div>
-        </section>
-        
-        <!-- 查询功能 -->
-        <section class="query-section">
-          <h2>RAG 查询</h2>
-          <div class="query-content">
-            <input v-model="queryText" placeholder="请输入查询内容" />
-            <button @click="performQuery">查询</button>
-            <div v-if="queryResult" class="query-result">
-              <h3>查询结果:</h3>
-              <pre>{{ queryResult }}</pre>
+        <!-- 主页内容 -->
+        <div v-show="activeTab === 'home'">
+          <!-- 音频录制组件 -->
+          <section class="audio-section">
+            <AudioRecorder />
+          </section>
+          
+          <!-- 健康检查和状态显示 -->
+          <section class="status-section">
+            <h2>系统状态</h2>
+            <div class="status-content">
+              <p>健康检查: {{ healthStatus }}</p>
+              <p>VAD 状态: {{ vadStatusInfo }}</p>
+              <p>RAG 状态: {{ ragStatusInfo }}</p>
+              <p>LLM 健康: {{ llmHealthStatus }}</p>
+              <button @click="checkHealth">检查健康</button>
+              <button @click="getVadStatus">获取 VAD 状态</button>
+              <button @click="reinitializeVad">重启 VAD</button>
+              <button @click="getRagStatus">获取 RAG 状态</button>
+              <button @click="refreshRag">刷新 RAG</button>
+              <button @click="checkLLMHealth">检查 LLM 健康</button>
             </div>
-          </div>
-        </section>
+          </section>
+          
+          <!-- 查询功能 -->
+          <section class="query-section">
+            <h2>RAG 查询</h2>
+            <div class="query-content">
+              <input v-model="queryText" placeholder="请输入查询内容" />
+              <button @click="performQuery">查询</button>
+              <div v-if="queryResult" class="query-result">
+                <h3>查询结果:</h3>
+                <pre>{{ queryResult }}</pre>
+              </div>
+            </div>
+          </section>
 
-        <!-- 配置显示 -->
-        <section class="config-section">
-          <h2>当前配置</h2>
-          <div class="config-content">
-            <button @click="loadConfig" :disabled="configLoading">
-              {{ configLoading ? '加载中...' : '加载配置' }}
-            </button>
-            <div v-if="currentConfig" class="config-display">
-              <div v-for="(category, categoryName) in currentConfig" :key="categoryName" class="config-category">
-                <h3>{{ categoryName.toUpperCase() }} 配置</h3>
-                <div v-for="(value, key) in category" :key="key" class="config-item">
-                  <strong>{{ key }}:</strong> {{ value }}
+          <!-- 配置显示 -->
+          <section class="config-section">
+            <h2>当前配置</h2>
+            <div class="config-content">
+              <button @click="loadConfig" :disabled="configLoading">
+                {{ configLoading ? '加载中...' : '加载配置' }}
+              </button>
+              <div v-if="currentConfig" class="config-display">
+                <div v-for="(category, categoryName) in currentConfig" :key="categoryName" class="config-category">
+                  <h3>{{ categoryName.toUpperCase() }} 配置</h3>
+                  <div v-for="(value, key) in category" :key="key" class="config-item">
+                    <strong>{{ key }}:</strong> {{ value }}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <!-- 文件上传 -->
-        <section class="upload-section">
-          <h2>上传 videos.csv</h2>
-          <div class="upload-content">
-            <input type="file" ref="fileInput" accept=".csv" />
-            <button @click="uploadFile">上传</button>
-            <p v-if="uploadMessage">{{ uploadMessage }}</p>
-          </div>
-        </section>
+          <!-- 文件上传 (Legacy) -->
+          <section class="upload-section">
+            <h2>上传 videos.csv (文件)</h2>
+            <div class="upload-content">
+              <input type="file" ref="fileInput" accept=".csv" />
+              <button @click="uploadFile">上传</button>
+              <p v-if="uploadMessage">{{ uploadMessage }}</p>
+            </div>
+          </section>
+        </div>
+
+        <!-- 设备管理 -->
+        <div v-if="activeTab === 'devices'">
+          <DeviceManager />
+        </div>
+
+        <!-- 资源管理 -->
+        <div v-if="activeTab === 'resources'">
+          <ResourceManager />
+        </div>
+
+        <!-- 区域管理 -->
+        <div v-if="activeTab === 'areas'">
+          <AreaManager />
+        </div>
+
       </div>
     </main>
   </div>
@@ -75,6 +112,9 @@
 
 <script>
 import AudioRecorder from './components/AudioRecorder.vue'
+import DeviceManager from './components/DeviceManager.vue'
+import ResourceManager from './components/ResourceManager.vue'
+import AreaManager from './components/AreaManager.vue'
 import {
   getCurrentConfig,
   healthCheck,
@@ -90,10 +130,14 @@ import {
 export default {
   name: 'App',
   components: {
-    AudioRecorder
+    AudioRecorder,
+    DeviceManager,
+    ResourceManager,
+    AreaManager
   },
   data() {
     return {
+      activeTab: 'home',
       healthStatus: '未知',
       ragStatusInfo: '未知',
       vadStatusInfo: '未知',
@@ -157,7 +201,7 @@ export default {
       }
     },
 
-    async restartVad() {
+    async reinitializeVad() {
       try {
         const response = await vadRestart()
         this.vadStatusInfo = response.data.data.current_status
@@ -207,9 +251,11 @@ export default {
 
     // 定期更新状态
     async updateStatuses() {
-      await this.checkHealth()
-      await this.getVadStatus()
-      await this.getRagStatus()
+      if (this.activeTab === 'home') {
+        await this.checkHealth()
+        await this.getVadStatus()
+        await this.getRagStatus()
+      }
     },
 
     // 第一次更新所有状态
@@ -254,7 +300,34 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 20px;
+}
+
+.tabs {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  margin: 0 5px;
+}
+
+.tabs button.active {
+  color: #42b983;
+  border-bottom: 2px solid #42b983;
+  font-weight: bold;
+}
+
+.tabs button:hover {
+  color: #42b983;
 }
 
 .container {
@@ -282,6 +355,11 @@ button {
 
 button:hover {
   background-color: #359c6d;
+}
+
+button:disabled {
+  background-color: #a8d5c2;
+  cursor: not-allowed;
 }
 
 input {
