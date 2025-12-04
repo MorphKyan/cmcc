@@ -16,12 +16,17 @@ batch_size_s = 60.0
 merge_vad = true
 merge_length_s = 15.0
 
-# RAG (检索增强生成) 配置
-[rag]
-# RAG 提供商选择: "ollama" 或 "modelscope"
-provider = "dashscope"
+# 数据文件路径配置
+[data]
 videos_data_path = "./data/videos.csv"
 devices_data_path = "./data/devices.csv"
+areas_data_path = "./data/areas.csv"
+doors_data_path = "./data/doors.csv"
+
+# RAG (检索增强生成) 配置
+[rag]
+# RAG 提供商选择: "ollama", "modelscope", 或 "dashscope"
+provider = "dashscope"
 chroma_db_dir = "./chroma_db"
 top_k_results = 10
 # Ollama 配置
