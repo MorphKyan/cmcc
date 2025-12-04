@@ -11,7 +11,7 @@ from langchain_core.documents import Document
 from loguru import logger
 
 from src.config.config import RAGSettings
-from src.module.rag.data_loader import load_documents_from_csvs
+from src.services.data_service import DataService
 
 
 class RAGStatus(Enum):
@@ -59,8 +59,7 @@ class BaseRAGProcessor(ABC):
             self.vector_store.reset_collection()
 
             documents = await asyncio.to_thread(
-                load_documents_from_csvs, 
-                [self.settings.videos_data_path, self.settings.devices_data_path]
+                DataService().get_rag_documents
             )
 
             if not documents:
@@ -92,8 +91,7 @@ class BaseRAGProcessor(ABC):
         try:
             # 加载videos和devices数据
             documents = await asyncio.to_thread(
-                load_documents_from_csvs, 
-                [self.settings.videos_data_path, self.settings.devices_data_path]
+                DataService().get_rag_documents
             )
 
             if not documents:

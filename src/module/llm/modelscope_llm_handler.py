@@ -68,8 +68,6 @@ class ModelScopeLLMHandler(BaseLLMHandler):
 
         logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.modelscope_model)
 
-    # ==================== Response Methods ====================
-    
     async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> str:
         """
         结合RAG上下文，异步获取大模型的响应 - 现代结构化输出版本。
