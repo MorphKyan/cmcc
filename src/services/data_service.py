@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from langchain_core.documents import Document
 
 from src.config.config import get_settings
-from src.api.schemas import DeviceItem, AreaItem, VideoItem
+from src.api.schemas import DeviceItem, AreaItem, VideoItem, DoorItem
 
 class DataService:
     """
@@ -190,84 +190,17 @@ class DataService:
         with self._data_lock:
             return list(self._devices_cache.keys())
 
-    def get_rag_documents(self) -> List[Document]:
-        """
-        Convert cached data into LangChain Documents for RAG.
-        Returns:
-            List[Document]: List of documents ready for vector store.
-        """
-        documents = []
+    def get_all_doors_data(self) -> List[Dict[str, Any]]:
         with self._data_lock:
-            # Process Doors
-            for _, door in self._doors_cache.items():
-                content_parts = [f"{door['name']}"]
-                door_type = door.get('type', '')
-                
-                if door_type == 'passage':
-                    area1 = door.get('area1', '')
-                    area2 = door.get('area2', '')
-                    if area1 and area2:
-                        content_parts.append(f"连接{area1}和{area2}")
-                elif door_type == 'standalone':
-                    location = door.get('location', '')
-                    if location:
-                        content_parts.append(f"位于{location}")
-                
-                content = "，".join(content_parts)
-                metadata = {
-                    "type": "door",
-                    "name": door.get("name", ""),
-                    "door_type": door_type,
-                    "area1": door.get("area1", ""),
-                    "area2": door.get("area2", ""),
-                    "location": door.get("location", ""),
-                    "filename": ""
-                }
-                documents.append(Document(page_content=content, metadata=metadata))
+            return list(self._doors_cache.values())
 
-            # Process Devices
-            for _, device in self._devices_cache.items():
-                content_parts = [f"{device['name']}"]
-                if device.get('type'):
-                    content_parts.append(f"类型为{device['type']}")
-                if device.get('area'):
-                    content_parts.append(f"位于{device['area']}")
-                if device.get('aliases'):
-                    content_parts.append(f"也称为{device['aliases']}")
-                if device.get('description'):
-                    content_parts.append(f"内容描述了{device['description']}")
+    def get_all_videos_data(self) -> List[Dict[str, Any]]:
+        with self._data_lock:
+            return list(self._videos_cache.values())
 
-                content = "，".join(content_parts)
-                metadata = {
-                    "type": "device",
-                    "name": device.get("name", ""),
-                    "device_type": device.get("type", ""),
-                    "area": device.get("area", ""),
-                    "aliases": device.get("aliases", ""),
-                    "description": device.get("description", ""),
-                    "filename": ""
-                }
-                documents.append(Document(page_content=content, metadata=metadata))
-
-            # Process Videos
-            for _, video in self._videos_cache.items():
-                content_parts = [f"{video['name']}"]
-                if video.get('aliases'):
-                    content_parts.append(f"也称为{video['aliases']}")
-                if video.get('description'):
-                    content_parts.append(f"内容描述了{video['description']}")
-
-                content = "，".join(content_parts)
-                metadata = {
-                    "type": "video",
-                    "name": video.get("name", ""),
-                    "aliases": video.get("aliases", ""),
-                    "description": video.get("description", ""),
-                    "filename": video.get("filename", "")
-                }
-                documents.append(Document(page_content=content, metadata=metadata))
-
-        return documents
+    def get_all_devices_data(self) -> List[Dict[str, Any]]:
+        with self._data_lock:
+            return list(self._devices_cache.values())
 
     # --- Write Methods ---
 
@@ -284,6 +217,11 @@ class DataService:
     async def add_videos(self, items: List[VideoItem]) -> None:
         settings = get_settings()
         await self._append_to_csv(settings.data.videos_data_path, items, ['name', 'aliases', 'description', 'filename'])
+        self.reload()
+
+    async def add_doors(self, items: List[DoorItem]) -> None:
+        settings = get_settings()
+        await self._append_to_csv(settings.data.doors_data_path, items, ['name', 'type', 'area1', 'area2', 'location'])
         self.reload()
 
     async def _append_to_csv(self, file_path: str, items: List[BaseModel], columns: List[str]) -> None:

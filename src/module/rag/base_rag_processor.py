@@ -12,6 +12,8 @@ from loguru import logger
 
 from src.config.config import RAGSettings
 from src.services.data_service import DataService
+from src.module.rag.helper import convert_doors_to_documents, convert_videos_to_documents, convert_devices_to_documents
+from src.api.schemas import DoorItem, VideoItem, DeviceItem
 
 
 class RAGStatus(Enum):
@@ -58,9 +60,15 @@ class BaseRAGProcessor(ABC):
             self.status = RAGStatus.UNINITIALIZED
             self.vector_store.reset_collection()
 
-            documents = await asyncio.to_thread(
-                DataService().get_rag_documents
-            )
+            data_service = DataService()
+            doors_data = data_service.get_all_doors_data
+            videos_data = data_service.get_all_videos_data
+            devices_data = data_service.get_all_devices_data
+
+            documents = []
+            documents.extend(convert_doors_to_documents(doors_data))
+            documents.extend(convert_videos_to_documents(videos_data))
+            documents.extend(convert_devices_to_documents(devices_data))
 
             if not documents:
                 raise ValueError("从CSV加载的文档为空，无法创建数据库。")
@@ -90,9 +98,15 @@ class BaseRAGProcessor(ABC):
         """
         try:
             # 加载videos和devices数据
-            documents = await asyncio.to_thread(
-                DataService().get_rag_documents
-            )
+            data_service = DataService()
+            doors_data = data_service.get_all_doors_data
+            videos_data = data_service.get_all_videos_data
+            devices_data = data_service.get_all_devices_data
+
+            documents = []
+            documents.extend(convert_doors_to_documents(doors_data))
+            documents.extend(convert_videos_to_documents(videos_data))
+            documents.extend(convert_devices_to_documents(devices_data))
 
             if not documents:
                 raise ValueError("从CSV加载的文档为空，无法创建数据库。")
@@ -110,3 +124,27 @@ class BaseRAGProcessor(ABC):
             logger.info("数据库已成功创建并保存在 '{db_dir}'。", db_dir=self.chroma_db_dir)
         except (FileNotFoundError, ValueError) as e:
             raise IOError(f"创建数据库失败: {e}") from e
+
+    async def batch_add_doors(self, items: list[DoorItem]) -> None:
+        """批量添加门数据并更新向量数据库"""
+        new_doors_data = [item.model_dump() for item in items]
+        documents = convert_doors_to_documents(new_doors_data)
+        if self.vector_store:
+            self.vector_store.add_documents(documents)
+            logger.info(f"已向向量数据库添加 {len(documents)} 个门文档")
+
+    async def batch_add_videos(self, items: list[VideoItem]) -> None:
+        """批量添加视频数据并更新向量数据库"""
+        new_videos_data = [item.model_dump() for item in items]
+        documents = convert_videos_to_documents(new_videos_data)
+        if self.vector_store:
+            self.vector_store.add_documents(documents)
+            logger.info(f"已向向量数据库添加 {len(documents)} 个视频文档")
+
+    async def batch_add_devices(self, items: list[DeviceItem]) -> None:
+        """批量添加设备数据并更新向量数据库"""
+        new_devices_data = [item.model_dump() for item in items]
+        documents = convert_devices_to_documents(new_devices_data)
+        if self.vector_store:
+            self.vector_store.add_documents(documents)
+            logger.info(f"已向向量数据库添加 {len(documents)} 个设备文档")
