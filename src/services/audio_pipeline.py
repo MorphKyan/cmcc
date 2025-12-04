@@ -91,11 +91,31 @@ async def run_asr_processor(context: Context) -> None:
 async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     """LLM/RAG处理逻辑代码"""
     logger.info("LLM/RAG处理器已启动")
+    
+    # 导入MetadataType用于分类检索
+    from src.module.rag.base_rag_processor import MetadataType
 
     while True:
         try:
             recognized_text = await context.asr_output_queue.get()
-            retrieved_docs = await dependencies.rag_processor.retrieve_context(recognized_text)
+            
+            # 分别检索每种类型的文档，每种5个
+            door_docs = await dependencies.rag_processor.retrieve_context(
+                recognized_text, metadata_types=[MetadataType.DOOR], top_k=5
+            )
+            video_docs = await dependencies.rag_processor.retrieve_context(
+                recognized_text, metadata_types=[MetadataType.VIDEO], top_k=5
+            )
+            device_docs = await dependencies.rag_processor.retrieve_context(
+                recognized_text, metadata_types=[MetadataType.DEVICE], top_k=5
+            )
+            
+            # 构建分类后的RAG文档字典
+            retrieved_docs_by_type = {
+                "door": door_docs,
+                "video": video_docs,
+                "device": device_docs
+            }
 
             # 获取聊天历史
             chat_history_messages = context.chat_history
@@ -103,7 +123,7 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             # 执行指令重试
             llm_response = await dependencies.llm_processor.get_response_with_retries(
                 user_input=recognized_text,
-                rag_docs=retrieved_docs,
+                rag_docs=retrieved_docs_by_type,
                 user_location=context.location,
                 chat_history=chat_history_messages
             )

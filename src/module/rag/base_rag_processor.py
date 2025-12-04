@@ -23,6 +23,13 @@ class RAGStatus(Enum):
     ERROR = "ERROR"
 
 
+class MetadataType(Enum):
+    """RAG文档的元数据类型"""
+    DOOR = "door"
+    VIDEO = "video"
+    DEVICE = "device"
+
+
 class BaseRAGProcessor(ABC):
     def __init__(self, settings: RAGSettings) -> None:
         """初始化RAG处理器基类。
@@ -49,8 +56,19 @@ class BaseRAGProcessor(ABC):
         pass
 
     @abstractmethod
-    async def retrieve_context(self, query: str) -> list[Document]:
-        """根据查询检索相关上下文。"""
+    async def retrieve_context(
+        self, 
+        query: str, 
+        metadata_types: list[MetadataType] | None = None,
+        top_k: int | None = None
+    ) -> list[Document]:
+        """根据查询检索相关上下文。
+        
+        Args:
+            query: 查询文本
+            metadata_types: 可选的元数据类型过滤列表，为None时检索所有类型
+            top_k: 返回的文档数量，为None时使用配置默认值
+        """
         pass
 
     async def refresh_database(self) -> bool:

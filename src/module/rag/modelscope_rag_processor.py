@@ -10,7 +10,7 @@ from langchain_openai import OpenAIEmbeddings
 from loguru import logger
 
 from src.config.config import RAGSettings
-from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus
+from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus, MetadataType
 
 
 class ModelScopeRAGProcessor(BaseRAGProcessor):
@@ -65,12 +65,37 @@ class ModelScopeRAGProcessor(BaseRAGProcessor):
                 logger.exception(self.error_message)
                 raise
 
-    async def retrieve_context(self, query: str) -> list[Document]:
-        """根据用户查询异步检索相关上下文。"""
+    async def retrieve_context(
+        self, 
+        query: str, 
+        metadata_types: list[MetadataType] | None = None,
+        top_k: int | None = None
+    ) -> list[Document]:
+        """根据用户查询异步检索相关上下文。
+        
+        Args:
+            query: 查询文本
+            metadata_types: 可选的元数据类型过滤列表，为None时检索所有类型
+            top_k: 返回的文档数量，为None时使用配置默认值
+        """
         if self.status != RAGStatus.READY:
             raise RuntimeError(f"RAG处理器未准备就绪，当前状态: {self.status}")
-        logger.info("正在为查询检索上下文: '{query}'", query=query)
-        docs = await self.retriever.ainvoke(query)
+        
+        k = top_k if top_k is not None else self.settings.top_k_results
+        logger.info("正在为查询检索上下文: '{query}', 类型过滤: {types}, top_k: {k}", 
+                    query=query, types=metadata_types, k=k)
+        
+        if metadata_types is None:
+            # 无过滤，使用默认检索
+            docs = await self.vector_store.asimilarity_search(query, k=k)
+        else:
+            # 使用metadata过滤
+            type_values = [t.value for t in metadata_types]
+            filter_dict = {"type": {"$in": type_values}}
+            docs = await self.vector_store.asimilarity_search(
+                query, k=k, filter=filter_dict
+            )
+        
         logger.info("检索到 {num_docs} 个相关文档。", num_docs=len(docs))
         return docs
 

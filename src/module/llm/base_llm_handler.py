@@ -101,16 +101,28 @@ class BaseLLMHandler(ABC):
         }
 
     @abstractmethod
-    async def get_response(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> str:
+    async def get_response(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> str:
         """
         结合RAG上下文，异步获取大模型的响应。
+        
+        Args:
+            user_input: 用户输入
+            rag_docs: 按类型分类的RAG文档字典 {"door": [...], "video": [...], "device": [...]}
+            user_location: 用户当前位置
+            chat_history: 聊天历史
         """
         pass
 
-    async def get_response_with_retries(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> str:
+    async def get_response_with_retries(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> str:
         """
         带重试机制的响应获取方法。
         使用LangChain的bind_tools和自定义循环来处理工具调用和错误恢复。
+        
+        Args:
+            user_input: 用户输入
+            rag_docs: 按类型分类的RAG文档字典 {"door": [...], "video": [...], "device": [...]}
+            user_location: 用户当前位置
+            chat_history: 聊天历史
         """
         # 1. 准备输入
         chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
@@ -206,18 +218,30 @@ class BaseLLMHandler(ABC):
         # 循环结束（达到最大重试次数或最后一次仍有错）        
         return self._format_response(ai_msg)
 
-    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> dict[str, Any]:
+    def _prepare_chain_input(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> dict[str, Any]:
         """
         准备Prompt的输入变量，供子类使用。
+        
+        Args:
+            user_input: 用户输入
+            rag_docs: 按类型分类的RAG文档字典 {"door": [...], "video": [...], "device": [...]}
+            user_location: 用户当前位置
+            chat_history: 聊天历史
         """
-        videos_info = self._get_prompt_from_documents(rag_docs)
-        devices_info_json = json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2)
-        doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
+        # 从分类文档字典中提取各类型的文档
+        video_docs = rag_docs.get("video", [])
+        door_docs = rag_docs.get("door", [])
+        device_docs = rag_docs.get("device", [])
+        
+        # 格式化各类型信息
+        videos_info = self._get_prompt_from_documents(video_docs, "video")
+        doors_info = self._get_prompt_from_documents(door_docs, "door")
+        devices_info = self._get_prompt_from_documents(device_docs, "device")
         areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
 
         return {
-            "DEVICES_INFO": devices_info_json,
-            "DOORS_INFO": doors_info_json,
+            "DEVICES_INFO": devices_info,
+            "DOORS_INFO": doors_info,
             "AREAS_INFO": areas_info_json,
             "VIDEOS_INFO": videos_info,
             "USER_INPUT": user_input,
@@ -255,33 +279,60 @@ class BaseLLMHandler(ABC):
         return json.dumps([], ensure_ascii=False)
 
     @staticmethod
-    def _get_prompt_from_documents(docs: list[Document]) -> str:
+    def _get_prompt_from_documents(docs: list[Document], doc_type: str = "video") -> str:
         """
-        将检索到的Videos Document对象格式化为可以插入到Prompt中的字符串。
+        将检索到的Document对象格式化为可以插入到Prompt中的字符串。
 
         Args:
             docs (list[Document]): 检索到的Document对象列表。
+            doc_type (str): 文档类型，可选值为 "video", "door", "device"
 
         Returns:
-            str: 格式化后的知识库字符串，包含设备类型、名称、描述和文件名。
+            str: 格式化后的JSON字符串。
         """
         if not docs:
-            return ""
+            return "[]"
 
-        videos = []
+        result = []
 
         for doc in docs:
             meta = doc.metadata
-            filename = meta.get("filename", "")
-            description = meta.get("description", "")
-            aliases = meta.get("aliases", "")
-            video = {
-                "name": filename,
-                "description": f"{description}，也称为{aliases}",
-            }
-            videos.append(video)
+            
+            if doc_type == "video":
+                item = {
+                    "name": meta.get("filename", ""),
+                    "description": f"{meta.get('description', '')}，也称为{meta.get('aliases', '')}",
+                }
+            elif doc_type == "door":
+                door_type = meta.get("door_type", "")
+                if door_type == "passage":
+                    area1 = meta.get("area1", "")
+                    area2 = meta.get("area2", "")
+                    description = f"连接{area1}和{area2}的通道门"
+                elif door_type == "standalone":
+                    location = meta.get("location", "")
+                    description = f"位于{location}的独立门"
+                else:
+                    description = "门"
+                item = {
+                    "name": meta.get("name", ""),
+                    "type": door_type,
+                    "description": description
+                }
+            elif doc_type == "device":
+                item = {
+                    "name": meta.get("name", ""),
+                    "type": meta.get("device_type", ""),
+                    "area": meta.get("area", ""),
+                    "description": f"{meta.get('description', '')}，也称为{meta.get('aliases', '')}"
+                }
+            else:
+                # 默认处理
+                item = {"content": doc.page_content}
+            
+            result.append(item)
 
-        return json.dumps(videos, ensure_ascii=False, indent=2)
+        return json.dumps(result, ensure_ascii=False, indent=2)
 
     @property
     def data_service(self):
