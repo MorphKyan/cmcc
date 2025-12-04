@@ -9,7 +9,7 @@ from loguru import logger
 
 from src.config.config import LLMSettings
 from src.module.llm.base_llm_handler import BaseLLMHandler
-
+from src.module.llm.helper import DocumentFormatter
 
 
 class ModelScopeLLMHandler(BaseLLMHandler):
@@ -94,9 +94,9 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             door_docs = rag_docs.get("door", [])
             device_docs = rag_docs.get("device", [])
             
-            videos_info = self._get_prompt_from_documents(video_docs, "video")
-            doors_info = self._get_prompt_from_documents(door_docs, "door")
-            devices_info = self._get_prompt_from_documents(device_docs, "device")
+            videos_info = DocumentFormatter.get_prompt_from_documents(self, video_docs)
+            doors_info = DocumentFormatter.get_prompt_from_documents(self, door_docs)
+            devices_info = DocumentFormatter.get_prompt_from_documents(self, device_docs)
             area_list = self.get_areas_info_for_prompt()
             areas_info_json = json.dumps(area_list, ensure_ascii=False, indent=2)
             

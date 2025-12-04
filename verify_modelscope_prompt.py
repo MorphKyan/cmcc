@@ -40,7 +40,7 @@ async def verify_handler():
     
     # Mock helper methods to return simple JSON
     handler._get_json_info = MagicMock(return_value="[]")
-    handler._get_prompt_from_documents = MagicMock(return_value="[]")
+    # handler._get_prompt_from_documents = MagicMock(return_value="[]")
     
     # Test Data
     user_input = "Test Input"

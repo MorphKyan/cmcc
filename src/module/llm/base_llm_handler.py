@@ -15,6 +15,7 @@ from src.config.config import LLMSettings
 from src.core import dependencies
 from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
 from src.module.llm.tool.validator import ToolValidator
+from src.module.llm.helper import DocumentFormatter
 
 
 class BaseLLMHandler(ABC):
@@ -172,7 +173,7 @@ class BaseLLMHandler(ABC):
                     
                 try:
                     # Semantic Validation
-                    is_valid, error_message = self._validate_tool_args(tool_name, tool_args)
+                    is_valid, error_message = ToolValidator.get_instance().validate_tool_args(tool_name, tool_args)
                     if not is_valid:
                         raise ValueError(f"Validation failed: {error_message}")
 
@@ -234,9 +235,9 @@ class BaseLLMHandler(ABC):
         device_docs = rag_docs.get("device", [])
         
         # 格式化各类型信息
-        videos_info = self._get_prompt_from_documents(video_docs, "video")
-        doors_info = self._get_prompt_from_documents(door_docs, "door")
-        devices_info = self._get_prompt_from_documents(device_docs, "device")
+        videos_info = DocumentFormatter.get_prompt_from_documents(self, video_docs)
+        doors_info = DocumentFormatter.get_prompt_from_documents(self, door_docs)
+        devices_info = DocumentFormatter.get_prompt_from_documents(self, device_docs)
         areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
 
         return {
@@ -277,62 +278,6 @@ class BaseLLMHandler(ABC):
             return json.dumps(commands, ensure_ascii=False, indent=2)
             
         return json.dumps([], ensure_ascii=False)
-
-    @staticmethod
-    def _get_prompt_from_documents(docs: list[Document], doc_type: str = "video") -> str:
-        """
-        将检索到的Document对象格式化为可以插入到Prompt中的字符串。
-
-        Args:
-            docs (list[Document]): 检索到的Document对象列表。
-            doc_type (str): 文档类型，可选值为 "video", "door", "device"
-
-        Returns:
-            str: 格式化后的JSON字符串。
-        """
-        if not docs:
-            return "[]"
-
-        result = []
-
-        for doc in docs:
-            meta = doc.metadata
-            
-            if doc_type == "video":
-                item = {
-                    "name": meta.get("filename", ""),
-                    "description": f"{meta.get('description', '')}，也称为{meta.get('aliases', '')}",
-                }
-            elif doc_type == "door":
-                door_type = meta.get("door_type", "")
-                if door_type == "passage":
-                    area1 = meta.get("area1", "")
-                    area2 = meta.get("area2", "")
-                    description = f"连接{area1}和{area2}的通道门"
-                elif door_type == "standalone":
-                    location = meta.get("location", "")
-                    description = f"位于{location}的独立门"
-                else:
-                    description = "门"
-                item = {
-                    "name": meta.get("name", ""),
-                    "type": door_type,
-                    "description": description
-                }
-            elif doc_type == "device":
-                item = {
-                    "name": meta.get("name", ""),
-                    "type": meta.get("device_type", ""),
-                    "area": meta.get("area", ""),
-                    "description": f"{meta.get('description', '')}，也称为{meta.get('aliases', '')}"
-                }
-            else:
-                # 默认处理
-                item = {"content": doc.page_content}
-            
-            result.append(item)
-
-        return json.dumps(result, ensure_ascii=False, indent=2)
 
     @property
     def data_service(self):
@@ -408,19 +353,6 @@ class BaseLLMHandler(ABC):
                     "description": f"{description_str}，也称为{aliases}"
                 })
         return devices_info
-
-    def _validate_tool_args(self, tool_name: str, tool_args: dict) -> tuple[bool, str | None]:
-        """
-        验证工具参数
-
-        Args:
-            tool_name: 工具名称
-            tool_args: 工具参数
-
-        Returns:
-            (是否有效, 错误信息)
-        """
-        return ToolValidator.get_instance().validate_tool_args(tool_name, tool_args)
 
     def create_error_response(self, reason: str, message: str | None = None) -> str:
         """
