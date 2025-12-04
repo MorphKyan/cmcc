@@ -363,6 +363,15 @@ class FunASRSettings(BaseSettings):
     merge_length_s: float = 15.0
 
 
+class DataSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="DATA_")
+
+    videos_data_path: str = os.path.join(data_dir, "videos.csv")
+    devices_data_path: str = os.path.join(data_dir, "devices.csv")
+    areas_data_path: str = os.path.join(data_dir, "areas.csv")
+    doors_data_path: str = os.path.join(data_dir, "doors.csv")
+
+
 class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
@@ -370,9 +379,6 @@ class RAGSettings(BaseSettings):
     provider: str = "modelscope"
 
     # Common settings
-    videos_data_path: str = os.path.join(data_dir, "videos.csv")
-    devices_data_path: str = os.path.join(data_dir, "devices.csv")
-    areas_data_path: str = os.path.join(data_dir, "areas.csv")
     chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
     top_k_results: int = 3  # 检索返回的文档数
 
@@ -413,6 +419,7 @@ class LLMSettings(BaseSettings):
     request_timeout: int = 10  # Request timeout in seconds
     connection_timeout: int = 10  # Connection timeout in seconds
 
+
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_nested_delimiter='_',
@@ -420,6 +427,7 @@ class AppSettings(BaseSettings):
         extra='allow'
     )
 
+    data: DataSettings = DataSettings()
     vad: VADSettings = VADSettings()
     asr: FunASRSettings = FunASRSettings()
     rag: RAGSettings = RAGSettings()

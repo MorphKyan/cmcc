@@ -78,16 +78,6 @@
               </div>
             </div>
           </section>
-
-          <!-- 文件上传 (Legacy) -->
-          <section class="upload-section">
-            <h2>上传 videos.csv (文件)</h2>
-            <div class="upload-content">
-              <input type="file" ref="fileInput" accept=".csv" />
-              <button @click="uploadFile">上传</button>
-              <p v-if="uploadMessage">{{ uploadMessage }}</p>
-            </div>
-          </section>
         </div>
 
         <!-- 设备管理 -->
@@ -122,7 +112,6 @@ import {
   queryRag,
   ragStatus,
   refreshRag,
-  uploadVideos,
   vadRestart,
   vadStatus
 } from './api'
@@ -145,8 +134,7 @@ export default {
       currentConfig: null,
       configLoading: false,
       queryText: '',
-      queryResult: null,
-      uploadMessage: ''
+      queryResult: null
     }
   },
   methods: {
@@ -231,21 +219,6 @@ export default {
         this.queryResult = JSON.stringify(response.data, null, 2)
       } catch (error) {
         this.queryResult = '错误: ' + error.message
-      }
-    },
-    
-    async uploadFile() {
-      const file = this.$refs.fileInput.files[0]
-      if (!file) {
-        alert('请选择一个文件')
-        return
-      }
-
-      try {
-        const response = await uploadVideos(file)
-        this.uploadMessage = response.data.message
-      } catch (error) {
-        this.uploadMessage = '上传失败: ' + error.message
       }
     },
 

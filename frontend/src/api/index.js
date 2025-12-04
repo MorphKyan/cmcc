@@ -46,16 +46,6 @@ export const queryRag = (query) => {
   return api.post('/rag/query', { query })
 }
 
-export const uploadVideos = (file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  return api.post('/data/upload-videos', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-}
-
 export const uploadDevicesBatch = (items) => {
   return api.post('/data/devices/batch', items)
 }

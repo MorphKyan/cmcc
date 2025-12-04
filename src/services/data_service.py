@@ -41,18 +41,11 @@ class DataService:
         """Reload data from CSV files."""
         try:
             settings = get_settings()
-            # Use settings paths directly
-            videos_path = settings.rag.videos_data_path
-            devices_path = settings.rag.devices_data_path
-            areas_path = settings.rag.areas_data_path
-            # Doors path might not be in RAG settings, check config or assume default
-            doors_path = os.path.join(settings.data_dir, "doors.csv")
-
-            if not (os.path.exists(videos_path) and
-                    os.path.exists(devices_path) and
-                    os.path.exists(areas_path)):
-                 # Doors might be optional or handled differently, but let's check it if it exists
-                 pass
+            # Use settings paths directly from DataSettings
+            videos_path = settings.data.videos_data_path
+            devices_path = settings.data.devices_data_path
+            areas_path = settings.data.areas_data_path
+            doors_path = settings.data.doors_data_path
 
             with self._data_lock:
                 if os.path.exists(videos_path):
@@ -200,17 +193,17 @@ class DataService:
 
     async def add_devices(self, items: List[DeviceItem]) -> None:
         settings = get_settings()
-        await self._append_to_csv(settings.rag.devices_data_path, items, ['name', 'type', 'area', 'aliases', 'description'])
+        await self._append_to_csv(settings.data.devices_data_path, items, ['name', 'type', 'area', 'aliases', 'description'])
         self.reload()
 
     async def add_areas(self, items: List[AreaItem]) -> None:
         settings = get_settings()
-        await self._append_to_csv(settings.rag.areas_data_path, items, ['name', 'aliases', 'description'])
+        await self._append_to_csv(settings.data.areas_data_path, items, ['name', 'aliases', 'description'])
         self.reload()
 
     async def add_videos(self, items: List[VideoItem]) -> None:
         settings = get_settings()
-        await self._append_to_csv(settings.rag.videos_data_path, items, ['name', 'aliases', 'description', 'filename'])
+        await self._append_to_csv(settings.data.videos_data_path, items, ['name', 'aliases', 'description', 'filename'])
         self.reload()
 
     async def _append_to_csv(self, file_path: str, items: List[BaseModel], columns: List[str]) -> None:
@@ -244,22 +237,4 @@ class DataService:
             # Restore backup if exists
             if os.path.exists(file_path + '.backup'):
                 shutil.move(file_path + '.backup', file_path)
-            raise e
-
-    async def replace_data_file(self, file_path: str, temp_file_path: str) -> None:
-        """Replace a data file with a new one (e.g. from upload)."""
-        backup_path = file_path + '.backup'
-        try:
-            if os.path.exists(file_path):
-                shutil.copy2(file_path, backup_path)
-            
-            shutil.move(temp_file_path, file_path)
-            self.reload()
-            
-            if os.path.exists(backup_path):
-                os.remove(backup_path)
-        except Exception as e:
-            logger.error(f"Error replacing data file {file_path}: {e}")
-            if os.path.exists(backup_path):
-                shutil.move(backup_path, file_path)
             raise e
