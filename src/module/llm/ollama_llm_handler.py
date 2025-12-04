@@ -18,7 +18,6 @@ class OllamaLLMHandler(BaseLLMHandler):
             settings (LLMSettings): LLM参数
         """
         super().__init__(settings)
-        # Keep __init__ lightweight - defer heavy initialization to async initialize()
         self.model = None
         logger.info("异步Ollama大语言模型处理器已创建，等待异步初始化...")
 
@@ -43,7 +42,7 @@ class OllamaLLMHandler(BaseLLMHandler):
         self.model_with_tools = self.model.bind_tools(self.tools)
 
         # 3. 构建处理链
-        self.chain = self.prompt_template | self.model_with_tools
+        self.chain = self.prompt_template | self.trimmer | self.model_with_tools
 
         logger.info("异步Ollama大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.ollama_model)
 

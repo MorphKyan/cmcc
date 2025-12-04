@@ -8,7 +8,7 @@ from typing import Any
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableSerializable
-from langchain_core.messages import ToolMessage, AIMessage
+from langchain_core.messages import ToolMessage, AIMessage, trim_messages
 from loguru import logger
 
 from src.config.config import LLMSettings
@@ -38,7 +38,53 @@ class BaseLLMHandler(ABC):
             ("user", "{USER_INPUT}")
         ])
 
+        # 创建消息修剪器 (Trimmer)
+        # strategy="last": 保留最后的消息
+        # max_tokens=5: 保留5条消息 (token_counter=len 表示按消息数量计数)
+        # include_system=False: 不修剪系统消息 (保持系统提示词静态)
+        # start_on="human": 确保保留的消息从用户消息开始
+        self.trimmer = trim_messages(
+            strategy="last",
+            max_tokens=5,
+            token_counter=len,
+            include_system=False,
+            allow_partial=False,
+            start_on="human"
+        )
+
         logger.info("LLM处理器基类初始化完成")
+
+    @abstractmethod
+    async def initialize(self) -> None:
+        pass
+
+    async def check_health(self) -> bool:
+        """
+        检查服务的健康状态。
+        通过发送一个简单的健康检查请求来验证服务是否可用。
+        """
+        try:
+            # 确保已初始化
+            if self.chain is None:
+                await self.initialize()
+
+            # 使用简单的健康检查提示
+            health_check_input = {
+                "DEVICES_INFO": "",
+                "DOORS_INFO": "",
+                "AREAS_INFO": "",
+                "VIDEOS_INFO": "",
+                "USER_INPUT": "健康检查"
+            }
+
+            # 使用较短的超时进行健康检查
+            import asyncio
+            await asyncio.wait_for(self.chain.ainvoke(health_check_input), timeout=5.0)
+
+            return True
+        except Exception as e:
+            logger.warning(f"LLM健康检查失败: {e}")
+            return False
 
     def get_network_retry_config(self) -> dict:
         """
@@ -60,167 +106,6 @@ class BaseLLMHandler(ABC):
         """
         pass
 
-    async def check_health(self) -> bool:
-        """
-        检查服务的健康状态。
-        通过发送一个简单的健康检查请求来验证服务是否可用。
-        """
-        try:
-            # 确保已初始化
-            if self.chain is None:
-                await self.initialize()
-
-            # 使用简单的健康检查提示
-            health_check_input = {
-                "DEVICES_INFO": json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2),
-                "DOORS_INFO": json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2),
-                "AREAS_INFO": json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2),
-                "VIDEOS_INFO": "",
-                "USER_INPUT": "健康检查"
-            }
-
-            # 使用较短的超时进行健康检查
-            import asyncio
-            await asyncio.wait_for(self.chain.ainvoke(health_check_input), timeout=5.0)
-
-            return True
-        except Exception as e:
-            logger.warning(f"LLM健康检查失败: {e}")
-            return False
-
-    async def initialize(self) -> None:
-        """
-        Optional async initialization method for LLM handlers.
-        Subclasses can override this method to perform async setup operations
-        like model loading, client initialization, or connection establishment.
-
-        This method is called after __init__ during application startup.
-        """
-        pass
-
-    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> dict[str, Any]:
-        """
-        准备Prompt的输入变量，供子类使用。
-        """
-        videos_info = self._get_prompt_from_documents(rag_docs)
-        devices_info_json = json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2)
-        doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
-        areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
-
-        return {
-            "DEVICES_INFO": devices_info_json,
-            "DOORS_INFO": doors_info_json,
-            "AREAS_INFO": areas_info_json,
-            "VIDEOS_INFO": videos_info,
-            "USER_INPUT": user_input,
-            "USER_LOCATION": user_location,
-            "chat_history": chat_history
-        }
-
-    @property
-    def data_service(self):
-        if dependencies.data_service is None:
-            raise RuntimeError("DataService not initialized")
-        return dependencies.data_service
-
-    def get_doors_info_for_prompt(self) -> list[dict[str, Any]]:
-        """
-        获取用于Prompt的门信息列表
-        """
-        doors_info = []
-        all_doors = self.data_service.get_all_doors()
-        for door_name in all_doors:
-            door_info = self.data_service.get_door_info(door_name)
-            if door_info:
-                door_type = door_info.get("type", "")
-                if door_type == "passage":
-                    # 通道门
-                    area1 = door_info.get("area1", "")
-                    area2 = door_info.get("area2", "")
-                    description = f"连接{area1}和{area2}的通道门"
-                elif door_type == "standalone":
-                    # 独立门
-                    location = door_info.get("location", "")
-                    description = f"位于{location}的独立门"
-                else:
-                    description = "门"
-                
-                doors_info.append({
-                    "name": door_name,
-                    "type": door_type,
-                    "description": description
-                })
-        return doors_info
-
-    def get_areas_info_for_prompt(self) -> list[dict[str, Any]]:
-        """
-        获取用于Prompt的区域信息列表
-        """
-        areas_info = []
-        all_areas = self.data_service.get_all_areas()
-        for area_name in all_areas:
-            area_info = self.data_service.get_area_info(area_name)
-            if area_info:
-                aliases_str = area_info.get("aliases", "")
-                description_str = area_info.get("description", "")
-                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
-                areas_info.append({
-                    "name": area_name,
-                    "description": f"{description_str}，也称为{aliases}"
-                })
-        return areas_info
-
-    def get_devices_info_for_prompt(self) -> list[dict[str, Any]]:
-        """
-        获取用于Prompt的设备信息列表
-        """
-        devices_info = []
-        all_devices = self.data_service.get_all_devices()
-        for device_name in all_devices:
-            device_info = self.data_service.get_device_info(device_name)
-            if device_info:
-                aliases_str = device_info.get("aliases", "")
-                description_str = device_info.get("description", "")
-                device_type = device_info.get("type", "")
-                area = device_info.get("area", "")
-                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
-                devices_info.append({
-                    "name": device_name,
-                    "type": device_type,
-                    "area": area,
-                    "description": f"{description_str}，也称为{aliases}"
-                })
-        return devices_info
-
-    def _format_response(self, response) -> str:
-        """
-        将结构化响应格式化为JSON字符串。
-        
-        Args:
-            response: 结构化响应对象
-            
-        Returns:
-            JSON格式的响应字符串
-        """
-        if isinstance(response, AIMessage) and response.tool_calls:
-            commands = []
-            for tool_call in response.tool_calls:
-                # 这里的tool_call已经是执行后的结果或者是模型生成的调用意图
-                # 在新的流程中，我们实际上是在get_response_with_retries中处理执行
-                # 这里主要用于最后格式化给前端
-                
-                # 从tool_call中提取信息
-                cmd = ExhibitionCommand(
-                    action=tool_call["name"], # 假设工具名即动作名，或者需要映射
-                    target=tool_call["args"].get("target"),
-                    device=tool_call["args"].get("device"),
-                    value=tool_call["args"].get("value")
-                )
-                commands.append(cmd.model_dump())
-            return json.dumps(commands, ensure_ascii=False, indent=2)
-            
-        return json.dumps([], ensure_ascii=False)
-
     async def get_response_with_retries(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> str:
         """
         带重试机制的响应获取方法。
@@ -229,17 +114,12 @@ class BaseLLMHandler(ABC):
         # 1. 准备输入
         chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
         
-        # 2. 绑定工具到模型 (如果尚未绑定)
-        # 注意：子类应该在初始化时或此处确保 self.model_with_tools 已设置
-        # 如果子类没有设置 model_with_tools，尝试使用 self.chain.get_prompts()[0] 对应的模型
-        # 这里假设子类会正确设置 self.model_with_tools 或者 self.chain 已经包含了绑定工具的模型
-        
-        # 为了通用性，我们构建一个新的 runnable
+        # 2. 绑定工具到模型
         if not self.model_with_tools:
              raise ValueError("Model with tools not initialized. Subclasses must set self.model_with_tools.")
 
-        # 构建运行链：Prompt -> ModelWithTools
-        runnable = self.prompt_template | self.model_with_tools
+        # 构建运行链：Prompt -> Trimmer -> ModelWithTools
+        runnable = self.prompt_template | self.trimmer | self.model_with_tools
         
         messages = [] # 这里的messages主要用于在循环中累积工具交互，实际prompt template会处理chat_history
         
@@ -325,6 +205,158 @@ class BaseLLMHandler(ABC):
         # 循环结束（达到最大重试次数或最后一次仍有错）        
         return self._format_response(ai_msg)
 
+    def _prepare_chain_input(self, user_input: str, rag_docs: list[Document], user_location: str, chat_history: list) -> dict[str, Any]:
+        """
+        准备Prompt的输入变量，供子类使用。
+        """
+        videos_info = self._get_prompt_from_documents(rag_docs)
+        devices_info_json = json.dumps(self.get_devices_info_for_prompt(), ensure_ascii=False, indent=2)
+        doors_info_json = json.dumps(self.get_doors_info_for_prompt(), ensure_ascii=False, indent=2)
+        areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
+
+        return {
+            "DEVICES_INFO": devices_info_json,
+            "DOORS_INFO": doors_info_json,
+            "AREAS_INFO": areas_info_json,
+            "VIDEOS_INFO": videos_info,
+            "USER_INPUT": user_input,
+            "USER_LOCATION": user_location,
+            "chat_history": chat_history
+        }
+
+    def _format_response(self, response) -> str:
+        """
+        将结构化响应格式化为JSON字符串。
+        
+        Args:
+            response: 结构化响应对象
+            
+        Returns:
+            JSON格式的响应字符串
+        """
+        if isinstance(response, AIMessage) and response.tool_calls:
+            commands = []
+            for tool_call in response.tool_calls:
+                # 这里的tool_call已经是执行后的结果或者是模型生成的调用意图
+                # 在新的流程中，我们实际上是在get_response_with_retries中处理执行
+                # 这里主要用于最后格式化给前端
+                
+                # 从tool_call中提取信息
+                cmd = ExhibitionCommand(
+                    action=tool_call["name"], # 假设工具名即动作名，或者需要映射
+                    target=tool_call["args"].get("target"),
+                    device=tool_call["args"].get("device"),
+                    value=tool_call["args"].get("value")
+                )
+                commands.append(cmd.model_dump())
+            return json.dumps(commands, ensure_ascii=False, indent=2)
+            
+        return json.dumps([], ensure_ascii=False)
+
+    @staticmethod
+    def _get_prompt_from_documents(docs: list[Document]) -> str:
+        """
+        将检索到的Videos Document对象格式化为可以插入到Prompt中的字符串。
+
+        Args:
+            docs (list[Document]): 检索到的Document对象列表。
+
+        Returns:
+            str: 格式化后的知识库字符串，包含设备类型、名称、描述和文件名。
+        """
+        if not docs:
+            return ""
+
+        videos = []
+
+        for doc in docs:
+            meta = doc.metadata
+            filename = meta.get("filename", "")
+            description = meta.get("description", "")
+            aliases = meta.get("aliases", "")
+            video = {
+                "name": filename,
+                "description": f"{description}，也称为{aliases}",
+            }
+            videos.append(video)
+
+        return json.dumps(videos, ensure_ascii=False, indent=2)
+
+    @property
+    def data_service(self):
+        if dependencies.data_service is None:
+            raise RuntimeError("DataService not initialized")
+        return dependencies.data_service
+
+    def get_doors_info_for_prompt(self) -> list[dict[str, Any]]:
+        """
+        获取用于Prompt的门信息列表
+        """
+        doors_info = []
+        all_doors = self.data_service.get_all_doors()
+        for door_name in all_doors:
+            door_info = self.data_service.get_door_info(door_name)
+            if door_info:
+                door_type = door_info.get("type", "")
+                if door_type == "passage":
+                    # 通道门
+                    area1 = door_info.get("area1", "")
+                    area2 = door_info.get("area2", "")
+                    description = f"连接{area1}和{area2}的通道门"
+                elif door_type == "standalone":
+                    # 独立门
+                    location = door_info.get("location", "")
+                    description = f"位于{location}的独立门"
+                else:
+                    description = "门"
+                
+                doors_info.append({
+                    "name": door_name,
+                    "type": door_type,
+                    "description": description
+                })
+        return doors_info
+
+    def get_areas_info_for_prompt(self) -> list[dict[str, Any]]:
+        """
+        获取用于Prompt的区域信息列表
+        """
+        areas_info = []
+        all_areas = self.data_service.get_all_areas()
+        for area_name in all_areas:
+            area_info = self.data_service.get_area_info(area_name)
+            if area_info:
+                aliases_str = area_info.get("aliases", "")
+                description_str = area_info.get("description", "")
+                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                areas_info.append({
+                    "name": area_name,
+                    "description": f"{description_str}，也称为{aliases}"
+                })
+        return areas_info
+
+    def get_devices_info_for_prompt(self) -> list[dict[str, Any]]:
+        """
+        获取用于Prompt的设备信息列表
+        """
+        devices_info = []
+        all_devices = self.data_service.get_all_devices()
+        for device_name in all_devices:
+            device_info = self.data_service.get_device_info(device_name)
+            if device_info:
+                aliases_str = device_info.get("aliases", "")
+                description_str = device_info.get("description", "")
+                device_type = device_info.get("type", "")
+                area = device_info.get("area", "")
+                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                devices_info.append({
+                    "name": device_name,
+                    "type": device_type,
+                    "area": area,
+                    "description": f"{description_str}，也称为{aliases}"
+                })
+        return devices_info
+
     def _validate_play_video_args(self, target: str, device: str) -> tuple[bool, str | None]:
         if not self.data_service.video_exists(target):
             return False, f"Video '{target}' not found in videos.csv"
@@ -402,32 +434,3 @@ class BaseLLMHandler(ABC):
             error_dict["message"] = message
 
         return json.dumps([error_dict], ensure_ascii=False)
-
-    @staticmethod
-    def _get_prompt_from_documents(docs: list[Document]) -> str:
-        """
-        将检索到的Videos Document对象格式化为可以插入到Prompt中的字符串。
-
-        Args:
-            docs (list[Document]): 检索到的Document对象列表。
-
-        Returns:
-            str: 格式化后的知识库字符串，包含设备类型、名称、描述和文件名。
-        """
-        if not docs:
-            return ""
-
-        videos = []
-
-        for doc in docs:
-            meta = doc.metadata
-            filename = meta.get("filename", "")
-            description = meta.get("description", "")
-            aliases = meta.get("aliases", "")
-            video = {
-                "name": filename,
-                "description": f"{description}，也称为{aliases}",
-            }
-            videos.append(video)
-
-        return json.dumps(videos, ensure_ascii=False, indent=2)
