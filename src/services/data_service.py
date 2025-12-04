@@ -275,6 +275,12 @@ class DataService:
         await self._clear_csv_file(settings.data.videos_data_path, ['name', 'aliases', 'description', 'filename'])
         self.reload()
 
+    async def clear_doors(self) -> None:
+        """Clear all door data."""
+        settings = get_settings()
+        await self._clear_csv_file(settings.data.doors_data_path, ['name', 'type', 'area1', 'area2', 'location'])
+        self.reload()
+
     async def _clear_csv_file(self, file_path: str, columns: List[str]) -> None:
         """Clear a CSV file by writing only headers."""
         backup_path = file_path + '.backup'

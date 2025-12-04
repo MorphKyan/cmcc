@@ -19,6 +19,10 @@
           :class="{ active: activeTab === 'areas' }" 
           @click="activeTab = 'areas'"
         >区域管理</button>
+        <button 
+          :class="{ active: activeTab === 'doors' }" 
+          @click="activeTab = 'doors'"
+        >门资源管理</button>
       </nav>
     </header>
     
@@ -95,6 +99,11 @@
           <AreaManager />
         </div>
 
+        <!-- 门资源管理 -->
+        <div v-if="activeTab === 'doors'">
+          <DoorManager />
+        </div>
+
       </div>
     </main>
   </div>
@@ -105,6 +114,7 @@ import AudioRecorder from './components/AudioRecorder.vue'
 import DeviceManager from './components/DeviceManager.vue'
 import ResourceManager from './components/ResourceManager.vue'
 import AreaManager from './components/AreaManager.vue'
+import DoorManager from './components/DoorManager.vue'
 import {
   getCurrentConfig,
   healthCheck,
@@ -122,7 +132,8 @@ export default {
     AudioRecorder,
     DeviceManager,
     ResourceManager,
-    AreaManager
+    AreaManager,
+    DoorManager
   },
   data() {
     return {

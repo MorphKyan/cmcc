@@ -58,5 +58,17 @@ export const uploadVideosBatch = (items) => {
   return api.post('/data/videos/batch', items)
 }
 
+export const uploadDoorsBatch = (items) => {
+  return api.post('/data/doors/batch', items)
+}
+
+export const getDoors = () => {
+  return api.get('/data/doors')
+}
+
+export const clearDoors = () => {
+  return api.delete('/data/doors')
+}
+
 // 默认导出axios实例，便于其他模块直接使用
 export default api

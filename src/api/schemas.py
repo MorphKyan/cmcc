@@ -78,3 +78,11 @@ class VideoItem(BaseModel):
     aliases: Optional[str] = None
     description: Optional[str] = None
     filename: str
+
+
+class DoorItem(BaseModel):
+    name: str
+    type: str
+    area1: str
+    area2: str
+    location: str
