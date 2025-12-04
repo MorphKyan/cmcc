@@ -8,6 +8,7 @@ from src.config.config import get_settings
 from src.core import dependencies
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.vad.vad_core import VADCore
+from src.services.data_service import DataService
 
 
 @asynccontextmanager
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
     llm_config = settings.llm
 
     try:
+        dependencies.data_service = DataService()
         dependencies.vad_core = VADCore(vad_config)
         dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
 

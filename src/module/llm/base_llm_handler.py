@@ -12,7 +12,7 @@ from langchain_core.messages import ToolMessage, AIMessage
 from loguru import logger
 
 from src.config.config import LLMSettings
-from src.core.csv_loader import CSVLoader
+from src.core import dependencies
 from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
 
 
@@ -25,7 +25,6 @@ class BaseLLMHandler(ABC):
             settings (LLMSettings): LLM参数
         """
         self.settings = settings
-        self.csv_loader = CSVLoader()
         self.model_with_tools = None
         self.chain: RunnableSerializable[dict, Any] | None = None
 
@@ -118,16 +117,20 @@ class BaseLLMHandler(ABC):
             "chat_history": chat_history
         }
 
-
+    @property
+    def data_service(self):
+        if dependencies.data_service is None:
+            raise RuntimeError("DataService not initialized")
+        return dependencies.data_service
 
     def get_doors_info_for_prompt(self) -> list[dict[str, Any]]:
         """
         获取用于Prompt的门信息列表
         """
         doors_info = []
-        all_doors = self.csv_loader.get_all_doors()
+        all_doors = self.data_service.get_all_doors()
         for door_name in all_doors:
-            door_info = self.csv_loader.get_door_info(door_name)
+            door_info = self.data_service.get_door_info(door_name)
             if door_info:
                 door_type = door_info.get("type", "")
                 if door_type == "passage":
@@ -154,9 +157,9 @@ class BaseLLMHandler(ABC):
         获取用于Prompt的区域信息列表
         """
         areas_info = []
-        all_areas = self.csv_loader.get_all_areas()
+        all_areas = self.data_service.get_all_areas()
         for area_name in all_areas:
-            area_info = self.csv_loader.get_area_info(area_name)
+            area_info = self.data_service.get_area_info(area_name)
             if area_info:
                 aliases_str = area_info.get("aliases", "")
                 description_str = area_info.get("description", "")
@@ -172,9 +175,9 @@ class BaseLLMHandler(ABC):
         获取用于Prompt的设备信息列表
         """
         devices_info = []
-        all_devices = self.csv_loader.get_all_devices()
+        all_devices = self.data_service.get_all_devices()
         for device_name in all_devices:
-            device_info = self.csv_loader.get_device_info(device_name)
+            device_info = self.data_service.get_device_info(device_name)
             if device_info:
                 aliases_str = device_info.get("aliases", "")
                 description_str = device_info.get("description", "")
@@ -323,16 +326,16 @@ class BaseLLMHandler(ABC):
         return self._format_response(ai_msg)
 
     def _validate_play_video_args(self, target: str, device: str) -> tuple[bool, str | None]:
-        if not self.csv_loader.video_exists(target):
+        if not self.data_service.video_exists(target):
             return False, f"Video '{target}' not found in videos.csv"
 
-        if not self.csv_loader.device_exists(device):
+        if not self.data_service.device_exists(device):
             return False, f"Device '{device}' not found in devices.csv"
 
         return True, None
 
     def _validate_control_door_args(self, target: str, action: str) -> tuple[bool, str | None]:
-        if not self.csv_loader.door_exists(target):
+        if not self.data_service.door_exists(target):
             return False, f"Door '{target}' not found in doors.csv"
 
         if action not in ["open", "close"]:
@@ -341,7 +344,7 @@ class BaseLLMHandler(ABC):
         return True, None
 
     def _validate_device_args(self, device: str, tool_name: str) -> tuple[bool, str | None]:
-        if not self.csv_loader.device_exists(device):
+        if not self.data_service.device_exists(device):
             return False, f"Device '{device}' not found in devices.csv for {tool_name} tool"
 
         return True, None
@@ -364,7 +367,7 @@ class BaseLLMHandler(ABC):
 
             elif tool_name == "update_location":
                 target = tool_args.get("target", "")
-                if not self.csv_loader.area_exists(target):
+                if not self.data_service.area_exists(target):
                     return False, f"Area '{target}' not found in areas.csv"
                 return True, None
 
