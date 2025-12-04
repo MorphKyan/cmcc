@@ -14,6 +14,7 @@ from loguru import logger
 from src.config.config import LLMSettings
 from src.core import dependencies
 from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
+from src.module.llm.tool.validator import ToolValidator
 
 
 class BaseLLMHandler(ABC):
@@ -357,58 +358,18 @@ class BaseLLMHandler(ABC):
                 })
         return devices_info
 
-    def _validate_play_video_args(self, target: str, device: str) -> tuple[bool, str | None]:
-        if not self.data_service.video_exists(target):
-            return False, f"Video '{target}' not found in videos.csv"
-
-        if not self.data_service.device_exists(device):
-            return False, f"Device '{device}' not found in devices.csv"
-
-        return True, None
-
-    def _validate_control_door_args(self, target: str, action: str) -> tuple[bool, str | None]:
-        if not self.data_service.door_exists(target):
-            return False, f"Door '{target}' not found in doors.csv"
-
-        if action not in ["open", "close"]:
-            return False, f"Invalid door action '{action}'. Must be 'open' or 'close'"
-
-        return True, None
-
-    def _validate_device_args(self, device: str, tool_name: str) -> tuple[bool, str | None]:
-        if not self.data_service.device_exists(device):
-            return False, f"Device '{device}' not found in devices.csv for {tool_name} tool"
-
-        return True, None
-
     def _validate_tool_args(self, tool_name: str, tool_args: dict) -> tuple[bool, str | None]:
-        try:
-            if tool_name == "play_video":
-                target = tool_args.get("target", "")
-                device = tool_args.get("device", "")
-                return self._validate_play_video_args(target, device)
+        """
+        验证工具参数
 
-            elif tool_name == "control_door":
-                target = tool_args.get("target", "")
-                action = tool_args.get("action", "")
-                return self._validate_control_door_args(target, action)
+        Args:
+            tool_name: 工具名称
+            tool_args: 工具参数
 
-            elif tool_name in ["seek_video", "set_volume", "adjust_volume"]:
-                device = tool_args.get("device", "")
-                return self._validate_device_args(device, tool_name)
-
-            elif tool_name == "update_location":
-                target = tool_args.get("target", "")
-                if not self.data_service.area_exists(target):
-                    return False, f"Area '{target}' not found in areas.csv"
-                return True, None
-
-            else:
-                return True, None
-
-        except Exception as e:
-            logger.error(f"Error validating tool '{tool_name}' arguments: {e}")
-            return False, f"Validation error: {str(e)}"
+        Returns:
+            (是否有效, 错误信息)
+        """
+        return ToolValidator.get_instance().validate_tool_args(tool_name, tool_args)
 
     def create_error_response(self, reason: str, message: str | None = None) -> str:
         """
