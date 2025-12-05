@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 
 from fastapi import APIRouter, HTTPException, status
 
-from src.api.schemas import UploadResponse, DeviceItem, AreaItem, VideoItem, DoorItem
+from src.api.schemas import UploadResponse, DeviceItem, AreaItem, VideoItem, DoorItem, LocationUpdateRequest, StatusResponse
 from src.core import dependencies
 
 router = APIRouter(
@@ -171,3 +171,27 @@ async def clear_doors() -> UploadResponse:
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"清空门数据失败: {str(e)}")
 
+
+@router.post("/location", response_model=StatusResponse)
+async def update_user_location(request: LocationUpdateRequest) -> StatusResponse:
+    """
+    更新用户位置信息。
+    将传入的位置信息存储到对应 client_id 的 context 的 location 字段中。
+    """
+    client_id = request.client_id
+    location = request.location
+
+    if client_id not in dependencies.active_contexts:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"未找到客户端连接: {client_id}"
+        )
+
+    context = dependencies.active_contexts[client_id]
+    context.location = location
+
+    return StatusResponse(
+        status="success",
+        data={"client_id": client_id, "location": location},
+        message=f"用户位置已更新为: {location}"
+    )

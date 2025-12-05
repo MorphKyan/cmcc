@@ -86,3 +86,9 @@ class DoorItem(BaseModel):
     area1: str
     area2: str
     location: str
+
+
+class LocationUpdateRequest(BaseModel):
+    """用户位置更新请求"""
+    client_id: str
+    location: str
