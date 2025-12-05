@@ -10,7 +10,7 @@ from src.api.schemas import WebSocketConfig
 from src.config.logging_config import request_id_var
 from src.core import dependencies
 from src.module.input.stream_decoder import StreamDecoder
-from src.services.audio_pipeline import run_vad_appender, run_vad_processor, decode_loop, run_asr_processor, run_llm_rag_processor, receive_loop
+from src.services.audio_pipeline import run_vad_appender, run_vad_processor, decode_loop, run_asr_processor, run_llm_rag_processor, receive_loop, run_function_calling_sender
 
 router = APIRouter(
     prefix="/audio",
@@ -54,7 +54,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str) -> None:
             asyncio.create_task(run_vad_appender(context)),
             asyncio.create_task(run_vad_processor(context)),
             asyncio.create_task(run_asr_processor(context)),
-            asyncio.create_task(run_llm_rag_processor(context, websocket))
+            asyncio.create_task(run_llm_rag_processor(context)),
+            asyncio.create_task(run_function_calling_sender(context, websocket))
         ]
 
         done, pending = await asyncio.wait(all_tasks, return_when=asyncio.FIRST_COMPLETED)

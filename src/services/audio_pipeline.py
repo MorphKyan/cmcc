@@ -88,7 +88,7 @@ async def run_asr_processor(context: Context) -> None:
             # break
 
 
-async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
+async def run_llm_rag_processor(context: Context) -> None:
     """LLM/RAG处理逻辑代码"""
     logger.info("LLM/RAG处理器已启动")
     
@@ -150,10 +150,19 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
 
             await context.function_calling_queue.put(llm_response)
 
-            # 通过WebSocket发送响应
-            await websocket.send_text(llm_response)
-
         except Exception as e:
             logger.exception("[LLM/RAG错误]")
             # 可以选择是否继续处理或退出
             # break
+
+
+async def run_function_calling_sender(context: Context, websocket: WebSocket) -> None:
+    """从function_calling_queue获取数据并通过WebSocket发送给前端"""
+    logger.info("Function Calling发送器已启动")
+    while True:
+        try:
+            function_calling_data = await context.function_calling_queue.get()
+            logger.info("[发送Function Calling] {data}", data=function_calling_data)
+            await websocket.send_text(function_calling_data)
+        except Exception as e:
+            logger.exception("[Function Calling发送错误]")
