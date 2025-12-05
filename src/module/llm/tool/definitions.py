@@ -1,9 +1,25 @@
 """
 LLM函数调用工具定义 - Modern Structured Output Approach.
 """
+import json
+from datetime import datetime
+from enum import Enum
 from typing import Literal, Optional
+
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
+
+
+class CommandAction(str, Enum):
+    """命令动作类型枚举"""
+    PLAY = "play"
+    OPEN = "open"
+    CLOSE = "close"
+    SEEK = "seek"
+    SET_VOLUME = "set_volume"
+    ADJUST_VOLUME = "adjust_volume"
+    UPDATE_LOCATION = "update_location"
+    ERROR = "error"
 
 
 class ExhibitionCommand(BaseModel):
@@ -12,6 +28,29 @@ class ExhibitionCommand(BaseModel):
     target: Optional[str] = Field(default=None, description="Target device or screen name")
     device: Optional[str] = Field(default=None, description="Device identifier")
     value: Optional[str | int] = Field(default=None, description="Command value (string or integer)")
+
+
+class ExecutableCommand(BaseModel):
+    """可执行的命令包，包含完整上下文"""
+    user_id: str = Field(description="执行命令的用户ID")
+    commands: list[ExhibitionCommand] = Field(default_factory=list)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    
+    def get_local_commands(self) -> list[ExhibitionCommand]:
+        """获取需要本地执行的命令（如更新位置）"""
+        return [cmd for cmd in self.commands if cmd.action == CommandAction.UPDATE_LOCATION.value]
+    
+    def get_remote_commands(self) -> list[ExhibitionCommand]:
+        """获取需要发送到前端的命令"""
+        return [cmd for cmd in self.commands if cmd.action != CommandAction.UPDATE_LOCATION.value]
+    
+    def to_websocket_payload(self) -> str:
+        """转换为 WebSocket 发送的 JSON 格式"""
+        remote_cmds = self.get_remote_commands()
+        return json.dumps({
+            "user_id": self.user_id,
+            "commands": [cmd.model_dump() for cmd in remote_cmds]
+        }, ensure_ascii=False)
 
 
 class PlayVideoInput(BaseModel):

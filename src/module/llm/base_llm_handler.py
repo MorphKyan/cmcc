@@ -114,7 +114,7 @@ class BaseLLMHandler(ABC):
         """
         pass
 
-    async def get_response_with_retries(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> str:
+    async def get_response_with_retries(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> tuple[AIMessage, list[ExhibitionCommand]]:
         """
         带重试机制的响应获取方法。
         使用LangChain的bind_tools和自定义循环来处理工具调用和错误恢复。
@@ -124,6 +124,9 @@ class BaseLLMHandler(ABC):
             rag_docs: 按类型分类的RAG文档字典 {"door": [...], "video": [...], "device": [...]}
             user_location: 用户当前位置
             chat_history: 聊天历史
+            
+        Returns:
+            tuple[AIMessage, list[ExhibitionCommand]]: (AI消息用于历史记录, 命令列表用于执行)
         """
         # 1. 准备输入
         chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
@@ -142,7 +145,8 @@ class BaseLLMHandler(ABC):
             ai_msg = await runnable.ainvoke(chain_input)
         except Exception as e:
             logger.error(f"Initial LLM call failed: {e}")
-            return self.create_error_response("llm_error", str(e))
+            error_msg = AIMessage(content=f"错误: {e}")
+            return error_msg, self.create_error_response("llm_error", str(e))
 
         messages.append(ai_msg)
         
@@ -151,7 +155,7 @@ class BaseLLMHandler(ABC):
         
         for attempt in range(max_retries):
             if not ai_msg.tool_calls:
-                # 没有工具调用，直接结束（可能是闲聊或无法处理）
+                # 没有工具调用，直接结束 这里在应用中需要酌情改为重试
                 break
                 
             # 执行工具
@@ -193,8 +197,8 @@ class BaseLLMHandler(ABC):
                     has_error = True
             
             if not has_error:
-                # 所有工具执行成功，返回当前的 ai_msg (包含正确的 tool_calls)
-                return self._format_response(ai_msg)
+                # 所有工具执行成功，返回 AI消息和命令列表
+                return ai_msg, self._format_response(ai_msg)
                 
             # 如果有错误，我们需要把 tool_outputs 反馈给模型，让其修正
             # 更新 chain_input 中的 chat_history 或者 messages            
@@ -214,10 +218,11 @@ class BaseLLMHandler(ABC):
                 messages.append(ai_msg)
             except Exception as e:
                 logger.error(f"LLM retry call failed: {e}")
-                return self.create_error_response("llm_retry_error", str(e))
+                error_msg = AIMessage(content=f"重试错误: {e}")
+                return error_msg, self.create_error_response("llm_retry_error", str(e))
 
         # 循环结束（达到最大重试次数或最后一次仍有错）        
-        return self._format_response(ai_msg)
+        return ai_msg, self._format_response(ai_msg)
 
     def _prepare_chain_input(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> dict[str, Any]:
         """
@@ -250,34 +255,30 @@ class BaseLLMHandler(ABC):
             "chat_history": chat_history
         }
 
-    def _format_response(self, response) -> str:
+    def _format_response(self, response) -> list[ExhibitionCommand]:
         """
-        将结构化响应格式化为JSON字符串。
+        将AI响应转换为命令列表。
         
         Args:
-            response: 结构化响应对象
+            response: AI消息响应对象
             
         Returns:
-            JSON格式的响应字符串
+            list[ExhibitionCommand]: 命令列表
         """
         if isinstance(response, AIMessage) and response.tool_calls:
             commands = []
             for tool_call in response.tool_calls:
-                # 这里的tool_call已经是执行后的结果或者是模型生成的调用意图
-                # 在新的流程中，我们实际上是在get_response_with_retries中处理执行
-                # 这里主要用于最后格式化给前端
-                
-                # 从tool_call中提取信息
+                # 从tool_call中提取信息，构建命令对象
                 cmd = ExhibitionCommand(
-                    action=tool_call["name"], # 假设工具名即动作名，或者需要映射
+                    action=tool_call["name"],
                     target=tool_call["args"].get("target"),
                     device=tool_call["args"].get("device"),
                     value=tool_call["args"].get("value")
                 )
-                commands.append(cmd.model_dump())
-            return json.dumps(commands, ensure_ascii=False, indent=2)
+                commands.append(cmd)
+            return commands
             
-        return json.dumps([], ensure_ascii=False)
+        return []
 
     @property
     def data_service(self):
@@ -354,7 +355,7 @@ class BaseLLMHandler(ABC):
                 })
         return devices_info
 
-    def create_error_response(self, reason: str, message: str | None = None) -> str:
+    def create_error_response(self, reason: str, message: str | None = None) -> list[ExhibitionCommand]:
         """
         创建错误响应。
 
@@ -363,18 +364,13 @@ class BaseLLMHandler(ABC):
             message: 可选错误消息
 
         Returns:
-            JSON格式的错误响应字符串
+            list[ExhibitionCommand]: 包含错误命令的列表
         """
+        error_value = f"{reason}: {message}" if message else reason
         error_command = ExhibitionCommand(
             action="error",
             target=None,
             device=None,
-            value=reason
+            value=error_value
         )
-
-        error_dict = error_command.model_dump()
-
-        if message:
-            error_dict["message"] = message
-
-        return json.dumps([error_dict], ensure_ascii=False)
+        return [error_command]

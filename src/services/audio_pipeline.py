@@ -4,10 +4,11 @@ import numpy as np
 import numpy.typing as npt
 from fastapi import WebSocket
 from loguru import logger
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage
 
 from src.api.context import Context
 from src.core import dependencies
+from src.module.llm.tool.definitions import ExecutableCommand, ExhibitionCommand
 
 
 async def receive_loop(websocket: WebSocket, context: Context) -> None:
@@ -120,35 +121,28 @@ async def run_llm_rag_processor(context: Context) -> None:
             # 获取聊天历史
             chat_history_messages = context.chat_history
 
-            # 执行指令重试
-            llm_response = await dependencies.llm_processor.get_response_with_retries(
+            # 执行指令重试，获取AI消息和命令列表
+            ai_message, commands = await dependencies.llm_processor.get_response_with_retries(
                 user_input=recognized_text,
                 rag_docs=retrieved_docs_by_type,
                 user_location=context.location,
                 chat_history=chat_history_messages
             )
             
-            logger.info("[大模型响应] {llm_response}", llm_response=llm_response)
+            logger.info("[大模型响应] 返回 {count} 个命令", count=len(commands))
 
-            # 自动保存对话到历史（添加用户消息和AI响应）
+            # 构建可执行命令对象
+            executable_cmd = ExecutableCommand(
+                user_id=context.context_id,
+                commands=commands
+            )
+
+            # 自动保存对话到历史
             context.chat_history.append(HumanMessage(content=recognized_text))
-            context.chat_history.append(AIMessage(content=llm_response))
+            context.chat_history.append(ai_message)
 
-            # 处理位置更新
-            try:
-                import json
-                commands = json.loads(llm_response)
-                if isinstance(commands, list):
-                    for command in commands:
-                        if command.get("action") == "update_location":
-                            new_location = command.get("target")
-                            if new_location:
-                                logger.info(f"[位置更新] 用户位置从 '{context.location}' 更新为 '{new_location}'")
-                                context.location = new_location
-            except Exception as e:
-                logger.warning(f"解析LLM响应以更新位置时出错: {e}")
-
-            await context.function_calling_queue.put(llm_response)
+            # 放入命令队列，由执行器异步处理
+            await context.command_queue.put(executable_cmd)
 
         except Exception as e:
             logger.exception("[LLM/RAG错误]")
@@ -156,13 +150,32 @@ async def run_llm_rag_processor(context: Context) -> None:
             # break
 
 
-async def run_function_calling_sender(context: Context, websocket: WebSocket) -> None:
-    """从function_calling_queue获取数据并通过WebSocket发送给前端"""
-    logger.info("Function Calling发送器已启动")
+async def run_command_executor(context: Context, websocket: WebSocket) -> None:
+    """异步执行命令：本地执行或发送到前端"""
+    logger.info("命令执行器已启动")
     while True:
         try:
-            function_calling_data = await context.function_calling_queue.get()
-            logger.info("[发送Function Calling] {data}", data=function_calling_data)
-            await websocket.send_text(function_calling_data)
+            executable_cmd = await context.command_queue.get()
+            
+            # 1. 先执行本地命令（如更新位置）
+            for cmd in executable_cmd.get_local_commands():
+                await _execute_local_command(cmd, context)
+            
+            # 2. 发送远程命令到前端
+            remote_commands = executable_cmd.get_remote_commands()
+            if remote_commands:
+                payload = executable_cmd.to_websocket_payload()
+                logger.info("[发送命令] user={user_id}, count={count}", 
+                           user_id=executable_cmd.user_id, count=len(remote_commands))
+                await websocket.send_text(payload)
+                
         except Exception as e:
-            logger.exception("[Function Calling发送错误]")
+            logger.exception("[命令执行错误]")
+
+
+async def _execute_local_command(cmd: ExhibitionCommand, context: Context) -> None:
+    """执行本地命令"""
+    if cmd.action == "update_location" and cmd.target:
+        old_location = context.location
+        context.location = cmd.target
+        logger.info("[位置更新] {old} -> {new}", old=old_location, new=cmd.target)
