@@ -1,32 +1,83 @@
 <template>
   <div class="audio-recorder">
-    <h2>网页麦克风输入</h2>
-    <div v-if="isSupported">
-      <button @click="startRecording" :disabled="isRecording">开始录音</button>
-      <button @click="stopRecording" :disabled="!isRecording">停止录音</button>
-      <p>状态: {{ status }}</p>
-      <div v-if="actualAudioConfig" class="audio-config">
-        <h3>实际音频配置:</h3>
-        <ul>
-          <li>采样率: {{ actualAudioConfig.sampleRate }} Hz</li>
-          <li>声道数: {{ actualAudioConfig.channelCount }}</li>
-          <li>采样位数: {{ actualAudioConfig.sampleSize }} bit</li>
-          <li>音频上下文采样率: {{ audioContextSampleRate }} Hz</li>
-        </ul>
+    <div class="recorder-header">
+      <h2 class="recorder-title">
+        <span class="recorder-icon">🎤</span>
+        网页麦克风输入
+      </h2>
+    </div>
+    
+    <div v-if="isSupported" class="recorder-content">
+      <!-- Recording Controls -->
+      <div class="recorder-controls">
+        <button 
+          class="record-btn" 
+          :class="{ recording: isRecording }"
+          @click="isRecording ? stopRecording() : startRecording()"
+        >
+          <div class="record-btn-inner">
+            <span class="record-icon">{{ isRecording ? '⏹️' : '🎙️' }}</span>
+          </div>
+          <div v-if="isRecording" class="pulse-ring"></div>
+          <div v-if="isRecording" class="pulse-ring delay"></div>
+        </button>
+        <p class="record-hint">{{ isRecording ? '点击停止录音' : '点击开始录音' }}</p>
       </div>
-      <div v-if="websocketOutput" class="websocket-output">
-        <h3>处理结果:</h3>
-        <pre>{{ websocketOutput }}</pre>
+
+      <!-- Status Display -->
+      <div class="status-display">
+        <div class="status-indicator" :class="statusClass">
+          <span class="status-dot"></span>
+          <span class="status-text">{{ status }}</span>
+        </div>
+      </div>
+
+      <!-- Audio Configuration -->
+      <div v-if="actualAudioConfig" class="audio-config card">
+        <h3 class="config-title">
+          <span>📊</span>
+          音频配置
+        </h3>
+        <div class="config-grid">
+          <div class="config-item">
+            <span class="config-label">采样率</span>
+            <span class="config-value">{{ actualAudioConfig.sampleRate }} Hz</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">声道数</span>
+            <span class="config-value">{{ actualAudioConfig.channelCount }}</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">采样位数</span>
+            <span class="config-value">{{ actualAudioConfig.sampleSize }} bit</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">上下文采样率</span>
+            <span class="config-value">{{ audioContextSampleRate }} Hz</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- WebSocket Output -->
+      <div v-if="websocketOutput" class="websocket-output card">
+        <h3 class="output-title">
+          <span>💬</span>
+          处理结果
+        </h3>
+        <pre class="output-content">{{ websocketOutput }}</pre>
       </div>
     </div>
-    <div v-else>
+
+    <!-- Unsupported Browser -->
+    <div v-else class="unsupported">
+      <span class="warning-icon">⚠️</span>
       <p>抱歉，您的浏览器不支持所需功能。</p>
+      <p class="hint">请使用最新版本的 Chrome、Firefox 或 Edge 浏览器。</p>
     </div>
   </div>
 </template>
 
 <script>
-// 引入配置
 import { config } from '../config';
 
 export default {
@@ -41,64 +92,61 @@ export default {
       audioStream: null,
       actualAudioConfig: null,
       audioContextSampleRate: null,
-      // 为每个客户端生成一个唯一的ID
       clientId: `web-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       websocketOutput: '',
       audioWorkletNode: null
     };
   },
+  computed: {
+    statusClass() {
+      if (this.status.includes('错误')) return 'error';
+      if (this.isRecording) return 'recording';
+      if (this.status.includes('已连接') || this.status.includes('已获取')) return 'active';
+      if (this.status === '已停止') return 'stopped';
+      return 'idle';
+    }
+  },
   methods: {
     async startRecording() {
       if (this.isRecording) return;
-      // 定义音频参数约束
       const audioConstraints = {
         audio: {
-          sampleRate: 16000,   // 期望的采样率，例如 16kHz（语音识别常用）
-          //sampleSize: 16,      // 期望的采样位数，例如 16-bit
-          channelCount: 1,     // 期望的声道数，例如单声道
+          sampleRate: 16000,
+          channelCount: 1,
           autoGainControl: true,
-          echoCancellation: false, // 开启回声消除，十分影响效果建议关闭
-          noiseSuppression: true  // 开启噪声抑制
+          echoCancellation: false,
+          noiseSuppression: true
         }
       };
       try {
-        // 1. 获取用户麦克风权限和音频流
         this.audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
         this.status = '已获取麦克风权限';
 
-        // 打印实际应用的配置，用于调试
         const audioTrack = this.audioStream.getAudioTracks()[0];
         const settings = audioTrack.getSettings();
         console.log('实际应用的音频配置:', settings);
 
-        // 保存实际配置到组件数据
         this.actualAudioConfig = {
           sampleRate: settings.sampleRate,
           channelCount: settings.channelCount,
-          sampleSize: settings.sampleSize || 16 // 如果未提供sampleSize，默认为16
+          sampleSize: settings.sampleSize || 16
         };
 
-        // 2. 创建 AudioContext
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
           sampleRate: 16000
         });
         this.audioContextSampleRate = this.audioContext.sampleRate;
 
-        // 3. 加载 AudioWorklet
         await this.audioContext.audioWorklet.addModule('/audio-processor.js');
 
-        // 4. 创建 MediaStreamAudioSourceNode
         const source = this.audioContext.createMediaStreamSource(this.audioStream);
 
-        // 5. 创建 AudioWorkletNode
         this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-processor');
 
-        // 6. 建立 WebSocket 连接
         const wsUrl = config.getWebSocketUrl(this.clientId);
         this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = async () => {
-          // 发送元数据 - 使用实际获取的音频配置
           const metadata = {
             type: 'config',
             format: 'pcm',
@@ -113,34 +161,26 @@ export default {
           this.status = 'WebSocket 已连接，正在录音...';
           this.isRecording = true;
 
-          // 连接音频节点
           source.connect(this.audioWorkletNode);
           this.audioWorkletNode.connect(this.audioContext.destination);
 
-          // 监听来自 AudioWorklet 的 PCM 数据
           this.audioWorkletNode.port.onmessage = (event) => {
             if (!this.isRecording || this.socket.readyState !== WebSocket.OPEN) {
               return;
             }
-
-            // 发送原始PCM数据
             this.socket.send(event.data);
           };
 
-          // 开始音频上下文
           if (this.audioContext.state === 'suspended') {
             await this.audioContext.resume();
           }
         };
 
-        // 接收后端通过WebSocket发送的处理结果
         this.socket.onmessage = (event) => {
           try {
-            // 尝试解析JSON数据
             const data = JSON.parse(event.data);
             this.websocketOutput = JSON.stringify(data, null, 2);
           } catch (e) {
-            // 如果不是JSON，则直接显示文本
             this.websocketOutput = event.data;
           }
         };
@@ -172,13 +212,11 @@ export default {
     },
 
     cleanup() {
-      // 停止本地音频流轨道，关闭麦克风指示灯
       if (this.audioStream) {
         this.audioStream.getTracks().forEach(track => track.stop());
         this.audioStream = null;
       }
 
-      // 关闭AudioContext
       if (this.audioContext) {
         this.audioContext.close();
         this.audioContext = null;
@@ -193,7 +231,6 @@ export default {
     }
   },
   beforeUnmount() {
-    // 组件销毁前确保资源被清理
     this.stopRecording();
   }
 };
@@ -201,27 +238,252 @@ export default {
 
 <style scoped>
 .audio-recorder {
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  max-width: 400px;
-  margin: 20px auto;
+  text-align: center;
 }
-button {
-  margin: 5px;
-  padding: 10px 15px;
+
+.recorder-header {
+  margin-bottom: var(--space-lg);
 }
-.websocket-output {
-  margin-top: 20px;
-  text-align: left;
-  background-color: #f5f5f5;
-  padding: 10px;
-  border-radius: 4px;
-  overflow-x: auto;
-}
-.websocket-output pre {
+
+.recorder-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-size: 1.25rem;
   margin: 0;
+}
+
+.recorder-icon {
+  font-size: 1.5rem;
+}
+
+/* Recording Controls */
+.recorder-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+.record-btn {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-normal);
+}
+
+.record-btn:hover {
+  transform: scale(1.05);
+}
+
+.record-btn-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-glow);
+  transition: all var(--transition-normal);
+}
+
+.record-btn.recording .record-btn-inner {
+  background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.record-icon {
+  font-size: 2rem;
+}
+
+/* Pulse Animation */
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid var(--error);
+  transform: translate(-50%, -50%);
+  animation: pulse-animation 1.5s ease-out infinite;
+}
+
+.pulse-ring.delay {
+  animation-delay: 0.5s;
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+.record-hint {
+  margin-top: var(--space-md);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Status Display */
+.status-display {
+  margin-bottom: var(--space-lg);
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.status-indicator.idle .status-dot {
+  background: var(--text-muted);
+}
+
+.status-indicator.active .status-dot {
+  background: var(--success);
+}
+
+.status-indicator.recording .status-dot {
+  background: var(--error);
+  animation: blink 1s ease-in-out infinite;
+}
+
+.status-indicator.stopped .status-dot {
+  background: var(--warning);
+}
+
+.status-indicator.error .status-dot {
+  background: var(--error);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.status-text {
+  color: var(--text-primary);
+}
+
+/* Audio Config Card */
+.audio-config {
+  margin-bottom: var(--space-lg);
+  text-align: left;
+}
+
+.config-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.9375rem;
+  margin-bottom: var(--space-md);
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+}
+
+.config-label {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.config-value {
+  color: var(--primary);
+  font-weight: 500;
+  font-size: 0.8125rem;
+}
+
+/* WebSocket Output */
+.websocket-output {
+  text-align: left;
+}
+
+.output-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.9375rem;
+  margin-bottom: var(--space-md);
+}
+
+.output-content {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  word-break: break-all;
+}
+
+/* Unsupported State */
+.unsupported {
+  padding: var(--space-xl);
+  text-align: center;
+}
+
+.warning-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: var(--space-md);
+}
+
+.unsupported p {
+  margin-bottom: var(--space-sm);
+}
+
+.unsupported .hint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

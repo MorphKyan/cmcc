@@ -1,82 +1,111 @@
 <template>
   <div id="app">
-    <header>
-      <h1>智能控制系统</h1>
-      <nav class="tabs">
-        <button 
-          :class="{ active: activeTab === 'home' }" 
-          @click="activeTab = 'home'"
-        >主页</button>
-        <button 
-          :class="{ active: activeTab === 'devices' }" 
-          @click="activeTab = 'devices'"
-        >设备管理</button>
-        <button 
-          :class="{ active: activeTab === 'resources' }" 
-          @click="activeTab = 'resources'"
-        >资源管理</button>
-        <button 
-          :class="{ active: activeTab === 'areas' }" 
-          @click="activeTab = 'areas'"
-        >区域管理</button>
-        <button 
-          :class="{ active: activeTab === 'doors' }" 
-          @click="activeTab = 'doors'"
-        >门资源管理</button>
-      </nav>
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <h1 class="app-title">
+          <span class="title-icon">🎛️</span>
+          智能控制系统
+        </h1>
+        <nav class="nav-tabs">
+          <button 
+            v-for="tab in tabs" 
+            :key="tab.id"
+            :class="['nav-tab', { active: activeTab === tab.id }]" 
+            @click="activeTab = tab.id"
+          >
+            <span class="tab-icon">{{ tab.icon }}</span>
+            <span class="tab-label">{{ tab.label }}</span>
+          </button>
+        </nav>
+      </div>
     </header>
     
-    <main>
+    <main class="app-main">
       <div class="container">
         <!-- 主页内容 -->
-        <div v-show="activeTab === 'home'">
+        <div v-show="activeTab === 'home'" class="page-content">
           <!-- 音频录制组件 -->
-          <section class="audio-section">
+          <section class="section">
             <AudioRecorder />
           </section>
           
-          <!-- 健康检查和状态显示 -->
-          <section class="status-section">
-            <h2>系统状态</h2>
-            <div class="status-content">
-              <p>健康检查: {{ healthStatus }}</p>
-              <p>VAD 状态: {{ vadStatusInfo }}</p>
-              <p>RAG 状态: {{ ragStatusInfo }}</p>
-              <p>LLM 健康: {{ llmHealthStatus }}</p>
-              <button @click="checkHealth">检查健康</button>
-              <button @click="getVadStatus">获取 VAD 状态</button>
-              <button @click="reinitializeVad">重启 VAD</button>
-              <button @click="getRagStatus">获取 RAG 状态</button>
-              <button @click="refreshRag">刷新 RAG</button>
-              <button @click="checkLLMHealth">检查 LLM 健康</button>
+          <!-- 系统状态卡片 -->
+          <section class="section">
+            <h2 class="section-title">
+              <span class="section-icon">📊</span>
+              系统状态
+            </h2>
+            <div class="status-grid">
+              <div class="status-card">
+                <div class="status-label">健康检查</div>
+                <div :class="['status-value', getStatusClass(healthStatus)]">{{ healthStatus }}</div>
+              </div>
+              <div class="status-card">
+                <div class="status-label">VAD 状态</div>
+                <div :class="['status-value', getStatusClass(vadStatusInfo)]">{{ vadStatusInfo }}</div>
+              </div>
+              <div class="status-card">
+                <div class="status-label">RAG 状态</div>
+                <div :class="['status-value', getStatusClass(ragStatusInfo)]">{{ ragStatusInfo }}</div>
+              </div>
+              <div class="status-card">
+                <div class="status-label">LLM 健康</div>
+                <div :class="['status-value', getStatusClass(llmHealthStatus)]">{{ llmHealthStatus }}</div>
+              </div>
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-primary" @click="checkHealth">检查健康</button>
+              <button class="btn btn-secondary" @click="getVadStatus">获取 VAD 状态</button>
+              <button class="btn btn-secondary" @click="reinitializeVad">重启 VAD</button>
+              <button class="btn btn-secondary" @click="getRagStatus">获取 RAG 状态</button>
+              <button class="btn btn-secondary" @click="refreshRag">刷新 RAG</button>
+              <button class="btn btn-secondary" @click="checkLLMHealth">检查 LLM 健康</button>
             </div>
           </section>
           
           <!-- 查询功能 -->
-          <section class="query-section">
-            <h2>RAG 查询</h2>
-            <div class="query-content">
-              <input v-model="queryText" placeholder="请输入查询内容" />
-              <button @click="performQuery">查询</button>
+          <section class="section">
+            <h2 class="section-title">
+              <span class="section-icon">🔍</span>
+              RAG 查询
+            </h2>
+            <div class="query-container">
+              <div class="query-input-wrapper">
+                <input 
+                  v-model="queryText" 
+                  class="input query-input" 
+                  placeholder="请输入查询内容..." 
+                  @keyup.enter="performQuery"
+                />
+                <button class="btn btn-primary" @click="performQuery">查询</button>
+              </div>
               <div v-if="queryResult" class="query-result">
-                <h3>查询结果:</h3>
-                <pre>{{ queryResult }}</pre>
+                <h3>查询结果</h3>
+                <pre class="result-code">{{ queryResult }}</pre>
               </div>
             </div>
           </section>
 
           <!-- 配置显示 -->
-          <section class="config-section">
-            <h2>当前配置</h2>
-            <div class="config-content">
-              <button @click="loadConfig" :disabled="configLoading">
+          <section class="section">
+            <h2 class="section-title">
+              <span class="section-icon">⚙️</span>
+              当前配置
+            </h2>
+            <div class="config-container">
+              <button class="btn btn-primary" @click="loadConfig" :disabled="configLoading">
+                <span v-if="configLoading" class="spinner"></span>
                 {{ configLoading ? '加载中...' : '加载配置' }}
               </button>
-              <div v-if="currentConfig" class="config-display">
+              <div v-if="currentConfig" class="config-grid">
                 <div v-for="(category, categoryName) in currentConfig" :key="categoryName" class="config-category">
-                  <h3>{{ categoryName.toUpperCase() }} 配置</h3>
-                  <div v-for="(value, key) in category" :key="key" class="config-item">
-                    <strong>{{ key }}:</strong> {{ value }}
+                  <h3 class="config-category-title">{{ categoryName.toUpperCase() }}</h3>
+                  <div class="config-items">
+                    <div v-for="(value, key) in category" :key="key" class="config-item">
+                      <span class="config-key">{{ key }}</span>
+                      <span class="config-value">{{ value }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -85,22 +114,22 @@
         </div>
 
         <!-- 设备管理 -->
-        <div v-if="activeTab === 'devices'">
+        <div v-if="activeTab === 'devices'" class="page-content">
           <DeviceManager />
         </div>
 
         <!-- 资源管理 -->
-        <div v-if="activeTab === 'resources'">
+        <div v-if="activeTab === 'resources'" class="page-content">
           <ResourceManager />
         </div>
 
         <!-- 区域管理 -->
-        <div v-if="activeTab === 'areas'">
+        <div v-if="activeTab === 'areas'" class="page-content">
           <AreaManager />
         </div>
 
         <!-- 门资源管理 -->
-        <div v-if="activeTab === 'doors'">
+        <div v-if="activeTab === 'doors'" class="page-content">
           <DoorManager />
         </div>
 
@@ -138,6 +167,13 @@ export default {
   data() {
     return {
       activeTab: 'home',
+      tabs: [
+        { id: 'home', label: '主页', icon: '🏠' },
+        { id: 'devices', label: '设备管理', icon: '📱' },
+        { id: 'resources', label: '资源管理', icon: '🎬' },
+        { id: 'areas', label: '区域管理', icon: '🗺️' },
+        { id: 'doors', label: '门资源管理', icon: '🚪' }
+      ],
       healthStatus: '未知',
       ragStatusInfo: '未知',
       vadStatusInfo: '未知',
@@ -149,6 +185,12 @@ export default {
     }
   },
   methods: {
+    getStatusClass(status) {
+      if (status.includes('错误') || status.includes('不健康')) return 'status-error'
+      if (status === '未知') return 'status-unknown'
+      return 'status-ok'
+    },
+    
     async checkHealth() {
       try {
         const response = await healthCheck()
@@ -233,7 +275,6 @@ export default {
       }
     },
 
-    // 定期更新状态
     async updateStatuses() {
       if (this.activeTab === 'home') {
         await this.checkHealth()
@@ -242,7 +283,6 @@ export default {
       }
     },
 
-    // 第一次更新所有状态
     async updateAllStatuses() {
       await this.checkHealth()
       await this.getVadStatus()
@@ -250,15 +290,13 @@ export default {
       await this.checkLLMHealth()
     },
 
-    // 启动定时更新
     startAutoUpdate() {
-      this.updateAllStatuses() // 立即更新一次
+      this.updateAllStatuses()
       this.autoUpdateInterval = setInterval(() => {
         this.updateStatuses()
-      }, 5000) // 每5秒更新一次
+      }, 5000)
     },
 
-    // 停止定时更新
     stopAutoUpdate() {
       if (this.autoUpdateInterval) {
         clearInterval(this.autoUpdateInterval)
@@ -278,115 +316,331 @@ export default {
 </script>
 
 <style>
+/* ===== App Layout ===== */
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.tabs {
-  margin-bottom: 20px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
+/* ===== Header ===== */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, rgba(10, 15, 26, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--space-md) 0;
 }
 
-.tabs button {
-  background: none;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 16px;
-  color: #666;
-  border-bottom: 2px solid transparent;
-  margin: 0 5px;
-}
-
-.tabs button.active {
-  color: #42b983;
-  border-bottom: 2px solid #42b983;
-  font-weight: bold;
-}
-
-.tabs button:hover {
-  color: #42b983;
-}
-
-.container {
-  max-width: 800px;
+.header-content {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
-section {
-  margin-bottom: 40px;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 1.5rem;
+  margin: 0;
 }
 
-button {
-  padding: 8px 16px;
-  margin: 5px;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 4px;
+.title-icon {
+  font-size: 1.75rem;
+}
+
+/* ===== Navigation Tabs ===== */
+.nav-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: var(--space-xs);
+}
+
+.nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
 }
 
-button:hover {
-  background-color: #359c6d;
+.nav-tab:hover {
+  color: var(--text-primary);
+  background: var(--glass-bg);
 }
 
-button:disabled {
-  background-color: #a8d5c2;
-  cursor: not-allowed;
+.nav-tab.active {
+  color: var(--primary);
+  background: rgba(20, 184, 166, 0.1);
+  border-color: var(--primary);
 }
 
-input {
-  padding: 8px;
-  margin: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.tab-icon {
+  font-size: 1.125rem;
+}
+
+/* ===== Main Content ===== */
+.app-main {
+  flex: 1;
+  padding: var(--space-xl) 0;
+}
+
+.page-content {
+  animation: fadeIn 0.3s ease;
+}
+
+/* ===== Sections ===== */
+.section {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-icon {
+  font-size: 1.25rem;
+}
+
+/* ===== Status Grid ===== */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.status-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  transition: all var(--transition-fast);
+}
+
+.status-card:hover {
+  border-color: var(--border-color-hover);
+  transform: translateY(-2px);
+}
+
+.status-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-xs);
+}
+
+.status-value {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.status-ok {
+  color: var(--success);
+}
+
+.status-error {
+  color: var(--error);
+}
+
+.status-unknown {
+  color: var(--text-muted);
+}
+
+/* ===== Action Buttons ===== */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* ===== Query Section ===== */
+.query-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.query-input-wrapper {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.query-input {
+  flex: 1;
 }
 
 .query-result {
-  margin-top: 20px;
-  text-align: left;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
 }
 
-.query-result pre {
-  background-color: #f5f5f5;
-  padding: 10px;
-  border-radius: 4px;
-  overflow-x: auto;
+.query-result h3 {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
 }
 
-.config-section {
-  margin-bottom: 40px;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.result-code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* ===== Config Section ===== */
+.config-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
 }
 
 .config-category {
-  margin-bottom: 20px;
-  padding: 10px;
-  border: 1px solid #eee;
-  border-radius: 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+.config-category-title {
+  font-size: 0.75rem;
+  color: var(--primary);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.config-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
 
 .config-item {
-  margin: 5px 0;
-  padding: 5px;
-  background-color: #f9f9f9;
-  border-radius: 3px;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  font-size: 0.8125rem;
+  padding: var(--space-xs) 0;
 }
 
-.config-item strong {
-  color: #333;
+.config-key {
+  color: var(--text-secondary);
+}
+
+.config-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+  word-break: break-all;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+  .header-content {
+    padding: 0 var(--space-sm);
+  }
+
+  .app-title {
+    font-size: 1.25rem;
+  }
+
+  .nav-tab {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.875rem;
+  }
+
+  .tab-label {
+    display: none;
+  }
+
+  .tab-icon {
+    font-size: 1.25rem;
+  }
+
+  .section {
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+  }
+
+  .status-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+  }
+
+  .query-input-wrapper {
+    flex-direction: column;
+  }
+
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header-content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-tabs {
+    justify-content: flex-end;
+  }
 }
 </style>

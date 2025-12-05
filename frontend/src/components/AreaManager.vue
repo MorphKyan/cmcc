@@ -1,15 +1,50 @@
 <template>
   <div class="manager-section">
-    <h2>区域管理</h2>
-    <div class="upload-box">
-      <h3>批量上传区域 (JSON)</h3>
-      <p class="hint">格式示例: [{"name": "区域名", "aliases": "别名", "description": "描述"}]</p>
-      <textarea v-model="jsonInput" placeholder="在此输入JSON数据..." rows="10"></textarea>
-      <div class="actions">
-        <button @click="upload" :disabled="loading">{{ loading ? '上传中...' : '上传' }}</button>
-        <button @click="formatJson" class="secondary">格式化JSON</button>
+    <div class="manager-header">
+      <h2 class="manager-title">
+        <span class="manager-icon">🗺️</span>
+        区域管理
+      </h2>
+      <p class="manager-desc">批量上传区域信息到系统</p>
+    </div>
+    
+    <div class="upload-card card">
+      <div class="card-header">
+        <h3>批量上传区域 (JSON)</h3>
       </div>
-      <p v-if="message" :class="['message', status]">{{ message }}</p>
+      
+      <div class="hint-box">
+        <span class="hint-icon">💡</span>
+        <code class="hint-code">[{"name": "区域名", "aliases": "别名", "description": "描述"}]</code>
+      </div>
+      
+      <textarea 
+        v-model="jsonInput" 
+        class="textarea json-input" 
+        placeholder="在此输入JSON数据..."
+        rows="10"
+      ></textarea>
+      
+      <div class="card-actions">
+        <button 
+          class="btn btn-primary" 
+          @click="upload" 
+          :disabled="loading"
+        >
+          <span v-if="loading" class="spinner"></span>
+          {{ loading ? '上传中...' : '上传' }}
+        </button>
+        <button class="btn btn-secondary" @click="formatJson">
+          格式化 JSON
+        </button>
+      </div>
+      
+      <transition name="fade">
+        <div v-if="message" :class="['message', messageClass]">
+          <span class="message-icon">{{ status === 'success' ? '✅' : '❌' }}</span>
+          {{ message }}
+        </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -25,6 +60,11 @@ export default {
       message: '',
       status: '',
       loading: false
+    }
+  },
+  computed: {
+    messageClass() {
+      return this.status === 'success' ? 'message-success' : 'message-error'
     }
   },
   methods: {
@@ -65,6 +105,7 @@ export default {
       try {
         const obj = JSON.parse(this.jsonInput)
         this.jsonInput = JSON.stringify(obj, null, 2)
+        this.message = ''
       } catch (e) {
         this.message = '无法格式化: JSON无效'
         this.status = 'error'
@@ -76,57 +117,103 @@ export default {
 
 <style scoped>
 .manager-section {
-  padding: 20px;
-  text-align: left;
+  animation: fadeIn 0.3s ease;
 }
 
-.upload-box {
-  background: #f9f9f9;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #eee;
+.manager-header {
+  margin-bottom: var(--space-lg);
 }
 
-textarea {
-  width: 100%;
-  font-family: monospace;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  resize: vertical;
+.manager-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
 }
 
-.hint {
-  font-size: 0.9em;
-  color: #666;
-  margin-bottom: 10px;
+.manager-icon {
+  font-size: 1.5rem;
 }
 
-.actions {
-  margin-bottom: 15px;
+.manager-desc {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0;
 }
 
-button {
-  margin-right: 10px;
+.upload-card {
+  padding: var(--space-lg);
 }
 
-button.secondary {
-  background-color: #666;
+.card-header h3 {
+  font-size: 1rem;
+  margin-bottom: var(--space-md);
+  color: var(--text-primary);
+}
+
+.hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--info-bg);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+
+.hint-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.hint-code {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--info);
+  word-break: break-all;
+}
+
+.json-input {
+  margin-bottom: var(--space-md);
+}
+
+.card-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .message {
-  padding: 10px;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
-.message.success {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+.message-icon {
+  flex-shrink: 0;
 }
 
-.message.error {
-  background-color: #ffebee;
-  color: #c62828;
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-actions {
+    flex-direction: column;
+  }
+  
+  .card-actions .btn {
+    width: 100%;
+  }
 }
 </style>
