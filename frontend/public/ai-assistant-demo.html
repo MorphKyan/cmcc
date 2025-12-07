@@ -246,7 +246,9 @@ AIAssistant.destroy();
     import { AIAssistant } from '/src/embed/ai-assistant-embed.js';
     
     AIAssistant.init({
-      backendUrl: 'https://local.morph.icu:5000',
+      // Configure this to your backend URL
+      // In development with Vite, this is automatically loaded from .env.development
+      backendUrl: window.location.origin.replace(':5173', ':5000'),
       position: { bottom: '20px', right: '20px' },
       theme: 'dark'
     });

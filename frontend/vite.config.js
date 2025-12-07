@@ -2,7 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import fs from 'fs'
 import path from 'path'
 
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
@@ -10,6 +10,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => {
+  // Load environment variables
+  const env = loadEnv(mode, process.cwd(), 'VITE_')
+
+  // Configuration from environment variables with fallbacks
+  const sslCert = env.VITE_SSL_CERT || 'local_morphk_icu.pem'
+  const sslKey = env.VITE_SSL_KEY || 'local_morphk_icu.key'
+  const backendUrl = env.VITE_BACKEND_URL || 'https://localhost:5000'
   // Library build mode for AI Assistant widget
   if (mode === 'lib') {
     return {
@@ -63,12 +70,12 @@ export default defineConfig(({ command, mode }) => {
       cors: true,
       open: true,
       https: {
-        cert: fs.readFileSync(path.resolve(__dirname, 'local_morphk_icu.pem')),
-        key: fs.readFileSync(path.resolve(__dirname, 'local_morphk_icu.key'))
+        cert: fs.readFileSync(path.resolve(__dirname, sslCert)),
+        key: fs.readFileSync(path.resolve(__dirname, sslKey))
       },
       proxy: {
         '/api': {
-          target: 'https://local.morph.icu:5000',
+          target: backendUrl,
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, '')

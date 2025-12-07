@@ -6304,7 +6304,7 @@ const nf = (e, t) => {
     },
     getDefaultBackendUrl() {
       if (!(typeof import.meta < "u" && rf?.VITE_BACKEND_URL))
-        return typeof import.meta < "u" ? window.location.origin : "https://local.morph.icu:5000";
+        return typeof import.meta < "u" ? window.location.origin : "https://local.morphk.icu:5000";
     },
     // ========== Drag Functionality ==========
     startDrag(e) {

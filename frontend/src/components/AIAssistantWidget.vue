@@ -191,7 +191,9 @@ export default {
       if (typeof import.meta !== 'undefined' && import.meta.env?.PROD) {
         return window.location.origin;
       }
-      return 'https://local.morph.icu:5000';
+      // Fallback for development - use env var or localhost
+      const devDomain = import.meta.env?.VITE_DEV_DOMAIN || 'localhost';
+      return `https://${devDomain}:5000`;
     },
 
     // ========== Drag Functionality ==========

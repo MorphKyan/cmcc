@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,25 +11,25 @@
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       min-height: 100vh;
       color: #e4e4e7;
     }
-    
+
     .container {
       max-width: 900px;
       margin: 0 auto;
       padding: 60px 20px;
     }
-    
+
     header {
       text-align: center;
       margin-bottom: 60px;
     }
-    
+
     h1 {
       font-size: 2.5rem;
       font-weight: 700;
@@ -38,12 +39,12 @@
       background-clip: text;
       margin-bottom: 16px;
     }
-    
+
     .subtitle {
       font-size: 1.1rem;
       color: #a1a1aa;
     }
-    
+
     .demo-section {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -52,39 +53,39 @@
       margin-bottom: 32px;
       backdrop-filter: blur(10px);
     }
-    
+
     .demo-section h2 {
       font-size: 1.3rem;
       margin-bottom: 20px;
       color: #f4f4f5;
     }
-    
+
     .feature-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
       margin-top: 20px;
     }
-    
+
     .feature-card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 12px;
       padding: 24px;
     }
-    
+
     .feature-card h3 {
       font-size: 1rem;
       margin-bottom: 12px;
       color: #a78bfa;
     }
-    
+
     .feature-card p {
       font-size: 0.9rem;
       color: #9ca3af;
       line-height: 1.6;
     }
-    
+
     .code-block {
       background: #0d1117;
       border-radius: 8px;
@@ -94,27 +95,27 @@
       font-size: 0.85rem;
       line-height: 1.6;
     }
-    
+
     .code-block .comment {
       color: #6a737d;
     }
-    
+
     .code-block .tag {
       color: #7ee787;
     }
-    
+
     .code-block .attr {
       color: #79c0ff;
     }
-    
+
     .code-block .string {
       color: #a5d6ff;
     }
-    
+
     .code-block .keyword {
       color: #ff7b72;
     }
-    
+
     .instructions {
       margin-top: 20px;
       padding: 16px;
@@ -122,12 +123,12 @@
       border-left: 3px solid #a78bfa;
       border-radius: 0 8px 8px 0;
     }
-    
+
     .instructions p {
       margin: 8px 0;
       font-size: 0.9rem;
     }
-    
+
     .arrow-hint {
       position: fixed;
       bottom: 100px;
@@ -136,32 +137,48 @@
       font-size: 0.9rem;
       animation: bounce 2s infinite;
     }
-    
+
     .arrow-hint::after {
       content: '→';
       font-size: 1.5rem;
       margin-left: 8px;
     }
-    
+
     @keyframes bounce {
-      0%, 100% { transform: translateX(0); }
-      50% { transform: translateX(10px); }
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      50% {
+        transform: translateX(10px);
+      }
     }
-    
+
     @media (max-width: 640px) {
-      h1 { font-size: 1.8rem; }
-      .container { padding: 40px 16px; }
-      .arrow-hint { display: none; }
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .container {
+        padding: 40px 16px;
+      }
+
+      .arrow-hint {
+        display: none;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <header>
       <h1>🤖 AI Assistant Widget</h1>
       <p class="subtitle">可嵌入任何H5页面的智能语音助手模块</p>
     </header>
-    
+
     <section class="demo-section">
       <h2>✨ 功能特性</h2>
       <div class="feature-grid">
@@ -191,65 +208,69 @@
         </div>
       </div>
     </section>
-    
+
     <section class="demo-section">
       <h2>📝 嵌入方法</h2>
       <div class="code-block">
-<span class="comment">&lt;!-- 在页面底部引入 --&gt;</span>
-<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="string">"https://your-cdn.com/ai-assistant.umd.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
-<span class="tag">&lt;script&gt;</span>
-  <span class="keyword">AIAssistant</span>.init({
-    <span class="attr">backendUrl</span>: <span class="string">'https://your-backend.com'</span>,
-    <span class="attr">position</span>: { <span class="attr">bottom</span>: <span class="string">'20px'</span>, <span class="attr">right</span>: <span class="string">'20px'</span> },
-    <span class="attr">theme</span>: <span class="string">'dark'</span>
-  });
-<span class="tag">&lt;/script&gt;</span>
+        <span class="comment">&lt;!-- 在页面底部引入 --&gt;</span>
+        <span class="tag">&lt;script</span> <span class="attr">src</span>=<span
+          class="string">"https://your-cdn.com/ai-assistant.umd.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+        <span class="tag">&lt;script&gt;</span>
+        <span class="keyword">AIAssistant</span>.init({
+        <span class="attr">backendUrl</span>: <span class="string">'https://your-backend.com'</span>,
+        <span class="attr">position</span>: { <span class="attr">bottom</span>: <span class="string">'20px'</span>,
+        <span class="attr">right</span>: <span class="string">'20px'</span> },
+        <span class="attr">theme</span>: <span class="string">'dark'</span>
+        });
+        <span class="tag">&lt;/script&gt;</span>
       </div>
-      
+
       <div class="instructions">
         <p>📌 <strong>提示：</strong>右下角的AI助手图标已经加载完成！</p>
         <p>🎤 点击图标开始语音录制，再次点击停止</p>
         <p>✋ 按住图标可拖动到任意位置</p>
       </div>
     </section>
-    
+
     <section class="demo-section">
       <h2>🛠️ 配置选项</h2>
       <div class="code-block">
-AIAssistant.init({
-  <span class="comment">// 后端WebSocket地址（必填）</span>
-  <span class="attr">backendUrl</span>: <span class="string">'https://api.example.com'</span>,
-  
-  <span class="comment">// 初始位置（可选）</span>
-  <span class="attr">position</span>: { 
-    <span class="attr">bottom</span>: <span class="string">'20px'</span>, 
-    <span class="attr">right</span>: <span class="string">'20px'</span> 
-  },
-  
-  <span class="comment">// 主题：'light' 或 'dark'（可选，默认 'dark'）</span>
-  <span class="attr">theme</span>: <span class="string">'dark'</span>,
-  
-  <span class="comment">// 容器ID（可选）</span>
-  <span class="attr">containerId</span>: <span class="string">'ai-assistant-container'</span>
-});
+        AIAssistant.init({
+        <span class="comment">// 后端WebSocket地址（必填）</span>
+        <span class="attr">backendUrl</span>: <span class="string">'https://api.example.com'</span>,
 
-<span class="comment">// 销毁组件</span>
-AIAssistant.destroy();
+        <span class="comment">// 初始位置（可选）</span>
+        <span class="attr">position</span>: {
+        <span class="attr">bottom</span>: <span class="string">'20px'</span>,
+        <span class="attr">right</span>: <span class="string">'20px'</span>
+        },
+
+        <span class="comment">// 主题：'light' 或 'dark'（可选，默认 'dark'）</span>
+        <span class="attr">theme</span>: <span class="string">'dark'</span>,
+
+        <span class="comment">// 容器ID（可选）</span>
+        <span class="attr">containerId</span>: <span class="string">'ai-assistant-container'</span>
+        });
+
+        <span class="comment">// 销毁组件</span>
+        AIAssistant.destroy();
       </div>
     </section>
   </div>
-  
+
   <div class="arrow-hint">试试这里</div>
-  
+
   <!-- Load AI Assistant Widget -->
   <script type="module">
     import { AIAssistant } from '/src/embed/ai-assistant-embed.js';
-    
+
     AIAssistant.init({
-      backendUrl: 'https://local.morph.icu:5000',
+      // Configure this to your backend URL
+      backendUrl: window.location.origin.replace(':5173', ':5000'),
       position: { bottom: '20px', right: '20px' },
       theme: 'dark'
     });
   </script>
 </body>
+
 </html>

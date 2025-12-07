@@ -148,7 +148,7 @@ npm run dev
 ```javascript
 // 在控制台执行多次初始化/销毁循环
 for (let i = 0; i < 10; i++) {
-  AIAssistant.init({ backendUrl: 'https://local.morph.icu:5000' });
+  AIAssistant.init({ backendUrl: 'https://local.morphk.icu:5000' });
   await new Promise(r => setTimeout(r, 1000));
   AIAssistant.destroy();
 }

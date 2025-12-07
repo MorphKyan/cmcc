@@ -17,8 +17,9 @@ const getBackendUrl = () => {
     return window.location.origin;
   }
 
-  // Default development backend URL
-  return 'https://local.morph.icu:5000';
+  // Fallback: construct from domain env var or use localhost
+  const devDomain = import.meta.env.VITE_DEV_DOMAIN || 'localhost';
+  return `https://${devDomain}:5000`;
 };
 
 // Get WebSocket URL based on current protocol and backend configuration
@@ -34,8 +35,9 @@ const getWebSocketUrl = (clientId) => {
     console.warn('Invalid backend URL, using default:', backendUrl, error);
     // Fallback to current implementation with protocol detection
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Try to extract host from backendUrl if it's a simple string like "local.morph.icu:5000"
-    let host = 'local.morph.icu:5000';
+    // Use environment variable if available, otherwise fallback to localhost
+    const devDomain = import.meta.env.VITE_DEV_DOMAIN || 'localhost';
+    let host = `${devDomain}:5000`;
     if (backendUrl && backendUrl.startsWith('http')) {
       try {
         const tempUrl = new URL(backendUrl);
