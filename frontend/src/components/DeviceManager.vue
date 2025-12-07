@@ -5,9 +5,66 @@
         <span class="manager-icon">📱</span>
         设备管理
       </h2>
-      <p class="manager-desc">批量上传设备信息到系统</p>
+      <p class="manager-desc">管理和批量上传设备信息</p>
     </div>
     
+    <!-- Existing Devices List -->
+    <div class="list-card card">
+      <div class="card-header">
+        <h3>现有设备</h3>
+        <div class="header-actions">
+          <button class="btn btn-secondary btn-sm" @click="fetchDevices">
+            🔄 刷新列表
+          </button>
+          <button class="btn btn-danger btn-sm" @click="clearAllDevices">
+            🗑️ 清空所有
+          </button>
+        </div>
+      </div>
+      
+      <div v-if="loadingList" class="loading">
+        <span class="spinner"></span>
+        加载中...
+      </div>
+      
+      <div v-else-if="devices.length === 0" class="no-data">
+        <span class="empty-icon">📭</span>
+        <p>暂无设备数据</p>
+      </div>
+      
+      <div v-else class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>类型</th>
+              <th>区域</th>
+              <th>别名</th>
+              <th>描述</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="device in devices" :key="device.name">
+              <td>
+                <span class="item-name">{{ device.name }}</span>
+              </td>
+              <td>
+                <span class="item-type">{{ device.type }}</span>
+              </td>
+              <td>{{ device.area }}</td>
+              <td>{{ device.aliases }}</td>
+              <td>{{ device.description }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="list-footer">
+        <span class="count-badge">共 {{ devices.length }} 条记录</span>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
     <div class="upload-card card">
       <div class="card-header">
         <h3>批量上传设备 (JSON)</h3>
@@ -29,10 +86,10 @@
         <button 
           class="btn btn-primary" 
           @click="upload" 
-          :disabled="loading"
+          :disabled="uploading"
         >
-          <span v-if="loading" class="spinner"></span>
-          {{ loading ? '上传中...' : '上传' }}
+          <span v-if="uploading" class="spinner"></span>
+          {{ uploading ? '上传中...' : '上传' }}
         </button>
         <button class="btn btn-secondary" @click="formatJson">
           格式化 JSON
@@ -50,16 +107,18 @@
 </template>
 
 <script>
-import { uploadDevicesBatch } from '../api'
+import { uploadDevicesBatch, getDevices, clearDevices } from '../api'
 
 export default {
   name: 'DeviceManager',
   data() {
     return {
+      devices: [],
+      loadingList: false,
       jsonInput: '',
       message: '',
       status: '',
-      loading: false
+      uploading: false
     }
   },
   computed: {
@@ -67,7 +126,23 @@ export default {
       return this.status === 'success' ? 'message-success' : 'message-error'
     }
   },
+  mounted() {
+    this.fetchDevices()
+  },
   methods: {
+    async fetchDevices() {
+      this.loadingList = true
+      try {
+        const response = await getDevices()
+        this.devices = response.data
+      } catch (error) {
+        console.error('Failed to fetch devices:', error)
+        this.message = '获取设备列表失败: ' + error.message
+        this.status = 'error'
+      } finally {
+        this.loadingList = false
+      }
+    },
     async upload() {
       if (!this.jsonInput.trim()) {
         this.message = '请输入JSON数据'
@@ -75,7 +150,7 @@ export default {
         return
       }
 
-      this.loading = true
+      this.uploading = true
       this.message = ''
       
       try {
@@ -94,11 +169,26 @@ export default {
         this.message = response.data.message
         this.status = 'success'
         this.jsonInput = ''
+        this.fetchDevices()
       } catch (error) {
         this.message = error.message || '上传失败'
         this.status = 'error'
       } finally {
-        this.loading = false
+        this.uploading = false
+      }
+    },
+    async clearAllDevices() {
+      if (!confirm('确定要清空所有设备数据吗？此操作不可恢复！')) {
+        return
+      }
+      try {
+        await clearDevices()
+        this.message = '数据已清空'
+        this.status = 'success'
+        this.fetchDevices()
+      } catch (error) {
+        this.message = '清空失败: ' + error.message
+        this.status = 'error'
       }
     },
     formatJson() {
@@ -141,14 +231,87 @@ export default {
   margin: 0;
 }
 
-.upload-card {
+/* List Card */
+.list-card {
+  margin-bottom: var(--space-lg);
   padding: var(--space-lg);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
 }
 
 .card-header h3 {
   font-size: 1rem;
-  margin-bottom: var(--space-md);
+  margin: 0;
   color: var(--text-primary);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Table */
+.table-wrapper {
+  margin-bottom: var(--space-md);
+}
+
+.item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.item-type {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--primary-glow);
+  color: var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Empty State */
+.no-data {
+  padding: var(--space-xl);
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: var(--space-md);
+}
+
+.no-data p {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* List Footer */
+.list-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.count-badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-input);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Upload Card */
+.upload-card {
+  padding: var(--space-lg);
 }
 
 .hint-box {
@@ -208,12 +371,32 @@ export default {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .btn {
+    flex: 1;
+  }
+
   .card-actions {
     flex-direction: column;
   }
   
   .card-actions .btn {
     width: 100%;
+  }
+
+  .table-wrapper {
+    margin: 0 calc(-1 * var(--space-lg));
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
 }
 </style>

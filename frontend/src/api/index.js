@@ -62,6 +62,30 @@ export const uploadDoorsBatch = (items) => {
   return api.post('/data/doors/batch', items)
 }
 
+export const getDevices = () => {
+  return api.get('/data/devices')
+}
+
+export const clearDevices = () => {
+  return api.delete('/data/devices')
+}
+
+export const getAreas = () => {
+  return api.get('/data/areas')
+}
+
+export const clearAreas = () => {
+  return api.delete('/data/areas')
+}
+
+export const getVideos = () => {
+  return api.get('/data/videos')
+}
+
+export const clearVideos = () => {
+  return api.delete('/data/videos')
+}
+
 export const getDoors = () => {
   return api.get('/data/doors')
 }
