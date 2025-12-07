@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import numpy as np
 import numpy.typing as npt
@@ -89,7 +90,7 @@ async def run_asr_processor(context: Context) -> None:
             # break
 
 
-async def run_llm_rag_processor(context: Context) -> None:
+async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     """LLM/RAG处理逻辑代码"""
     logger.info("LLM/RAG处理器已启动")
     
@@ -131,15 +132,26 @@ async def run_llm_rag_processor(context: Context) -> None:
             
             logger.info("[大模型响应] 返回 {count} 个命令", count=len(commands))
 
+            # 自动保存对话到历史
+            context.chat_history.append(HumanMessage(content=recognized_text))
+            context.chat_history.append(ai_message)
+
+            # 当LLM未返回任何命令时，向前端发送提示
+            if not commands:
+                no_command_payload = json.dumps({
+                    "type": "system_message",
+                    "user_id": context.context_id,
+                    "message": "抱歉，我无法理解您的指令。请尝试重新描述您的需求。"
+                }, ensure_ascii=False)
+                await websocket.send_text(no_command_payload)
+                logger.info("[提示] 未识别到有效指令，已通知用户")
+                continue
+
             # 构建可执行命令对象
             executable_cmd = ExecutableCommand(
                 user_id=context.context_id,
                 commands=commands
             )
-
-            # 自动保存对话到历史
-            context.chat_history.append(HumanMessage(content=recognized_text))
-            context.chat_history.append(ai_message)
 
             # 放入命令队列，由执行器异步处理
             await context.command_queue.put(executable_cmd)
@@ -156,10 +168,22 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
     while True:
         try:
             executable_cmd = await context.command_queue.get()
+            execution_results: list[dict] = []
             
             # 1. 先执行本地命令（如更新位置）
             for cmd in executable_cmd.get_local_commands():
-                await _execute_local_command(cmd, context)
+                result = await _execute_local_command(cmd, context)
+                execution_results.append(result)
+                # 发送本地命令执行结果到前端
+                local_result_payload = json.dumps({
+                    "type": "command_result",
+                    "user_id": executable_cmd.user_id,
+                    "command": cmd.model_dump(),
+                    "result": result
+                }, ensure_ascii=False)
+                await websocket.send_text(local_result_payload)
+                logger.info("[本地命令结果] action={action}, success={success}, message={message}", 
+                           action=cmd.action, success=result.get("success"), message=result.get("message"))
             
             # 2. 发送远程命令到前端
             remote_commands = executable_cmd.get_remote_commands()
@@ -168,14 +192,57 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                 logger.info("[发送命令] user={user_id}, count={count}", 
                            user_id=executable_cmd.user_id, count=len(remote_commands))
                 await websocket.send_text(payload)
+            
+            # 3. 发送执行摘要到前端（用户友好的提示）
+            summary_messages: list[str] = []
+            for result in execution_results:
+                if result.get("success"):
+                    summary_messages.append(result.get("message", "操作成功"))
+            for cmd in remote_commands:
+                summary_messages.append(_get_command_description(cmd))
+            
+            if summary_messages:
+                summary_payload = json.dumps({
+                    "type": "execution_summary",
+                    "user_id": executable_cmd.user_id,
+                    "messages": summary_messages,
+                    "summary": "正在执行：" + "；".join(summary_messages)
+                }, ensure_ascii=False)
+                await websocket.send_text(summary_payload)
                 
         except Exception as e:
             logger.exception("[命令执行错误]")
 
 
-async def _execute_local_command(cmd: ExhibitionCommand, context: Context) -> None:
-    """执行本地命令"""
+async def _execute_local_command(cmd: ExhibitionCommand, context: Context) -> dict:
+    """执行本地命令，返回执行结果"""
     if cmd.action == "update_location" and cmd.target:
         old_location = context.location
         context.location = cmd.target
         logger.info("[位置更新] {old} -> {new}", old=old_location, new=cmd.target)
+        return {
+            "success": True,
+            "action": cmd.action,
+            "message": f"位置从「{old_location}」更新为「{cmd.target}」" if old_location else f"位置设置为「{cmd.target}」"
+        }
+    return {
+        "success": False,
+        "action": cmd.action,
+        "message": f"未知的本地命令：{cmd.action}"
+    }
+
+
+def _get_command_description(cmd: ExhibitionCommand) -> str:
+    """获取命令的用户友好描述"""
+    action_descriptions = {
+        "play": lambda c: f"在「{c.device}」上播放「{c.target}」",
+        "open": lambda c: f"打开「{c.target}」",
+        "close": lambda c: f"关闭「{c.target}」",
+        "seek": lambda c: f"将「{c.device}」跳转到{c.value}秒",
+        "set_volume": lambda c: f"将「{c.device}」音量设置为{c.value}",
+        "adjust_volume": lambda c: f"{'提高' if c.value == 'up' else '降低'}「{c.device}」音量",
+    }
+    
+    if cmd.action in action_descriptions:
+        return action_descriptions[cmd.action](cmd)
+    return f"执行{cmd.action}操作"

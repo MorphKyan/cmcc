@@ -38,8 +38,6 @@ class BaseRAGProcessor(ABC):
             settings: RAG配置
         """
         self.settings: RAGSettings = settings
-        self.videos_data_path = settings.videos_data_path
-        self.devices_data_path = settings.devices_data_path
         self.chroma_db_dir = settings.chroma_db_dir
         self.vector_store: Chroma | None = None
         self.retriever = None
@@ -79,9 +77,9 @@ class BaseRAGProcessor(ABC):
             self.vector_store.reset_collection()
 
             data_service = DataService()
-            doors_data = data_service.get_all_doors_data
-            videos_data = data_service.get_all_videos_data
-            devices_data = data_service.get_all_devices_data
+            doors_data = data_service.get_all_doors_data()
+            videos_data = data_service.get_all_videos_data()
+            devices_data = data_service.get_all_devices_data()
 
             documents = []
             documents.extend(convert_doors_to_documents(doors_data))
@@ -117,9 +115,9 @@ class BaseRAGProcessor(ABC):
         try:
             # 加载videos和devices数据
             data_service = DataService()
-            doors_data = data_service.get_all_doors_data
-            videos_data = data_service.get_all_videos_data
-            devices_data = data_service.get_all_devices_data
+            doors_data = data_service.get_all_doors_data()
+            videos_data = data_service.get_all_videos_data()
+            devices_data = data_service.get_all_devices_data()
 
             documents = []
             documents.extend(convert_doors_to_documents(doors_data))
