@@ -94,9 +94,9 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             door_docs = rag_docs.get("door", [])
             device_docs = rag_docs.get("device", [])
             
-            videos_info = DocumentFormatter.get_prompt_from_documents(self, video_docs)
-            doors_info = DocumentFormatter.get_prompt_from_documents(self, door_docs)
-            devices_info = DocumentFormatter.get_prompt_from_documents(self, device_docs)
+            videos_info = DocumentFormatter.format_video_documents(video_docs)
+            doors_info = DocumentFormatter.format_door_documents(door_docs)
+            devices_info = DocumentFormatter.format_device_documents(device_docs)
             area_list = self.get_areas_info_for_prompt()
             areas_info_json = json.dumps(area_list, ensure_ascii=False, indent=2)
             

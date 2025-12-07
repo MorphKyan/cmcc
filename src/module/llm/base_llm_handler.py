@@ -240,9 +240,9 @@ class BaseLLMHandler(ABC):
         device_docs = rag_docs.get("device", [])
         
         # 格式化各类型信息
-        videos_info = DocumentFormatter.get_prompt_from_documents(self, video_docs)
-        doors_info = DocumentFormatter.get_prompt_from_documents(self, door_docs)
-        devices_info = DocumentFormatter.get_prompt_from_documents(self, device_docs)
+        videos_info = DocumentFormatter.format_video_documents(video_docs)
+        doors_info = DocumentFormatter.format_door_documents(door_docs)
+        devices_info = DocumentFormatter.format_device_documents(device_docs)
         areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
 
         return {
