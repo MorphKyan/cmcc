@@ -77,8 +77,8 @@ if __name__ == '__main__':
 
     # 自动检测前端目录中的证书文件（如果未指定）
     if not args.ssl_certfile and not args.ssl_keyfile:
-        frontend_cert = os.path.join(os.path.dirname(__file__), 'frontend', 'morph_icu.pem')
-        frontend_key = os.path.join(os.path.dirname(__file__), 'frontend', 'morph_icu.key')
+        frontend_cert = os.path.join(os.path.dirname(__file__), 'frontend', 'local_morphk_icu.pem')
+        frontend_key = os.path.join(os.path.dirname(__file__), 'frontend', 'local_morphk_icu.key')
         if os.path.exists(frontend_cert) and os.path.exists(frontend_key):
             logger.info("检测到前端目录中的SSL证书，自动启用HTTPS/WSS")
             args.ssl_certfile = frontend_cert

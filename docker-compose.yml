@@ -24,8 +24,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./frontend/morph_icu.pem:/etc/nginx/certs/morph_icu.pem:ro
-      - ./frontend/morph_icu.key:/etc/nginx/certs/morph_icu.key:ro
+      - ./frontend/local_morphk_icu.pem:/etc/nginx/certs/local_morphk_icu.pem:ro
+      - ./frontend/local_morphk_icu.key:/etc/nginx/certs/local_morphk_icu.key:ro
       - ./logs/nginx:/var/log/nginx
     depends_on:
       - backend

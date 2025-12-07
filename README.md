@@ -101,14 +101,14 @@ python main.py
     python main.py --host 0.0.0.0 --port 5000
 
     # 启用HTTPS/WSS支持（使用项目中的SSL证书）
-    python main.py --ssl-certfile frontend/vue-project/morph_icu.pem --ssl-keyfile frontend/vue-project/morph_icu.key
+    python main.py --ssl-certfile frontend/vue-project/local_morphk_icu.pem --ssl-keyfile frontend/vue-project/local_morphk_icu.key
 
     # 启用HTTPS/WSS支持（使用自定义SSL证书）
     python main.py --ssl-certfile /path/to/your/cert.pem --ssl-keyfile /path/to/your/key.key --port 443
     ```
 
 -   **自动SSL检测**:
-    如果未指定SSL证书参数，系统会自动检测 `frontend/vue-project/` 目录中的 `morph_icu.pem` 和 `morph_icu.key` 文件，如果存在则自动启用HTTPS/WSS支持。
+    如果未指定SSL证书参数，系统会自动检测 `frontend/vue-project/` 目录中的 `local_morphk_icu.pem` 和 `local_morphk_icu.key` 文件，如果存在则自动启用HTTPS/WSS支持。
 
 -   **HTTPS/WSS优势**:
     - 解决前端HTTPS与后端HTTP的混合内容问题
@@ -142,7 +142,7 @@ python main.py
 python main.py
 
 # HTTPS模式（推荐，解决混合内容问题）
-python main.py --ssl-certfile frontend/vue-project/morph_icu.pem --ssl-keyfile frontend/vue-project/morph_icu.key
+python main.py --ssl-certfile frontend/vue-project/local_morphk_icu.pem --ssl-keyfile frontend/vue-project/local_morphk_icu.key
 ```
 
 API服务将在以下地址启动：

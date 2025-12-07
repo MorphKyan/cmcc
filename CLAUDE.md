@@ -80,7 +80,7 @@ The project uses a `.venv` virtual environment. Always activate it before runnin
 python main.py [--host HOST] [--port PORT]
 
 # HTTPS/WSS mode (recommended for production and mixed content resolution)
-python main.py --ssl-certfile frontend/vue-project/morph_icu.pem --ssl-keyfile frontend/vue-project/morph_icu.key [--host HOST] [--port PORT]
+python main.py --ssl-certfile frontend/vue-project/local_morphk_icu.pem --ssl-keyfile frontend/vue-project/local_morphk_icu.key [--host HOST] [--port PORT]
 ```
 
 Default: `http://0.0.0.0:5000` (HTTP) or `https://0.0.0.0:5000` (HTTPS)

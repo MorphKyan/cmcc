@@ -63,8 +63,8 @@ export default defineConfig(({ command, mode }) => {
       cors: true,
       open: true,
       https: {
-        cert: fs.readFileSync(path.resolve(__dirname, 'morph_icu.pem')),
-        key: fs.readFileSync(path.resolve(__dirname, 'morph_icu.key'))
+        cert: fs.readFileSync(path.resolve(__dirname, 'local_morphk_icu.pem')),
+        key: fs.readFileSync(path.resolve(__dirname, 'local_morphk_icu.key'))
       },
       proxy: {
         '/api': {
