@@ -23,8 +23,7 @@ async def get_current_config() -> ConfigResponse:
             "vad": {},
             "asr": {},
             "rag": {},
-            "llm": {},
-            "volcengine": {}
+            "llm": {}
         }
 
         # VAD 配置
@@ -49,7 +48,7 @@ async def get_current_config() -> ConfigResponse:
         # RAG 配置
         config_data["rag"] = {
             "provider": settings.rag.provider,
-            "videos_data_path": settings.rag.videos_data_path,
+            "videos_data_path": settings.data.media_data_path,
             "chroma_db_dir": settings.rag.chroma_db_dir,
             "top_k_results": settings.rag.top_k_results,
             "ollama_base_url": settings.rag.ollama_base_url,
