@@ -63,8 +63,7 @@ async def get_devices() -> List[Dict[str, Any]]:
     if dependencies.data_service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
     
-    devices = dependencies.data_service.get_all_devices()
-    return [dependencies.data_service.get_device_info(d) for d in devices if dependencies.data_service.get_device_info(d)]
+    return dependencies.data_service.get_all_devices_data()
 
 
 @router.get("/areas", response_model=List[Dict[str, Any]])
@@ -73,8 +72,7 @@ async def get_areas() -> List[Dict[str, Any]]:
     if dependencies.data_service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
     
-    areas = dependencies.data_service.get_all_areas()
-    return [dependencies.data_service.get_area_info(a) for a in areas if dependencies.data_service.get_area_info(a)]
+    return dependencies.data_service.get_all_areas_data()
 
 
 @router.get("/media", response_model=List[Dict[str, Any]])
@@ -83,8 +81,7 @@ async def get_media() -> List[Dict[str, Any]]:
     if dependencies.data_service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
     
-    media = dependencies.data_service.get_all_media()
-    return [dependencies.data_service.get_media_info(v) for v in media if dependencies.data_service.get_media_info(v)]
+    return dependencies.data_service.get_all_media_data()
 
 
 @router.delete("/devices", response_model=UploadResponse)
@@ -153,8 +150,7 @@ async def get_doors() -> List[Dict[str, Any]]:
     if dependencies.data_service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
     
-    doors = dependencies.data_service.get_all_doors()
-    return [dependencies.data_service.get_door_info(d) for d in doors if dependencies.data_service.get_door_info(d)]
+    return dependencies.data_service.get_all_doors_data()
 
 
 @router.delete("/doors", response_model=UploadResponse)
