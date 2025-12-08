@@ -73,6 +73,10 @@ export default defineConfig(({ command, mode }) => {
         cert: fs.readFileSync(path.resolve(__dirname, sslCert)),
         key: fs.readFileSync(path.resolve(__dirname, sslKey))
       },
+      // Explicitly set HMR host to match the custom domain to avoid WebSocket connection errors (wss:// vs https://)
+      hmr: {
+        host: 'local.morphk.icu',
+      },
       proxy: {
         '/api': {
           target: backendUrl,
