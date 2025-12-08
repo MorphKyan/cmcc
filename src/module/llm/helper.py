@@ -99,3 +99,30 @@ class DocumentFormatter:
                 "description": f"{meta.get('description', '')}，也称为{meta.get('aliases', '')}"
             })
         return json.dumps(result, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def format_area_info(areas: list[dict]) -> str:
+        """
+        格式化区域信息列表。
+
+        Args:
+            areas: 区域信息字典列表，每个字典包含 name, aliases, description 字段
+
+        Returns:
+            格式化后的 JSON 字符串
+        """
+        if not areas:
+            return "[]"
+
+        result = []
+        for area_info in areas:
+            if area_info:
+                name = area_info.get("name", "")
+                aliases_str = area_info.get("aliases", "")
+                description_str = area_info.get("description", "")
+                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                result.append({
+                    "name": name,
+                    "description": f"{description_str}，也称为{aliases}"
+                })
+        return json.dumps(result, ensure_ascii=False, indent=2)

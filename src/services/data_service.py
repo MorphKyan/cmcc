@@ -202,6 +202,10 @@ class DataService:
         with self._data_lock:
             return list(self._devices_cache.values())
 
+    def get_all_areas_data(self) -> List[Dict[str, Any]]:
+        with self._data_lock:
+            return list(self._areas_cache.values())
+
     # --- Write Methods ---
 
     async def add_devices(self, items: List[DeviceItem]) -> None:

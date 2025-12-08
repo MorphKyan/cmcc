@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
 from abc import ABC, abstractmethod
 from typing import Any
 
 from langchain_core.documents import Document
+from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableSerializable
 from langchain_core.messages import ToolMessage, AIMessage, trim_messages
@@ -19,6 +19,12 @@ from src.module.llm.helper import DocumentFormatter
 
 
 class BaseLLMHandler(ABC):
+    """
+    LLM处理器基类，定义了与大语言模型交互的通用流程。
+    
+    子类只需实现 _create_model() 方法来返回具体的模型实例。
+    """
+    
     def __init__(self, settings: LLMSettings) -> None:
         """
         初始化LLM处理器基类。
@@ -27,6 +33,7 @@ class BaseLLMHandler(ABC):
             settings (LLMSettings): LLM参数
         """
         self.settings = settings
+        self.model: BaseChatModel | None = None
         self.model_with_tools = None
         self.chain: RunnableSerializable[dict, Any] | None = None
 
@@ -41,10 +48,6 @@ class BaseLLMHandler(ABC):
         ])
 
         # 创建消息修剪器 (Trimmer)
-        # strategy="last": 保留最后的消息
-        # max_tokens=5: 保留5条消息 (token_counter=len 表示按消息数量计数)
-        # include_system=False: 不修剪系统消息 (保持系统提示词静态)
-        # start_on="human": 确保保留的消息从用户消息开始
         self.trimmer = trim_messages(
             strategy="last",
             max_tokens=5,
@@ -57,20 +60,59 @@ class BaseLLMHandler(ABC):
         logger.info("LLM处理器基类初始化完成")
 
     @abstractmethod
-    async def initialize(self) -> None:
+    def _create_model(self) -> BaseChatModel:
+        """
+        创建并返回具体的LLM模型实例。
+        
+        子类必须实现此方法以返回对应的模型（如 ChatOpenAI, ChatOllama 等）。
+        
+        Returns:
+            BaseChatModel: 初始化后的模型实例
+        """
         pass
+
+    def _build_chain(self) -> None:
+        """
+        构建处理链：绑定工具并创建运行链。
+        
+        在子类的 initialize() 方法创建模型后调用此方法。
+        """
+        if self.model is None:
+            raise ValueError("Model must be created before building chain")
+        
+        # 将工具绑定到模型
+        self.model_with_tools = self.model.bind_tools(self.tools)
+        
+        # 构建处理链
+        self.chain = self.prompt_template | self.trimmer | self.model_with_tools
+        
+        logger.debug("处理链构建完成")
+
+    async def initialize(self) -> None:
+        """
+        异步初始化模型和处理链。
+        
+        子类可以覆盖此方法以添加额外的初始化逻辑，但应调用 super().initialize()。
+        """
+        if self.model is not None:
+            return
+        
+        # 创建模型（由子类实现）
+        self.model = self._create_model()
+        
+        # 构建处理链
+        self._build_chain()
+        
+        logger.info(f"{self.__class__.__name__} 初始化完成")
 
     async def check_health(self) -> bool:
         """
         检查服务的健康状态。
-        通过发送一个简单的健康检查请求来验证服务是否可用。
         """
         try:
-            # 确保已初始化
             if self.chain is None:
                 await self.initialize()
 
-            # 使用简单的健康检查提示
             health_check_input = {
                 "DEVICES_INFO": "",
                 "DOORS_INFO": "",
@@ -79,7 +121,6 @@ class BaseLLMHandler(ABC):
                 "USER_INPUT": "健康检查"
             }
 
-            # 使用较短的超时进行健康检查
             import asyncio
             await asyncio.wait_for(self.chain.ainvoke(health_check_input), timeout=5.0)
 
@@ -91,9 +132,6 @@ class BaseLLMHandler(ABC):
     def get_network_retry_config(self) -> dict:
         """
         获取网络重试配置。
-
-        Returns:
-            dict: 包含重试配置的字典
         """
         return {
             'max_retries': getattr(self.settings, 'max_network_retries', 3),
@@ -101,8 +139,7 @@ class BaseLLMHandler(ABC):
             'max_delay': getattr(self.settings, 'max_retry_delay', 10.0)
         }
 
-    @abstractmethod
-    async def get_response(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> str:
+    async def get_response(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> list[ExhibitionCommand]:
         """
         结合RAG上下文，异步获取大模型的响应。
         
@@ -111,8 +148,22 @@ class BaseLLMHandler(ABC):
             rag_docs: 按类型分类的RAG文档字典 {"door": [...], "video": [...], "device": [...]}
             user_location: 用户当前位置
             chat_history: 聊天历史
+            
+        Returns:
+            list[ExhibitionCommand]: 命令列表
         """
-        pass
+        if self.chain is None:
+            await self.initialize()
+
+        logger.info("用户指令: {user_input}", user_input=user_input)
+
+        try:
+            chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
+            response = await self.chain.ainvoke(chain_input)
+            return self._format_response(response)
+        except Exception as api_error:
+            logger.exception("调用LLM API时出错: {error}", error=str(api_error))
+            return self.create_error_response("api_failure", str(api_error))
 
     async def get_response_with_retries(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> tuple[AIMessage, list[ExhibitionCommand]]:
         """
@@ -131,18 +182,17 @@ class BaseLLMHandler(ABC):
         # 1. 准备输入
         chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
         
-        # 2. 绑定工具到模型
+        # 2. 确保模型已初始化
         if not self.model_with_tools:
-             raise ValueError("Model with tools not initialized. Subclasses must set self.model_with_tools.")
+            await self.initialize()
+            if not self.model_with_tools:
+                raise ValueError("Model with tools not initialized.")
 
-        # 构建运行链：Prompt -> Trimmer -> ModelWithTools
-        runnable = self.prompt_template | self.trimmer | self.model_with_tools
-        
-        messages = [] # 这里的messages主要用于在循环中累积工具交互，实际prompt template会处理chat_history
+        messages = []
         
         # 初始调用
         try:
-            ai_msg = await runnable.ainvoke(chain_input)
+            ai_msg = await self.chain.ainvoke(chain_input)
         except Exception as e:
             logger.error(f"Initial LLM call failed: {e}")
             error_msg = AIMessage(content=f"错误: {e}")
@@ -155,7 +205,6 @@ class BaseLLMHandler(ABC):
         
         for attempt in range(max_retries):
             if not ai_msg.tool_calls:
-                # 没有工具调用，直接结束 这里在应用中需要酌情改为重试
                 break
                 
             # 执行工具
@@ -169,7 +218,6 @@ class BaseLLMHandler(ABC):
                 
                 tool_function = self._tool_map.get(tool_name)
                 if not tool_function:
-                    # 未知工具
                     error_msg = f"Error: Unknown tool '{tool_name}'"
                     tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id))
                     has_error = True
@@ -185,13 +233,12 @@ class BaseLLMHandler(ABC):
                     result = tool_function.invoke(tool_args)
                     
                     if isinstance(result, ExhibitionCommand) and result.action == "error":
-                         tool_outputs.append(ToolMessage(content=f"Error: {result.value}", tool_call_id=tool_call_id))
-                         has_error = True
+                        tool_outputs.append(ToolMessage(content=f"Error: {result.value}", tool_call_id=tool_call_id))
+                        has_error = True
                     else:
                         tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id))
                         
                 except Exception as e:
-                    # Catch execution/validation errors
                     error_msg = f"Error executing {tool_name}: {str(e)}. Please correct the arguments."
                     tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id))
                     has_error = True
@@ -226,29 +273,21 @@ class BaseLLMHandler(ABC):
 
     def _prepare_chain_input(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> dict[str, Any]:
         """
-        准备Prompt的输入变量，供子类使用。
-        
-        Args:
-            user_input: 用户输入
-            rag_docs: 按类型分类的RAG文档字典 {"door": [...], "video": [...], "device": [...]}
-            user_location: 用户当前位置
-            chat_history: 聊天历史
+        准备Prompt的输入变量。
         """
-        # 从分类文档字典中提取各类型的文档
         video_docs = rag_docs.get("video", [])
         door_docs = rag_docs.get("door", [])
         device_docs = rag_docs.get("device", [])
         
-        # 格式化各类型信息
         videos_info = DocumentFormatter.format_video_documents(video_docs)
         doors_info = DocumentFormatter.format_door_documents(door_docs)
         devices_info = DocumentFormatter.format_device_documents(device_docs)
-        areas_info_json = json.dumps(self.get_areas_info_for_prompt(), ensure_ascii=False, indent=2)
+        areas_info = DocumentFormatter.format_area_info(self.data_service.get_all_areas_data())
 
         return {
             "DEVICES_INFO": devices_info,
             "DOORS_INFO": doors_info,
-            "AREAS_INFO": areas_info_json,
+            "AREAS_INFO": areas_info,
             "VIDEOS_INFO": videos_info,
             "USER_INPUT": user_input,
             "USER_LOCATION": user_location,
@@ -258,17 +297,10 @@ class BaseLLMHandler(ABC):
     def _format_response(self, response) -> list[ExhibitionCommand]:
         """
         将AI响应转换为命令列表。
-        
-        Args:
-            response: AI消息响应对象
-            
-        Returns:
-            list[ExhibitionCommand]: 命令列表
         """
         if isinstance(response, AIMessage) and response.tool_calls:
             commands = []
             for tool_call in response.tool_calls:
-                # 从tool_call中提取信息，构建命令对象
                 cmd = ExhibitionCommand(
                     action=tool_call["name"],
                     target=tool_call["args"].get("target"),
@@ -286,34 +318,9 @@ class BaseLLMHandler(ABC):
             raise RuntimeError("DataService not initialized")
         return dependencies.data_service
 
-    def get_areas_info_for_prompt(self) -> list[dict[str, Any]]:
-        """
-        获取用于Prompt的区域信息列表
-        """
-        areas_info = []
-        all_areas = self.data_service.get_all_areas()
-        for area_name in all_areas:
-            area_info = self.data_service.get_area_info(area_name)
-            if area_info:
-                aliases_str = area_info.get("aliases", "")
-                description_str = area_info.get("description", "")
-                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
-                areas_info.append({
-                    "name": area_name,
-                    "description": f"{description_str}，也称为{aliases}"
-                })
-        return areas_info
-
     def create_error_response(self, reason: str, message: str | None = None) -> list[ExhibitionCommand]:
         """
         创建错误响应。
-
-        Args:
-            reason: 错误原因
-            message: 可选错误消息
-
-        Returns:
-            list[ExhibitionCommand]: 包含错误命令的列表
         """
         error_value = f"{reason}: {message}" if message else reason
         error_command = ExhibitionCommand(

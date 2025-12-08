@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from langchain_core.documents import Document
+from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from loguru import logger
 
@@ -10,29 +10,29 @@ from src.module.llm.base_llm_handler import BaseLLMHandler
 
 
 class ModelScopeLLMHandler(BaseLLMHandler):
+    """
+    使用 ModelScope API 的 LLM 处理器。
+    """
+
     def __init__(self, settings: LLMSettings) -> None:
         """
-        初始化使用LangChain的ModelScope大语言模型处理器。
+        初始化 ModelScope 大语言模型处理器。
 
         Args:
             settings (LLMSettings): LLM参数
         """
         super().__init__(settings)
-        self.model = None
-        
         logger.info("ModelScope大语言模型处理器已创建，等待异步初始化...")
 
-    async def initialize(self) -> None:
+    def _create_model(self) -> BaseChatModel:
         """
-        异步初始化ModelScope模型和处理链。
+        创建 ModelScope ChatOpenAI 模型实例。
+        
+        Returns:
+            BaseChatModel: 初始化后的 ChatOpenAI 模型
         """
-        if self.model is not None:
-            return
-
-        # 1. 初始化ChatOpenAI模型 for ModelScope
         try:
-            # 处理 SecretStr 类型的 API key
-            self.model = ChatOpenAI(
+            model = ChatOpenAI(
                 model=self.settings.modelscope_model,
                 base_url=self.settings.modelscope_base_url,
                 api_key=self.settings.modelscope_api_key,
@@ -46,48 +46,8 @@ class ModelScopeLLMHandler(BaseLLMHandler):
                     "enable_thinking": False
                 }
             )
+            logger.info("ModelScope模型创建成功，使用模型: {model}", model=self.settings.modelscope_model)
+            return model
         except Exception:
             logger.exception("初始化ModelScope客户端失败，请检查API配置。")
             raise
-
-        # 2. 将工具绑定到模型
-        self.model_with_tools = self.model.bind_tools(self.tools)
-        
-        # 3. 构建处理链
-        self.chain = self.prompt_template | self.trimmer | self.model_with_tools
-
-        logger.info("ModelScope大语言模型处理器初始化完成，使用模型: {model}", model=self.settings.modelscope_model)
-
-    async def get_response(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> str:
-        """
-        结合RAG上下文，异步获取大模型的响应 - 现代结构化输出版本。
-
-        Args:
-            user_input (str): 用户的原始输入文本。
-            rag_docs (dict[str, list[Document]]): 按类型分类的RAG文档字典 {"door": [...], "video": [...], "device": [...]}
-            user_location (str): 用户当前位置。
-            chat_history (list): 聊天记录。
-
-        Returns:
-            str: 大模型返回的JSON格式指令或错误信息。
-        """
-        # Ensure the handler is initialized before use
-        if self.chain is None:
-            await self.initialize()
-
-        logger.info("用户指令: {user_input}", user_input=user_input)
-
-        try:
-            # 使用基类的 _prepare_chain_input 方法准备输入变量
-            chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
-
-            # 异步调用现代化处理链 - 直接获得结构化输出
-            response = await self.chain.ainvoke(chain_input)
-
-            # 格式化结构化响应为JSON字符串
-            return self._format_response(response)
-
-        except Exception as api_error:
-            logger.exception("调用ModelScope API或处理链时出错: {error}", error=str(api_error))
-            # Use the modern error response method
-            return self.create_error_response("api_failure", str(api_error))
