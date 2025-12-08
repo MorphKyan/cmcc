@@ -55,7 +55,7 @@ export const uploadAreasBatch = (items) => {
 }
 
 export const uploadVideosBatch = (items) => {
-  return api.post('/data/videos/batch', items)
+  return api.post('/data/media/batch', items)
 }
 
 export const uploadDoorsBatch = (items) => {
@@ -79,11 +79,11 @@ export const clearAreas = () => {
 }
 
 export const getVideos = () => {
-  return api.get('/data/videos')
+  return api.get('/data/media')
 }
 
 export const clearVideos = () => {
-  return api.delete('/data/videos')
+  return api.delete('/data/media')
 }
 
 export const getDoors = () => {
