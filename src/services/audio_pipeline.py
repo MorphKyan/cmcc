@@ -236,6 +236,7 @@ def _get_command_description(cmd: ExhibitionCommand) -> str:
     """获取命令的用户友好描述"""
     action_descriptions = {
         "play": lambda c: f"在「{c.device}」上播放「{c.target}」",
+        "open_media": lambda c: f"在「{c.device}」上打开「{c.target}」",
         "open": lambda c: f"打开「{c.target}」",
         "close": lambda c: f"关闭「{c.target}」",
         "seek": lambda c: f"将「{c.device}」跳转到{c.value}秒",

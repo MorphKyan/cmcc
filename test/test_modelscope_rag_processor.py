@@ -19,23 +19,17 @@ class TestModelScopeRAGProcessor(unittest.IsolatedAsyncioTestCase):
         self.mock_settings.modelscope_api_key.get_secret_value.return_value = "mock_key"
         self.mock_settings.modelscope_embedding_model = "mock-embedding-model"
         self.mock_settings.chroma_db_dir = "mock_db_dir"
-        self.mock_settings.videos_data_path = "mock_videos.csv"
+        self.mock_settings.media_data_path = "mock_media.csv"
         self.mock_settings.devices_data_path = "mock_devices.csv"
         self.mock_settings.top_k_results = 3
 
         self.processor = ModelScopeRAGProcessor(self.mock_settings)
 
     async def test_initialize_success(self):
-        with patch('src.module.rag.modelscope_rag_processor.httpx.AsyncClient.get') as mock_get, \
-             patch('src.module.rag.modelscope_rag_processor.OpenAIEmbeddings') as mock_embeddings, \
+        with patch('src.module.rag.modelscope_rag_processor.OpenAIEmbeddings') as mock_embeddings, \
              patch('src.module.rag.modelscope_rag_processor.os.path.exists', return_value=True), \
              patch('src.module.rag.modelscope_rag_processor.Chroma') as mock_chroma:
             
-            # Mock successful connection checks
-            mock_response = MagicMock()
-            mock_response.raise_for_status.return_value = None
-            mock_get.return_value = mock_response
-
             # Mock Chroma
             mock_vector_store = MagicMock()
             mock_chroma.return_value = mock_vector_store
@@ -50,25 +44,9 @@ class TestModelScopeRAGProcessor(unittest.IsolatedAsyncioTestCase):
         self.processor.status = RAGStatus.INITIALIZING
         
         # Should return immediately without doing anything
-        with patch('src.module.rag.modelscope_rag_processor.httpx.AsyncClient.get') as mock_get:
-            await self.processor.initialize()
-            mock_get.assert_not_called()
+        await self.processor.initialize()
 
-    async def test_check_modelscope_connection_success(self):
-        with patch('src.module.rag.modelscope_rag_processor.httpx.AsyncClient.get') as mock_get:
-            mock_response = MagicMock()
-            mock_response.raise_for_status.return_value = None
-            mock_get.return_value = mock_response
-            
-            await self.processor._check_modelscope_connection()
-            # Should not raise exception
 
-    async def test_check_modelscope_connection_failure(self):
-        with patch('src.module.rag.modelscope_rag_processor.httpx.AsyncClient.get') as mock_get:
-            mock_get.side_effect = Exception("Connection failed")
-            
-            with self.assertRaises(RuntimeError):
-                await self.processor._check_modelscope_connection()
 
     async def test_retrieve_context_not_ready(self):
         self.processor.status = RAGStatus.UNINITIALIZED
@@ -77,17 +55,19 @@ class TestModelScopeRAGProcessor(unittest.IsolatedAsyncioTestCase):
 
     async def test_retrieve_context_success(self):
         self.processor.status = RAGStatus.READY
-        self.processor.retriever = AsyncMock()
+        self.processor.vector_store = MagicMock()
+        self.processor.vector_store.asimilarity_search = AsyncMock()
+        
         mock_docs = [Document(page_content="content", metadata={})]
-        self.processor.retriever.ainvoke.return_value = mock_docs
+        self.processor.vector_store.asimilarity_search.return_value = mock_docs
         
         docs = await self.processor.retrieve_context("test query")
         self.assertEqual(docs, mock_docs)
-        self.processor.retriever.ainvoke.assert_called_with("test query")
+        self.processor.vector_store.asimilarity_search.assert_called_with("test query", k=3)
 
     def test_data_cases(self):
         """
-        Data-driven test cases based on areas.csv, devices.csv, doors.csv, and videos.csv.
+        Data-driven test cases based on areas.csv, devices.csv, doors.csv, and media.csv.
         These tests verify that the query processing logic (conceptually) would handle these inputs.
         In a real integration test, we would verify the retrieval results match the expected keywords.
         Here we just iterate them to ensure no errors in processing.
@@ -126,7 +106,7 @@ class TestModelScopeRAGProcessor(unittest.IsolatedAsyncioTestCase):
             ("VR体验室门是开着的吗？", "VR体验室门"),
             ("未来科技赋能中心主入口在哪里？", "未来科技赋能中心主入口"),
             
-            # Videos
+            # Media
             ("播放5G技术总览视频", "5G技术总览"),
             ("我想看智慧家庭解决方案", "智慧家庭解决方案"),
             ("展示物联网应用案例", "物联网应用案例"),

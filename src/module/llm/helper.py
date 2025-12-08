@@ -17,12 +17,12 @@ class DocumentFormatter:
     """
 
     @staticmethod
-    def format_video_documents(docs: list[Document]) -> str:
+    def format_media_documents(docs: list[Document]) -> str:
         """
-        格式化视频类型的文档列表。
+        格式化媒体类型的文档列表。
 
         Args:
-            docs: 视频 Document 对象列表
+            docs: 媒体 Document 对象列表
 
         Returns:
             格式化后的 JSON 字符串

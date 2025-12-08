@@ -30,19 +30,19 @@ class ToolValidator:
             cls._instance = cls()
         return cls._instance
 
-    def validate_play_video_args(self, target: str, device: str) -> tuple[bool, str | None]:
+    def validate_open_media_args(self, target: str, device: str) -> tuple[bool, str | None]:
         """
-        验证播放视频工具的参数
+        验证打开媒体工具的参数
 
         Args:
-            target: 视频名称
+            target: 媒体资源名称
             device: 设备名称
 
         Returns:
             (是否有效, 错误信息)
         """
-        if not dependencies.data_service.video_exists(target):
-            return False, f"Video '{target}' not found in videos.csv"
+        if not dependencies.data_service.media_exists(target):
+            return False, f"Media '{target}' not found in media.csv"
 
         if not dependencies.data_service.device_exists(device):
             return False, f"Device '{device}' not found in devices.csv"
@@ -111,10 +111,10 @@ class ToolValidator:
             (是否有效, 错误信息)
         """
         try:
-            if tool_name == "play_video":
+            if tool_name == "open_media":
                 target = tool_args.get("target", "")
                 device = tool_args.get("device", "")
-                return self.validate_play_video_args(target, device)
+                return self.validate_open_media_args(target, device)
 
             elif tool_name == "control_door":
                 target = tool_args.get("target", "")

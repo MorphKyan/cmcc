@@ -33,7 +33,7 @@
 │   ├── devices.csv             # 设备信息（包含 name, type, area, aliases, description 列，type 可以为 screen, terminal, projector, phone 等）
 │   ├── doors.csv               # 门设备信息（包含 name, type, area1, area2, location 列）
 │   ├── areas.csv               # 区域信息（包含 name, aliases, description 列）
-│   └── videos.csv              # 视频信息
+│   └── media.csv               # 媒体信息
 ├── chroma_db/
 │   └── ...                     # (自动生成) 本地向量数据库文件
 ├── main.py                     # 项目主入口
@@ -159,7 +159,9 @@ FastAPI提供了自动生成的API文档：
 - `POST /api/rag/refresh` - 刷新RAG数据库
 - `GET /api/rag/status` - 获取RAG状态
 - `POST /api/rag/query` - 查询RAG数据库
-- `POST /api/data/upload-videos` - 上传videos.csv文件并更新RAG数据库
+- `POST /api/data/media/batch` - 批量上传媒体数据
+- `GET /api/data/media` - 获取所有媒体数据
+- `DELETE /api/data/media` - 清空所有媒体数据
 
 ### API使用示例
 

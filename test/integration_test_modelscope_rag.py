@@ -33,7 +33,7 @@ class TestModelScopeRAGIntegration(unittest.IsolatedAsyncioTestCase):
         These tests call the actual ModelScope API to retrieve context.
         """
         
-        # Test cases based on data files: areas.csv, devices.csv, doors.csv, videos.csv
+        # Test cases based on data files: areas.csv, devices.csv, doors.csv, media.csv
         # 15 test cases covering different data types and query scenarios
         test_cases = [
             # Areas test cases
@@ -97,7 +97,7 @@ class TestModelScopeRAGIntegration(unittest.IsolatedAsyncioTestCase):
                 "expected_keywords": ["未来科技赋能中心主入口", "standalone"]
             },
             
-            # Videos test cases
+            # Media test cases
             {
                 "query": "播放5G技术总览视频",
                 "description": "Query about specific video",

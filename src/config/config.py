@@ -89,7 +89,7 @@ SYSTEM_PROMPT_TEMPLATE = """
 # 可用函数
 你只能从以下函数中选择调用，不要自己生成JSON格式的响应：
 
-1. play_video(target, device) - 播放指定的视频文件
+1. open_media(target, device) - 打开指定的媒体资源
 2. control_door(target, action) - 控制门的开关，action可以是open或close
 3. seek_video(device, value) - 跳转到视频的指定时间点，value是秒数
 4. set_volume(device, value) - 设置音量到指定的绝对值，value是0-100的整数
@@ -99,9 +99,9 @@ SYSTEM_PROMPT_TEMPLATE = """
 **重要总则**: 函数调用中的所有字符串值都必须严格从本提示词提供的"知识库"中选取。绝不允许创造任何列表中不存在的值。
 
 ## 语义理解与函数映射
-*   **播放视频**:
-    *   利用知识库中的`aliases`和`description`来匹配视频。例如，"放一下关于智慧城市的视频"应匹配到`Smart_City_Vision.mp4`。
-    *   对于播放操作，如果用户未明确指定设备，`device`默认为`主屏幕`
+*   **打开媒体**:
+    *   利用知识库中的`aliases`和`description`来匹配媒体资源。例如，"放一下关于智慧城市的视频"应匹配到`Smart_City_Vision.mp4`。
+    *   对于打开操作，如果用户未明确指定设备，`device`默认为`主屏幕`
 *   **控制门**:
     *   识别"打开/关闭...的门"等指令。
 *   **跳转进度**:
@@ -130,17 +130,17 @@ SYSTEM_PROMPT_TEMPLATE = """
 
 # 示例
 *   用户输入: "我想看看5G的视频"
-    *   函数调用: `[play_video(target="5G_Revolution.mp4", device="主屏幕")]`
+    *   函数调用: `[open_media(target="5G_Revolution.mp4", device="主屏幕")]`
 *   用户输入: "在左边的屏幕上播放一下智慧家庭的解决方案"
-    *   函数调用: `[play_video(target="Smart_Home_Solution.mp4", device="左侧互动大屏")]`
+    *   函数调用: `[open_media(target="Smart_Home_Solution.mp4", device="左侧互动大屏")]`
 *   用户输入: "打开未来科技中心的门"
     *   函数调用: `[control_door(target="未来科技赋能中心的门", action="open")]`
 *   用户输入: "听不清，大一点声"
     *   函数调用: `[adjust_volume(device="主屏幕", value="up")]`
 *   用户输入: "你好，今天星期几？"
-    *   函数调用: `[play_video(target="Smart_City_Vision.mp4", device="主屏幕"), control_door(target="未来科技赋能中心的门", action="close"), adjust_volume(device="主屏幕", value="down")]`
+    *   函数调用: `[open_media(target="Smart_City_Vision.mp4", device="主屏幕"), control_door(target="未来科技赋能中心的门", action="close"), adjust_volume(device="主屏幕", value="down")]`
 *   **(复合指令示例)** 用户输入: "播放5G的视频，并且调大声音"
-    *   函数调用: `[play_video(target="5G_Revolution.mp4", device="主屏幕"), adjust_volume(device="主屏幕", value="up")]`
+    *   函数调用: `[open_media(target="5G_Revolution.mp4", device="主屏幕"), adjust_volume(device="主屏幕", value="up")]`
 """
 
 USER_CONTEXT_TEMPLATE = """
@@ -150,7 +150,7 @@ USER_CONTEXT_TEMPLATE = """
 "areas_info":{AREAS_INFO}
 "devices_info":{DEVICES_INFO}
 "doors_info":{DOORS_INFO}
-"videos":{VIDEOS_INFO}
+"media":{VIDEOS_INFO}
 
 ## 当前状态
 *   **用户当前位置**: {USER_LOCATION}
@@ -173,7 +173,7 @@ SYSTEM_PROMPT_TEMPLATE_V3 = """
 "areas_info":{AREAS_INFO}
 "devices_info":{DEVICES_INFO}
 "doors_info":{DOORS_INFO}
-"videos_info":{rag_context}
+"media_info":{rag_context}
 
 ## 当前状态
 *   **用户当前位置**: {USER_LOCATION}
@@ -194,8 +194,8 @@ SYSTEM_PROMPT_TEMPLATE_V3 = """
         3.  如果两个区域之间有门（passage door），生成 `control_door(target="门名称", action="open")`。
     *   **示例**: 当前在"5G先锋体验区"，用户说"去智慧生活馆"，应生成 `[control_door(target="5G先锋体验区和智慧生活馆的门", action="open"), update_location(target="智慧生活馆")]`。
 
-*   **播放视频**:
-    *   利用知识库中的`aliases`和`description`来匹配视频。例如，"放一下关于智慧城市的视频"应匹配到`Smart_City_Vision.mp4`。
+*   **打开媒体**:
+    *   利用知识库中的`aliases`和`description`来匹配媒体资源。例如，"放一下关于智慧城市的视频"应匹配到`Smart_City_Vision.mp4`。
     *   **智能设备选择**: 如果用户未明确指定设备，优先选择**用户当前位置**（{USER_LOCATION}）内的设备。
 
 *   **控制门**:
@@ -239,7 +239,7 @@ SYSTEM_PROMPT_TEMPLATE_V3 = """
     *   函数调用:
         ```
         [
-          play_video(target="Smart_City_Vision.mp4", device="主屏幕"),
+          open_media(target="Smart_City_Vision.mp4", device="主屏幕"),
           control_door(target="未来科技赋能中心的门", action="close"),
           adjust_volume(device="主屏幕", value="down")
         ]
@@ -248,7 +248,7 @@ SYSTEM_PROMPT_TEMPLATE_V3 = """
     *   函数调用:
         ```
         [
-          play_video(target="5G_Revolution.mp4", device="主屏幕"),
+          open_media(target="5G_Revolution.mp4", device="主屏幕"),
           adjust_volume(device="主屏幕", value="up")
         ]
         ```
@@ -274,7 +274,7 @@ SYSTEM_PROMPT_TEMPLATE_V2 = """
 # 可用函数
 你只能从以下函数中选择调用，不要自己生成JSON格式的响应：
 
-1. play_video(target, device) - 播放指定的视频文件
+1. open_media(target, device) - 打开指定的媒体资源
 2. control_door(target, action) - 控制门的开关，action可以是open或close
 3. seek_video(device, value) - 跳转到视频的指定时间点，value是秒数
 4. set_volume(device, value) - 设置音量到指定的绝对值，value是0-100的整数
@@ -284,9 +284,9 @@ SYSTEM_PROMPT_TEMPLATE_V2 = """
 **重要总则**: 函数调用中的所有字符串值都必须严格从本提示词提供的"知识库"中选取。绝不允许创造任何列表中不存在的值。
 
 ## 语义理解与函数映射
-*   **播放视频**:
-    *   利用知识库中的`aliases`和`description`来匹配视频。例如，"放一下关于智慧城市的视频"应匹配到`Smart_City_Vision.mp4`。
-    *   对于播放操作，如果用户未明确指定设备，`device`默认为`主屏幕`
+*   **打开媒体**:
+    *   利用知识库中的`aliases`和`description`来匹配媒体资源。例如，"放一下关于智慧城市的视频"应匹配到`Smart_City_Vision.mp4`。
+    *   对于打开操作，如果用户未明确指定设备，`device`默认为`主屏幕`
 *   **控制门**:
     *   识别"打开/关闭...的门"等指令。
 *   **跳转进度**:
@@ -315,9 +315,9 @@ SYSTEM_PROMPT_TEMPLATE_V2 = """
 
 # 示例
 *   用户输入: "我想看看5G的视频"
-    *   函数调用: `[play_video(target="5G_Revolution.mp4", device="主屏幕")]`
+    *   函数调用: `[open_media(target="5G_Revolution.mp4", device="主屏幕")]`
 *   用户输入: "在左边的屏幕上播放一下智慧家庭的解决方案"
-    *   函数调用: `[play_video(target="Smart_Home_Solution.mp4", device="左侧互动大屏")]`
+    *   函数调用: `[open_media(target="Smart_Home_Solution.mp4", device="左侧互动大屏")]`
 *   用户输入: "打开未来科技中心的门"
     *   函数调用: `[control_door(target="未来科技赋能中心的门", action="open")]`
 *   用户输入: "听不清，大一点声"
@@ -328,7 +328,7 @@ SYSTEM_PROMPT_TEMPLATE_V2 = """
     *   函数调用:
         ```
         [
-          play_video(target="Smart_City_Vision.mp4", device="主屏幕"),
+          open_media(target="Smart_City_Vision.mp4", device="主屏幕"),
           control_door(target="未来科技赋能中心的门", action="close"),
           adjust_volume(device="主屏幕", value="down")
         ]
@@ -337,7 +337,7 @@ SYSTEM_PROMPT_TEMPLATE_V2 = """
     *   函数调用:
         ```
         [
-          play_video(target="5G_Revolution.mp4", device="主屏幕"),
+          open_media(target="5G_Revolution.mp4", device="主屏幕"),
           adjust_volume(device="主屏幕", value="up")
         ]
         ```
@@ -368,7 +368,7 @@ class FunASRSettings(BaseSettings):
 class DataSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="DATA_")
 
-    videos_data_path: str = os.path.join(data_dir, "videos.csv")
+    media_data_path: str = os.path.join(data_dir, "media.csv")
     devices_data_path: str = os.path.join(data_dir, "devices.csv")
     areas_data_path: str = os.path.join(data_dir, "areas.csv")
     doors_data_path: str = os.path.join(data_dir, "doors.csv")

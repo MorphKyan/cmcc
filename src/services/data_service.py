@@ -8,11 +8,11 @@ from pydantic import BaseModel
 from langchain_core.documents import Document
 
 from src.config.config import get_settings
-from src.api.schemas import DeviceItem, AreaItem, VideoItem, DoorItem
+from src.api.schemas import DeviceItem, AreaItem, MediaItem, DoorItem
 
 class DataService:
     """
-    Data Service for managing exhibition data (videos, devices, areas, doors).
+    Data Service for managing exhibition data (media, devices, areas, doors).
     Replaces CSVLoader and provides write capabilities.
     """
     _instance = None
@@ -30,7 +30,7 @@ class DataService:
             return
 
         self._data_lock = threading.Lock()
-        self._videos_cache: Dict[str, Dict[str, Any]] = {}
+        self._media_cache: Dict[str, Dict[str, Any]] = {}
         self._doors_cache: Dict[str, Dict[str, Any]] = {}
         self._devices_cache: Dict[str, Dict[str, Any]] = {}
         self._areas_cache: Dict[str, Dict[str, Any]] = {}
@@ -43,16 +43,16 @@ class DataService:
         try:
             settings = get_settings()
             # Use settings paths directly from DataSettings
-            videos_path = settings.data.videos_data_path
+            media_path = settings.data.media_data_path
             devices_path = settings.data.devices_data_path
             areas_path = settings.data.areas_data_path
             doors_path = settings.data.doors_data_path
 
             with self._data_lock:
-                if os.path.exists(videos_path):
-                    videos_df = self._load_csv_file(videos_path)
-                    self._videos_cache = self._process_videos_data(videos_df)
-                    logger.info(f"Loaded {len(self._videos_cache)} videos from {videos_path}")
+                if os.path.exists(media_path):
+                    media_df = self._load_csv_file(media_path)
+                    self._media_cache = self._process_media_data(media_df)
+                    logger.info(f"Loaded {len(self._media_cache)} media items from {media_path}")
 
                 if os.path.exists(doors_path):
                     doors_df = self._load_csv_file(doors_path)
@@ -82,20 +82,19 @@ class DataService:
             logger.error(f"Failed to read CSV file '{file_path}': {e}")
             return pd.DataFrame()
 
-    def _process_videos_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
-        videos_dict = {}
-        if df.empty: return videos_dict
+    def _process_media_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+        media_dict = {}
+        if df.empty: return media_dict
         for _, row in df.iterrows():
-            filename = str(row.get("filename", "")).strip()
-            if not filename: continue
-            videos_dict[filename] = {
+            name = str(row.get("name", "")).strip()
+            if not name: continue
+            media_dict[name] = {
+                "name": name,
                 "type": str(row.get("type", "video")),
-                "name": str(row.get("name", "")),
                 "aliases": str(row.get("aliases", "")),
-                "description": str(row.get("description", "")),
-                "filename": filename
+                "description": str(row.get("description", ""))
             }
-        return videos_dict
+        return media_dict
 
     def _process_doors_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
         doors_dict = {}
@@ -142,25 +141,25 @@ class DataService:
 
     # --- Read Methods ---
 
-    def video_exists(self, filename: str) -> bool:
+    def media_exists(self, name: str) -> bool:
         with self._data_lock:
-            return filename in self._videos_cache
+            return name in self._media_cache
 
     def door_exists(self, name: str) -> bool:
         with self._data_lock:
             return name in self._doors_cache
 
-    def get_video_info(self, filename: str) -> Optional[Dict[str, Any]]:
+    def get_media_info(self, name: str) -> Optional[Dict[str, Any]]:
         with self._data_lock:
-            return self._videos_cache.get(filename)
+            return self._media_cache.get(name)
 
     def get_door_info(self, name: str) -> Optional[Dict[str, Any]]:
         with self._data_lock:
             return self._doors_cache.get(name)
 
-    def get_all_videos(self) -> List[str]:
+    def get_all_media(self) -> List[str]:
         with self._data_lock:
-            return list(self._videos_cache.keys())
+            return list(self._media_cache.keys())
 
     def get_all_doors(self) -> List[str]:
         with self._data_lock:
@@ -194,9 +193,9 @@ class DataService:
         with self._data_lock:
             return list(self._doors_cache.values())
 
-    def get_all_videos_data(self) -> List[Dict[str, Any]]:
+    def get_all_media_data(self) -> List[Dict[str, Any]]:
         with self._data_lock:
-            return list(self._videos_cache.values())
+            return list(self._media_cache.values())
 
     def get_all_devices_data(self) -> List[Dict[str, Any]]:
         with self._data_lock:
@@ -218,9 +217,9 @@ class DataService:
         await self._append_to_csv(settings.data.areas_data_path, items, ['name', 'aliases', 'description'])
         self.reload()
 
-    async def add_videos(self, items: List[VideoItem]) -> None:
+    async def add_media(self, items: List[MediaItem]) -> None:
         settings = get_settings()
-        await self._append_to_csv(settings.data.videos_data_path, items, ['name', 'aliases', 'description', 'filename'])
+        await self._append_to_csv(settings.data.media_data_path, items, ['name', 'type', 'aliases', 'description'])
         self.reload()
 
     async def add_doors(self, items: List[DoorItem]) -> None:
@@ -273,10 +272,10 @@ class DataService:
         await self._clear_csv_file(settings.data.areas_data_path, ['name', 'aliases', 'description'])
         self.reload()
 
-    async def clear_videos(self) -> None:
-        """Clear all video data."""
+    async def clear_media(self) -> None:
+        """Clear all media data."""
         settings = get_settings()
-        await self._clear_csv_file(settings.data.videos_data_path, ['name', 'aliases', 'description', 'filename'])
+        await self._clear_csv_file(settings.data.media_data_path, ['name', 'type', 'aliases', 'description'])
         self.reload()
 
     async def clear_doors(self) -> None:

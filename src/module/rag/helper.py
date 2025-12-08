@@ -56,22 +56,22 @@ def convert_devices_to_documents(devices_data: List[Dict[str, Any]]) -> List[Doc
         documents.append(Document(page_content=content, metadata=metadata))
     return documents
 
-def convert_videos_to_documents(videos_data: List[Dict[str, Any]]) -> List[Document]:
+def convert_media_to_documents(media_data: List[Dict[str, Any]]) -> List[Document]:
     documents = []
-    for video in videos_data:
-        content_parts = [f"{video.get('name', '')}"]
-        if video.get('aliases'):
-            content_parts.append(f"也称为{video['aliases']}")
-        if video.get('description'):
-            content_parts.append(f"内容描述了{video['description']}")
+    for media in media_data:
+        content_parts = [f"{media.get('name', '')}"]
+        if media.get('aliases'):
+            content_parts.append(f"也称为{media['aliases']}")
+        if media.get('description'):
+            content_parts.append(f"内容描述了{media['description']}")
 
         content = "，".join(content_parts)
         metadata = {
-            "type": "video",
-            "name": video.get("name", ""),
-            "aliases": video.get("aliases", ""),
-            "description": video.get("description", ""),
-            "filename": video.get("filename", "")
+            "type": "media",
+            "name": media.get("name", ""),
+            "aliases": media.get("aliases", ""),
+            "description": media.get("description", ""),
+            "filename": media.get("name", "")  # Backward compatibility or just use name
         }
         documents.append(Document(page_content=content, metadata=metadata))
     return documents

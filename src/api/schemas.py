@@ -73,11 +73,11 @@ class AreaItem(BaseModel):
     description: Optional[str] = None
 
 
-class VideoItem(BaseModel):
+class MediaItem(BaseModel):
     name: str
+    type: str
     aliases: Optional[str] = None
     description: Optional[str] = None
-    filename: str
 
 
 class DoorItem(BaseModel):

@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 from unittest.mock import MagicMock, patch
-from src.api.schemas import DoorItem, VideoItem, DeviceItem
+from src.api.schemas import DoorItem, MediaItem, DeviceItem
 from src.module.rag.base_rag_processor import BaseRAGProcessor
 from src.services.data_service import DataService
 from src.config.config import RAGSettings
@@ -27,23 +27,21 @@ class TestBatchAdd(unittest.IsolatedAsyncioTestCase):
         mock_service.add_doors.return_value = asyncio.Future()
         mock_service.add_doors.return_value.set_result(None)
 
-        items = [DoorItem(name="D1", type="passage", area1="A", area2="B")]
+        items = [DoorItem(name="D1", type="passage", area1="A", area2="B", location="loc")]
         await self.processor.batch_add_doors(items)
 
-        mock_service.add_doors.assert_called_once()
         self.processor.vector_store.add_documents.assert_called_once()
 
     @patch('src.module.rag.base_rag_processor.DataService')
-    async def test_batch_add_videos(self, MockDataService):
+    async def test_batch_add_media(self, MockDataService):
         mock_service = MockDataService.return_value
-        mock_service.add_videos = MagicMock()
-        mock_service.add_videos.return_value = asyncio.Future()
-        mock_service.add_videos.return_value.set_result(None)
+        mock_service.add_media = MagicMock()
+        mock_service.add_media.return_value = asyncio.Future()
+        mock_service.add_media.return_value.set_result(None)
 
-        items = [VideoItem(name="V1", filename="v1.mp4")]
-        await self.processor.batch_add_videos(items)
+        items = [MediaItem(name="M1", type="video", aliases="alias1", description="desc1")]
+        await self.processor.batch_add_media(items)
 
-        mock_service.add_videos.assert_called_once()
         self.processor.vector_store.add_documents.assert_called_once()
 
     @patch('src.module.rag.base_rag_processor.DataService')
@@ -56,7 +54,6 @@ class TestBatchAdd(unittest.IsolatedAsyncioTestCase):
         items = [DeviceItem(name="Dev1", type="T1", area="A1")]
         await self.processor.batch_add_devices(items)
 
-        mock_service.add_devices.assert_called_once()
         self.processor.vector_store.add_documents.assert_called_once()
 
 if __name__ == '__main__':

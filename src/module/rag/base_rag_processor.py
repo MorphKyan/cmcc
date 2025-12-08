@@ -12,8 +12,8 @@ from loguru import logger
 
 from src.config.config import RAGSettings
 from src.services.data_service import DataService
-from src.module.rag.helper import convert_doors_to_documents, convert_videos_to_documents, convert_devices_to_documents
-from src.api.schemas import DoorItem, VideoItem, DeviceItem
+from src.module.rag.helper import convert_doors_to_documents, convert_media_to_documents, convert_devices_to_documents
+from src.api.schemas import DoorItem, MediaItem, DeviceItem
 
 
 class RAGStatus(Enum):
@@ -26,7 +26,7 @@ class RAGStatus(Enum):
 class MetadataType(Enum):
     """RAG文档的元数据类型"""
     DOOR = "door"
-    VIDEO = "video"
+    MEDIA = "media"
     DEVICE = "device"
 
 
@@ -78,12 +78,12 @@ class BaseRAGProcessor(ABC):
 
             data_service = DataService()
             doors_data = data_service.get_all_doors_data()
-            videos_data = data_service.get_all_videos_data()
+            media_data = data_service.get_all_media_data()
             devices_data = data_service.get_all_devices_data()
 
             documents = []
             documents.extend(convert_doors_to_documents(doors_data))
-            documents.extend(convert_videos_to_documents(videos_data))
+            documents.extend(convert_media_to_documents(media_data))
             documents.extend(convert_devices_to_documents(devices_data))
 
             if not documents:
@@ -113,15 +113,15 @@ class BaseRAGProcessor(ABC):
         从CSV加载文档，创建向量数据库并持久化到磁盘。
         """
         try:
-            # 加载videos和devices数据
+            # 加载media和devices数据
             data_service = DataService()
             doors_data = data_service.get_all_doors_data()
-            videos_data = data_service.get_all_videos_data()
+            media_data = data_service.get_all_media_data()
             devices_data = data_service.get_all_devices_data()
 
             documents = []
             documents.extend(convert_doors_to_documents(doors_data))
-            documents.extend(convert_videos_to_documents(videos_data))
+            documents.extend(convert_media_to_documents(media_data))
             documents.extend(convert_devices_to_documents(devices_data))
 
             if not documents:
@@ -149,13 +149,13 @@ class BaseRAGProcessor(ABC):
             self.vector_store.add_documents(documents)
             logger.info(f"已向向量数据库添加 {len(documents)} 个门文档")
 
-    async def batch_add_videos(self, items: list[VideoItem]) -> None:
-        """批量添加视频数据并更新向量数据库"""
-        new_videos_data = [item.model_dump() for item in items]
-        documents = convert_videos_to_documents(new_videos_data)
+    async def batch_add_media(self, items: list[MediaItem]) -> None:
+        """批量添加媒体数据并更新向量数据库"""
+        new_media_data = [item.model_dump() for item in items]
+        documents = convert_media_to_documents(new_media_data)
         if self.vector_store:
             self.vector_store.add_documents(documents)
-            logger.info(f"已向向量数据库添加 {len(documents)} 个视频文档")
+            logger.info(f"已向向量数据库添加 {len(documents)} 个媒体文档")
 
     async def batch_add_devices(self, items: list[DeviceItem]) -> None:
         """批量添加设备数据并更新向量数据库"""

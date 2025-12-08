@@ -18,7 +18,7 @@ merge_length_s = 15.0
 
 # 数据文件路径配置
 [data]
-videos_data_path = "./data/videos.csv"
+media_data_path = "./data/media.csv"
 devices_data_path = "./data/devices.csv"
 areas_data_path = "./data/areas.csv"
 doors_data_path = "./data/doors.csv"

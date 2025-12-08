@@ -12,8 +12,8 @@ from langchain_core.tools import tool
 
 class CommandAction(str, Enum):
     """命令动作类型枚举"""
-    PLAY = "play"
     OPEN = "open"
+    OPEN_MEDIA = "open_media"
     CLOSE = "close"
     SEEK = "seek"
     SET_VOLUME = "set_volume"
@@ -53,10 +53,10 @@ class ExecutableCommand(BaseModel):
         }, ensure_ascii=False)
 
 
-class PlayVideoInput(BaseModel):
-    """Input for play video command."""
-    target: str = Field(description="要播放的视频文件名filename")
-    device: str = Field(description="要在其上播放视频的屏幕名称")
+class OpenMediaInput(BaseModel):
+    """Input for open media command."""
+    target: str = Field(description="要打开的媒体资源名称")
+    device: str = Field(description="要在其上打开媒体的屏幕名称")
 
 
 class ControlDoorInput(BaseModel):
@@ -92,11 +92,11 @@ class UpdateLocationInput(BaseModel):
     target: str = Field(description="用户移动到的目标区域名称")
 
 
-@tool(args_schema=PlayVideoInput)
-def play_video(target: str, device: str) -> ExhibitionCommand:
-    """播放指定的视频文件"""
+@tool(args_schema=OpenMediaInput)
+def open_media(target: str, device: str) -> ExhibitionCommand:
+    """打开指定的媒体资源"""
     return ExhibitionCommand(
-        action="play",
+        action="open_media",
         target=target,
         device=device,
         value=None
@@ -161,7 +161,7 @@ def update_location(target: str) -> ExhibitionCommand:
 def get_tools():
     """获取LLM函数调用的工具列表（现代结构化输出方法）。"""
     return [
-        play_video,
+        open_media,
         control_door,
         seek_video,
         set_volume,

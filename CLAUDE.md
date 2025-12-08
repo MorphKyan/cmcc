@@ -121,8 +121,9 @@ curl -X POST http://localhost:5000/api/rag/query \
      -d '{"query": "我想看关于5G的视频"}'
 
 # Upload videos.csv file
-curl -X POST http://localhost:5000/api/data/upload-videos \
-     -F "file=@/path/to/your/videos.csv"
+curl -X POST http://localhost:5000/api/data/media/batch \
+     -H "Content-Type: application/json" \
+     -d '[{"name": "test_video", "type": "video", "aliases": "Test Video", "description": "This is a test video"}]'
 
 # Trigger RAG reinitialization (async)
 curl -X POST http://localhost:5000/api/rag/reinitialize
@@ -148,7 +149,7 @@ The service provides the following RESTful endpoints:
 - `POST /api/rag/refresh` - Refresh RAG database
 - `GET /api/rag/status` - Get RAG status
 - `POST /api/rag/query` - Query RAG database
-- `POST /api/data/upload-videos` - Upload videos.csv file and update RAG database
+- `POST /api/data/media/batch` - Batch upload media data and update RAG database
 - `POST /api/rag/reinitialize` - Trigger async RAG reinitialization
 
 API documentation is available at:
