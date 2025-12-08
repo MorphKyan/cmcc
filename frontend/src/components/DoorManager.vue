@@ -103,14 +103,27 @@
         </div>
       </transition>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :isOpen="showConfirmModal"
+      title="清空门资源"
+      message="确定要清空所有门资源数据吗？此操作不可恢复！"
+      @confirm="executeClearAll"
+      @cancel="showConfirmModal = false"
+    />
   </div>
 </template>
 
 <script>
 import { uploadDoorsBatch, getDoors, clearDoors } from '../api'
+import ConfirmationModal from './ConfirmationModal.vue'
 
 export default {
   name: 'DoorManager',
+  components: {
+    ConfirmationModal
+  },
   data() {
     return {
       doors: [],
@@ -118,7 +131,8 @@ export default {
       jsonInput: '',
       message: '',
       status: '',
-      uploading: false
+      uploading: false,
+      showConfirmModal: false
     }
   },
   computed: {
@@ -177,10 +191,11 @@ export default {
         this.uploading = false
       }
     },
-    async clearAllDoors() {
-      if (!confirm('确定要清空所有门资源数据吗？此操作不可恢复！')) {
-        return
-      }
+    clearAllDoors() {
+      this.showConfirmModal = true
+    },
+    async executeClearAll() {
+      this.showConfirmModal = false
       try {
         await clearDoors()
         this.message = '数据已清空'

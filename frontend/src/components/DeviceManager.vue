@@ -103,14 +103,27 @@
         </div>
       </transition>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal
+      :isOpen="showConfirmModal"
+      title="清空设备"
+      message="确定要清空所有设备数据吗？此操作不可恢复！"
+      @confirm="executeClearAll"
+      @cancel="showConfirmModal = false"
+    />
   </div>
 </template>
 
 <script>
 import { uploadDevicesBatch, getDevices, clearDevices } from '../api'
+import ConfirmationModal from './ConfirmationModal.vue'
 
 export default {
   name: 'DeviceManager',
+  components: {
+    ConfirmationModal
+  },
   data() {
     return {
       devices: [],
@@ -118,7 +131,8 @@ export default {
       jsonInput: '',
       message: '',
       status: '',
-      uploading: false
+      uploading: false,
+      showConfirmModal: false
     }
   },
   computed: {
@@ -177,10 +191,11 @@ export default {
         this.uploading = false
       }
     },
-    async clearAllDevices() {
-      if (!confirm('确定要清空所有设备数据吗？此操作不可恢复！')) {
-        return
-      }
+    clearAllDevices() {
+      this.showConfirmModal = true
+    },
+    async executeClearAll() {
+      this.showConfirmModal = false
       try {
         await clearDevices()
         this.message = '数据已清空'
