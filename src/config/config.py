@@ -159,6 +159,8 @@ USER_CONTEXT_TEMPLATE = """
 展厅包含上述区域，每个区域都有名称、别名和描述。门分为两种类型：
 - **通道门（passage）**：连接两个区域，可以双向通行
 - **独立门（standalone）**：位于某个区域内的单独门，只控制开关
+
+当前的用户指令是：{USER_INPUT}
 """
 
 SYSTEM_PROMPT_TEMPLATE_V3 = """

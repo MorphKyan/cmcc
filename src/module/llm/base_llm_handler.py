@@ -37,7 +37,7 @@ class BaseLLMHandler(ABC):
         self.prompt_template = ChatPromptTemplate.from_messages([
             ("system", settings.system_prompt_template),
             MessagesPlaceholder(variable_name="chat_history", optional=True),
-            ("user", "{USER_INPUT}")
+            ("user", settings.user_context_template)
         ])
 
         # 创建消息修剪器 (Trimmer)
@@ -286,35 +286,6 @@ class BaseLLMHandler(ABC):
             raise RuntimeError("DataService not initialized")
         return dependencies.data_service
 
-    def get_doors_info_for_prompt(self) -> list[dict[str, Any]]:
-        """
-        获取用于Prompt的门信息列表
-        """
-        doors_info = []
-        all_doors = self.data_service.get_all_doors()
-        for door_name in all_doors:
-            door_info = self.data_service.get_door_info(door_name)
-            if door_info:
-                door_type = door_info.get("type", "")
-                if door_type == "passage":
-                    # 通道门
-                    area1 = door_info.get("area1", "")
-                    area2 = door_info.get("area2", "")
-                    description = f"连接{area1}和{area2}的通道门"
-                elif door_type == "standalone":
-                    # 独立门
-                    location = door_info.get("location", "")
-                    description = f"位于{location}的独立门"
-                else:
-                    description = "门"
-                
-                doors_info.append({
-                    "name": door_name,
-                    "type": door_type,
-                    "description": description
-                })
-        return doors_info
-
     def get_areas_info_for_prompt(self) -> list[dict[str, Any]]:
         """
         获取用于Prompt的区域信息列表
@@ -332,28 +303,6 @@ class BaseLLMHandler(ABC):
                     "description": f"{description_str}，也称为{aliases}"
                 })
         return areas_info
-
-    def get_devices_info_for_prompt(self) -> list[dict[str, Any]]:
-        """
-        获取用于Prompt的设备信息列表
-        """
-        devices_info = []
-        all_devices = self.data_service.get_all_devices()
-        for device_name in all_devices:
-            device_info = self.data_service.get_device_info(device_name)
-            if device_info:
-                aliases_str = device_info.get("aliases", "")
-                description_str = device_info.get("description", "")
-                device_type = device_info.get("type", "")
-                area = device_info.get("area", "")
-                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
-                devices_info.append({
-                    "name": device_name,
-                    "type": device_type,
-                    "area": area,
-                    "description": f"{description_str}，也称为{aliases}"
-                })
-        return devices_info
 
     def create_error_response(self, reason: str, message: str | None = None) -> list[ExhibitionCommand]:
         """

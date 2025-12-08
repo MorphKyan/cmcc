@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import json
 
 from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from loguru import logger
 
 from src.config.config import LLMSettings
 from src.module.llm.base_llm_handler import BaseLLMHandler
-from src.module.llm.helper import DocumentFormatter
 
 
 class ModelScopeLLMHandler(BaseLLMHandler):
@@ -21,14 +18,7 @@ class ModelScopeLLMHandler(BaseLLMHandler):
             settings (LLMSettings): LLM参数
         """
         super().__init__(settings)
-        # Keep __init__ lightweight - defer heavy initialization to async initialize()
         self.model = None
-        
-        self.prompt_template = ChatPromptTemplate.from_messages([
-            ("system", self.settings.system_prompt_template),
-            MessagesPlaceholder(variable_name="chat_history", optional=True),
-            ("user", "{context}\n\n用户指令: {user_input}")
-        ])
         
         logger.info("ModelScope大语言模型处理器已创建，等待异步初始化...")
 
@@ -88,32 +78,8 @@ class ModelScopeLLMHandler(BaseLLMHandler):
         logger.info("用户指令: {user_input}", user_input=user_input)
 
         try:
-            # 准备Prompt的输入变量
-            # 1. 从分类文档中提取各类型信息
-            video_docs = rag_docs.get("video", [])
-            door_docs = rag_docs.get("door", [])
-            device_docs = rag_docs.get("device", [])
-            
-            videos_info = DocumentFormatter.format_video_documents(video_docs)
-            doors_info = DocumentFormatter.format_door_documents(door_docs)
-            devices_info = DocumentFormatter.format_device_documents(device_docs)
-            area_list = self.get_areas_info_for_prompt()
-            areas_info_json = json.dumps(area_list, ensure_ascii=False, indent=2)
-            
-            context = self.settings.user_context_template.format(
-                AREAS_INFO=areas_info_json,
-                DEVICES_INFO=devices_info,
-                DOORS_INFO=doors_info,
-                VIDEOS_INFO=videos_info,
-                USER_LOCATION=user_location
-            )
-            
-            # 2. 构造Chain输入
-            chain_input = {
-                "context": context,
-                "user_input": user_input,
-                "chat_history": chat_history
-            }
+            # 使用基类的 _prepare_chain_input 方法准备输入变量
+            chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
 
             # 异步调用现代化处理链 - 直接获得结构化输出
             response = await self.chain.ainvoke(chain_input)
