@@ -10,7 +10,7 @@ from src.api.schemas import WebSocketConfig
 from src.config.logging_config import request_id_var
 from src.core import dependencies
 from src.module.input.stream_decoder import StreamDecoder
-from src.services.audio_pipeline import run_vad_appender, run_vad_processor, decode_loop, run_asr_processor, run_llm_rag_processor, receive_loop, run_command_executor
+from src.services.audio_pipeline import run_vad_processor, run_decode_vad_appender, run_asr_processor, run_llm_rag_processor, receive_loop, run_command_executor
 
 router = APIRouter(
     prefix="/audio",
@@ -50,8 +50,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str) -> None:
         # 启动处理管道
         all_tasks = [
             asyncio.create_task(receive_loop(websocket, context)),
-            asyncio.create_task(decode_loop(context)),
-            asyncio.create_task(run_vad_appender(context)),
+            asyncio.create_task(run_decode_vad_appender(context)),
             asyncio.create_task(run_vad_processor(context)),
             asyncio.create_task(run_asr_processor(context)),
             asyncio.create_task(run_llm_rag_processor(context, websocket)),
@@ -75,9 +74,13 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str) -> None:
         for task in all_tasks:
             if not task.done():
                 task.cancel()
-        # 等待所有任务真正取消
+        
+        # 等待所有任务真正取消，设置超时防止卡死
         if all_tasks:
-            await asyncio.gather(*all_tasks, return_exceptions=True)
+            try:
+                await asyncio.wait_for(asyncio.gather(*all_tasks, return_exceptions=True), timeout=5.0)
+            except asyncio.TimeoutError:
+                logger.warning("WebSocket任务清理超时，部分任务可能未正常退出")
 
         if client_id in dependencies.active_contexts:
             del dependencies.active_contexts[client_id]

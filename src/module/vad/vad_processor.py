@@ -26,7 +26,7 @@ class VADProcessor:
         self.last_end_time = None  # 上一segment的结束时间戳（累积）
         self.last_start_time_ms = None  # Start timestamp of the current speech segment in milliseconds
         self.total_samples_processed = 0  # A running counter of all samples seen so far
-        self.chunk_queue: asyncio.Queue[npt.NDArray] = asyncio.Queue()
+        self.chunk_queue: asyncio.Queue[npt.NDArray] = asyncio.Queue(maxsize=10000)
         self.save_audio_segments = save_audio_segments
 
     def append_audio(self, data: npt.NDArray[np.float32]) -> None:
@@ -35,10 +35,13 @@ class VADProcessor:
         self.input_buffer = np.concatenate([self.input_buffer, data_flat])
         self.history_buffer = np.concatenate([self.history_buffer, data_flat])
 
-        # 维护history buffer的固定大小
-        # overflow = len(self.history_buffer) - self.history_buffer_max_samples
-        # if overflow > 0:
-        #     self.history_buffer = self.history_buffer[overflow:]
+        # 维护history buffer的最大容量
+        if len(self.history_buffer) > self.history_buffer_max_samples:
+             overflow = len(self.history_buffer) - self.history_buffer_max_samples
+             if overflow > 0:
+                 self.history_buffer = self.history_buffer[overflow:]
+                 self.history_buffer_head_index += overflow
+                 logger.warning(f"history_buffer超出限制，强制裁剪 {overflow} 样本")
 
         # 处理为chunk
         while len(self.input_buffer) >= self.chunk_size_samples:
@@ -48,13 +51,6 @@ class VADProcessor:
                 self.chunk_queue.put_nowait(chunk_np)
             except asyncio.QueueFull:
                 logger.warning("chunk_queue已满，处理速度跟不上输入速度。")
-
-    # def flush(self):
-    #     # 音频流结束时调用
-    #     if self.last_start_time is not None:
-    #         end_ms = self.total_sample_processed * 1000 / self.sample_rate
-    #         result = self._extract_audio(self.last_start_time, end_ms)
-    #         self.last_start_time = None
 
     async def process_chunk(self) -> list[tuple[int, int]]:
         chunk = await self.chunk_queue.get()
@@ -131,7 +127,20 @@ class VADProcessor:
         if start_index_in_buffer >= end_index_in_buffer:
             logger.warning("检测到空的音频段: {start}ms - {end}ms", start=start_ms, end=end_ms)
             return None
-        return self.history_buffer[start_index_in_buffer:end_index_in_buffer]
+        
+        # 提取音频
+        audio = self.history_buffer[start_index_in_buffer:end_index_in_buffer].copy()
+
+        # 清理已使用的历史数据
+        # 保留一定的安全边界（例如1秒），以防VAD可能的检测延迟或需要重新提取
+        safety_margin_samples = 5 * self.sample_rate  # 5秒
+        trim_index = max(0, end_index_in_buffer - safety_margin_samples)
+        
+        if trim_index > 0:
+            self.history_buffer = self.history_buffer[trim_index:]
+            self.history_buffer_head_index += trim_index
+            
+        return audio
 
     def _save_audio_segment(self, audio_data: npt.NDArray[np.float32], start_ms: int, end_ms: int) -> None:
         """保存音频片段为WAV文件"""

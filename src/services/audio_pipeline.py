@@ -25,43 +25,47 @@ async def receive_loop(websocket: WebSocket, context: Context) -> None:
             break
 
 
-async def decode_loop(context: Context) -> None:
-    """负责解码并放入队列"""
-    logger.info("解码已启动")
+async def run_decode_vad_appender(context: Context) -> None:
+    """负责解码并直接推送到VAD处理器，合并了之前的decode_loop和vad_appender"""
+    logger.info("解码与VAD输入处理器已启动")
     while True:
         try:
             data_bytes = await context.audio_input_queue.get()
+            
+            # 开始计时
+            start_time = asyncio.get_running_loop().time()
+            
             # 将bytes转换为int16数组，然后归一化到-1.0到1.0的float32范围
             int16_array = np.frombuffer(data_bytes, dtype=np.int16)
             float32_array = int16_array.astype(np.float32) / 32767.0
-            logger.trace("处理PCM数据，形状: {shape}, 类型: {dtype}", shape=float32_array.shape, dtype=float32_array.dtype)
-            await context.audio_np_queue.put(float32_array)
+            
+            # 直接推送到VAD处理器，跳过中间队列
+            context.VADProcessor.append_audio(float32_array)
+            
+            # 计算耗时
+            end_time = asyncio.get_running_loop().time()
+            duration = end_time - start_time
+            if duration > 0.01: # 仅记录超过10ms的操作
+                 logger.trace("[性能指标] 解码+VAD输入耗时: {duration:.4f}s", duration=duration)
+                 
         except Exception as e:
-            logger.exception("解码错误")
-
-
-async def run_vad_appender(context: Context) -> None:
-    """VAD处理逻辑代码"""
-    logger.info("VAD处理器已启动")
-    while True:
-        try:
-            # 从WebSocket接收音频数据
-            audio = await context.audio_np_queue.get()
-
-            # 使用VAD检测语音活动
-            context.VADProcessor.append_audio(audio)
-
-        except Exception as e:
-            logger.exception("VAD输入错误")
-            # 可以选择是否继续处理或退出
-            # break
+            logger.exception("解码与VAD输入处理错误")
 
 
 async def run_vad_processor(context: Context) -> None:
     while True:
         try:
+             # VAD处理是内部循环等待，这里测量每一轮的处理时间
+            start_time = asyncio.get_running_loop().time()
+            
             result = await context.VADProcessor.process_chunk()
             speech_segments = context.VADProcessor.process_result(result)
+            
+            end_time = asyncio.get_running_loop().time()
+            duration = end_time - start_time
+            if duration > 0.01:
+                logger.debug("[性能指标] VAD处理耗时: {duration:.4f}s", duration=duration)
+            
             for segment in speech_segments:
                 start, end, audio_data = segment
                 logger.info("[VAD] 检测到语音段: {start:.2f}s - {end:.2f}s, 长度: {length:.2f}s", start=start / 1000, end=end / 1000,
@@ -79,7 +83,13 @@ async def run_asr_processor(context: Context) -> None:
             # 从VAD队列中获取分割好的语音片段
             segment: npt[np.float32] = await context.audio_segment_queue.get()
             # 使用ASR处理器处理音频数据
+            start_time = asyncio.get_running_loop().time()
             recognized_text = await asyncio.to_thread(dependencies.asr_processor.process_audio_data, segment)
+            
+            end_time = asyncio.get_running_loop().time()
+            duration = end_time - start_time
+            logger.info("[性能指标] ASR识别耗时: {duration:.3f}s", duration=duration)
+            
             if recognized_text and recognized_text.strip():
                 logger.info("[识别结果] {recognized_text}", recognized_text=recognized_text)
                 await context.asr_output_queue.put(recognized_text)
@@ -100,6 +110,9 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     while True:
         try:
             recognized_text = await context.asr_output_queue.get()
+            
+            # 开始计时
+            start_time = asyncio.get_running_loop().time()
             
             # 分别检索每种类型的文档，每种5个
             door_docs = await dependencies.rag_processor.retrieve_context(
@@ -129,6 +142,11 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
                 user_location=context.location,
                 chat_history=chat_history_messages
             )
+            
+            # 计算总耗时
+            end_time = asyncio.get_running_loop().time()
+            duration = end_time - start_time
+            logger.info("[性能指标] LLM/RAG处理耗时: {duration:.3f}s", duration=duration)
             
             logger.info("[大模型响应] 返回 {count} 个命令", count=len(commands))
 
@@ -168,6 +186,8 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
     while True:
         try:
             executable_cmd = await context.command_queue.get()
+            
+            start_time = asyncio.get_running_loop().time()
             execution_results: list[dict] = []
             
             # 1. 先执行本地命令（如更新位置）
@@ -209,6 +229,9 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                     "summary": "正在执行：" + "；".join(summary_messages)
                 }, ensure_ascii=False)
                 await websocket.send_text(summary_payload)
+            
+            end_time = asyncio.get_running_loop().time()
+            logger.info("[性能指标] 命令执行耗时: {duration:.4f}s", duration=end_time - start_time)
                 
         except Exception as e:
             logger.exception("[命令执行错误]")
