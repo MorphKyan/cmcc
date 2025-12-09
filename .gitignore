@@ -12,12 +12,6 @@
 **/*.py[cod]
 **/*$py.class
 
-# 确保根目录的__pycache__也被忽略
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

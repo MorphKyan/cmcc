@@ -32,17 +32,17 @@ async def run_decode_vad_appender(context: Context) -> None:
     while True:
         try:
             data_bytes = await context.audio_input_queue.get()
-            
+
             # 开始计时
             start_time = asyncio.get_running_loop().time()
-            
+
             # 将bytes转换为int16数组，然后归一化到-1.0到1.0的float32范围
             int16_array = np.frombuffer(data_bytes, dtype=np.int16)
             float32_array = int16_array.astype(np.float32) / 32767.0
-            
+
             # 直接推送到VAD处理器，跳过中间队列
             context.VADProcessor.append_audio(float32_array)
-            
+
             # 计算耗时
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
@@ -50,7 +50,7 @@ async def run_decode_vad_appender(context: Context) -> None:
             dependencies.metrics_manager.record(MetricType.VAD_INPUT, duration, context.context_id)
             if duration > 0.01:  # 仅记录超过10ms的日志
                 logger.trace("[性能指标] VAD输入耗时: {duration:.4f}s", duration=duration)
-                 
+
         except Exception as e:
             logger.exception("解码与VAD输入处理错误")
 
@@ -58,19 +58,19 @@ async def run_decode_vad_appender(context: Context) -> None:
 async def run_vad_processor(context: Context) -> None:
     while True:
         try:
-             # VAD处理是内部循环等待，这里测量每一轮的处理时间
+            # VAD处理是内部循环等待，这里测量每一轮的处理时间
             start_time = asyncio.get_running_loop().time()
-            
+
             result = await context.VADProcessor.process_chunk()
             speech_segments = context.VADProcessor.process_result(result)
-            
+
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
             # 记录性能指标
             dependencies.metrics_manager.record(MetricType.VAD_PROCESS, duration, context.context_id)
             if duration > 0.01:
                 logger.debug("[性能指标] VAD处理耗时: {duration:.4f}s", duration=duration)
-            
+
             for segment in speech_segments:
                 start, end, audio_data = segment
                 logger.info("[VAD] 检测到语音段: {start:.2f}s - {end:.2f}s, 长度: {length:.2f}s", start=start / 1000, end=end / 1000,
@@ -90,13 +90,13 @@ async def run_asr_processor(context: Context) -> None:
             # 使用ASR处理器处理音频数据
             start_time = asyncio.get_running_loop().time()
             recognized_text = await asyncio.to_thread(dependencies.asr_processor.process_audio_data, segment)
-            
+
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
             # 记录性能指标
             dependencies.metrics_manager.record(MetricType.ASR_RECOGNIZE, duration, context.context_id)
             logger.info("[性能指标] ASR识别耗时: {duration:.3f}s", duration=duration)
-            
+
             if recognized_text and recognized_text.strip():
                 logger.info("[识别结果] {recognized_text}", recognized_text=recognized_text)
                 await context.asr_output_queue.put(recognized_text)
@@ -110,17 +110,17 @@ async def run_asr_processor(context: Context) -> None:
 async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
     """LLM/RAG处理逻辑代码"""
     logger.info("LLM/RAG处理器已启动")
-    
+
     # 导入MetadataType用于分类检索
     from src.module.rag.base_rag_processor import MetadataType
 
     while True:
         try:
             recognized_text = await context.asr_output_queue.get()
-            
+
             # 开始计时
             start_time = asyncio.get_running_loop().time()
-            
+
             # 分别检索每种类型的文档，每种5个
             door_docs = await dependencies.rag_processor.retrieve_context(
                 recognized_text, metadata_types=[MetadataType.DOOR], top_k=5
@@ -131,7 +131,7 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             device_docs = await dependencies.rag_processor.retrieve_context(
                 recognized_text, metadata_types=[MetadataType.DEVICE], top_k=5
             )
-            
+
             # 构建分类后的RAG文档字典
             retrieved_docs_by_type = {
                 "door": door_docs,
@@ -149,14 +149,14 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
                 user_location=context.location,
                 chat_history=chat_history_messages
             )
-            
+
             # 计算总耗时
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
             # 记录性能指标
             dependencies.metrics_manager.record(MetricType.LLM_GENERATE, duration, context.context_id)
             logger.info("[性能指标] LLM/RAG处理耗时: {duration:.3f}s", duration=duration)
-            
+
             logger.info("[大模型响应] 返回 {count} 个命令", count=len(commands))
 
             # 自动保存对话到历史
@@ -195,10 +195,10 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
     while True:
         try:
             executable_cmd = await context.command_queue.get()
-            
+
             start_time = asyncio.get_running_loop().time()
             execution_results: list[dict] = []
-            
+
             # 1. 先执行本地命令（如更新位置）
             for cmd in executable_cmd.get_local_commands():
                 result = await _execute_local_command(cmd, context)
@@ -211,17 +211,17 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                     "result": result
                 }, ensure_ascii=False)
                 await websocket.send_text(local_result_payload)
-                logger.info("[本地命令结果] action={action}, success={success}, message={message}", 
-                           action=cmd.action, success=result.get("success"), message=result.get("message"))
-            
+                logger.info("[本地命令结果] action={action}, success={success}, message={message}",
+                            action=cmd.action, success=result.get("success"), message=result.get("message"))
+
             # 2. 发送远程命令到前端
             remote_commands = executable_cmd.get_remote_commands()
             if remote_commands:
                 payload = executable_cmd.to_websocket_payload()
-                logger.info("[发送命令] user={user_id}, count={count}", 
-                           user_id=executable_cmd.user_id, count=len(remote_commands))
+                logger.info("[发送命令] user={user_id}, count={count}, content={content}",
+                            user_id=executable_cmd.user_id, count=len(remote_commands), content=remote_commands)
                 await websocket.send_text(payload)
-            
+
             # 3. 发送执行摘要到前端（用户友好的提示）
             summary_messages: list[str] = []
             for result in execution_results:
@@ -229,7 +229,7 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                     summary_messages.append(result.get("message", "操作成功"))
             for cmd in remote_commands:
                 summary_messages.append(_get_command_description(cmd))
-            
+
             if summary_messages:
                 summary_payload = json.dumps({
                     "type": "execution_summary",
@@ -238,13 +238,13 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                     "summary": "正在执行：" + "；".join(summary_messages)
                 }, ensure_ascii=False)
                 await websocket.send_text(summary_payload)
-            
+
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
             # 记录性能指标
             dependencies.metrics_manager.record(MetricType.CMD_EXECUTE, duration, context.context_id)
             logger.info("[性能指标] 命令执行耗时: {duration:.4f}s", duration=duration)
-                
+
         except Exception as e:
             logger.exception("[命令执行错误]")
 
@@ -278,7 +278,7 @@ def _get_command_description(cmd: ExhibitionCommand) -> str:
         "set_volume": lambda c: f"将「{c.device}」音量设置为{c.value}",
         "adjust_volume": lambda c: f"{'提高' if c.value == 'up' else '降低'}「{c.device}」音量",
     }
-    
+
     if cmd.action in action_descriptions:
         return action_descriptions[cmd.action](cmd)
     return f"执行{cmd.action}操作"

@@ -291,7 +291,7 @@ class BaseLLMHandler(ABC):
             logger.info(f"Retry attempt {attempt + 1}/{max_retries} due to tool errors.")
             
             try:
-                ai_msg = await runnable.ainvoke(chain_input)
+                ai_msg = await self.chain.ainvoke(chain_input)
                 messages.append(ai_msg)
             except Exception as e:
                 logger.error(f"LLM retry call failed: {e}")
@@ -309,7 +309,7 @@ class BaseLLMHandler(ABC):
         door_docs = rag_docs.get("door", [])
         device_docs = rag_docs.get("device", [])
         
-        videos_info = DocumentFormatter.format_video_documents(video_docs)
+        videos_info = DocumentFormatter.format_media_documents(video_docs)
         doors_info = DocumentFormatter.format_door_documents(door_docs)
         devices_info = DocumentFormatter.format_device_documents(device_docs)
         areas_info = DocumentFormatter.format_area_info(self.data_service.get_all_areas_data())

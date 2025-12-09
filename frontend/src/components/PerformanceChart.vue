@@ -87,7 +87,8 @@ export default {
   methods: {
     connect() {
       const baseUrl = config.getBackendUrl()
-      const sseUrl = baseUrl.replace(/^https?/, 'http') + '/monitoring/metrics/stream'
+      // 保持与 backendUrl 相同的协议，避免 HTTPS 页面下的混合内容问题
+      const sseUrl = baseUrl + '/monitoring/metrics/stream'
       
       this.eventSource = new EventSource(sseUrl)
       
