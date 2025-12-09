@@ -372,6 +372,7 @@ class DataSettings(BaseSettings):
     devices_data_path: str = os.path.join(data_dir, "devices.csv")
     areas_data_path: str = os.path.join(data_dir, "areas.csv")
     doors_data_path: str = os.path.join(data_dir, "doors.csv")
+    dynamic_tools_path: str = os.path.join(data_dir, "dynamic_tools.json")
 
 
 class RAGSettings(BaseSettings):

@@ -133,6 +133,11 @@
           <DoorManager />
         </div>
 
+        <!-- 工具管理 -->
+        <div v-if="activeTab === 'tools'" class="page-content">
+          <ToolManager />
+        </div>
+
         <!-- 队列监控 -->
         <div v-if="activeTab === 'monitoring'" class="page-content">
           <section class="section">
@@ -160,6 +165,7 @@ import AreaManager from './components/AreaManager.vue'
 import DoorManager from './components/DoorManager.vue'
 import QueueMonitor from './components/QueueMonitor.vue'
 import PerformanceChart from './components/PerformanceChart.vue'
+import ToolManager from './components/ToolManager.vue'
 import {
   getCurrentConfig,
   healthCheck,
@@ -180,7 +186,8 @@ export default {
     AreaManager,
     DoorManager,
     QueueMonitor,
-    PerformanceChart
+    PerformanceChart,
+    ToolManager
   },
   data() {
     return {
@@ -191,6 +198,7 @@ export default {
         { id: 'resources', label: '资源管理', icon: '🎬' },
         { id: 'areas', label: '区域管理', icon: '🗺️' },
         { id: 'doors', label: '门资源管理', icon: '🚪' },
+        { id: 'tools', label: '工具管理', icon: '🔧' },
         { id: 'monitoring', label: '队列监控', icon: '📈' },
         { id: 'performance', label: '性能监控', icon: '⏱️' }
       ],

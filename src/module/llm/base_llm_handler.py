@@ -14,6 +14,7 @@ from loguru import logger
 from src.config.config import LLMSettings
 from src.core import dependencies
 from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
+from src.module.llm.tool.dynamic_tool_manager import DynamicToolManager
 from src.module.llm.tool.validator import ToolValidator
 from src.module.llm.helper import DocumentFormatter
 
@@ -37,7 +38,13 @@ class BaseLLMHandler(ABC):
         self.model_with_tools = None
         self.chain: RunnableSerializable[dict, Any] | None = None
 
-        self.tools = get_tools()
+        # 初始化动态工具管理器并注册更新回调
+        self._dynamic_manager = DynamicToolManager()
+        self._dynamic_manager.on_update(self._on_tools_updated)
+        
+        # 合并原生工具和动态工具
+        self._native_tools = get_tools()
+        self.tools = self._native_tools + self._dynamic_manager.get_langchain_tools()
         self._tool_map = {tool.name: tool for tool in self.tools}
 
         # 使用ChatPromptTemplate构建提示词
@@ -57,7 +64,9 @@ class BaseLLMHandler(ABC):
             start_on="human"
         )
 
-        logger.info("LLM处理器基类初始化完成")
+        logger.info("LLM处理器基类初始化完成，工具数: {} (原生: {}, 动态: {})", 
+                    len(self.tools), len(self._native_tools), 
+                    len(self._dynamic_manager.get_langchain_tools()))
 
     @abstractmethod
     def _create_model(self) -> BaseChatModel:
@@ -87,6 +96,26 @@ class BaseLLMHandler(ABC):
         self.chain = self.prompt_template | self.trimmer | self.model_with_tools
         
         logger.debug("处理链构建完成")
+
+    def _on_tools_updated(self) -> None:
+        """
+        工具更新回调 - 当动态工具发生变化时重建工具列表和处理链。
+        
+        此方法由 DynamicToolManager 在工具增删时自动调用。
+        """
+        # 重新合并工具列表
+        self.tools = self._native_tools + self._dynamic_manager.get_langchain_tools()
+        self._tool_map = {tool.name: tool for tool in self.tools}
+        
+        # 如果模型已初始化，重建处理链
+        if self.model is not None:
+            self.model_with_tools = self.model.bind_tools(self.tools)
+            self.chain = self.prompt_template | self.trimmer | self.model_with_tools
+            logger.info("LLM工具热重载完成，当前工具数: {} (原生: {}, 动态: {})",
+                        len(self.tools), len(self._native_tools),
+                        len(self._dynamic_manager.get_langchain_tools()))
+        else:
+            logger.debug("工具列表已更新，但模型尚未初始化，跳过重建处理链")
 
     async def initialize(self) -> None:
         """

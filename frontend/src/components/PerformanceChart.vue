@@ -58,7 +58,7 @@
 
 <script>
 import { Chart, registerables } from 'chart.js'
-import { getBaseUrl } from '../config'
+import { config } from '../config'
 
 Chart.register(...registerables)
 
@@ -86,7 +86,7 @@ export default {
   },
   methods: {
     connect() {
-      const baseUrl = getBaseUrl()
+      const baseUrl = config.getBackendUrl()
       const sseUrl = baseUrl.replace(/^https?/, 'http') + '/monitoring/metrics/stream'
       
       this.eventSource = new EventSource(sseUrl)

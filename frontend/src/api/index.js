@@ -94,5 +94,22 @@ export const clearDoors = () => {
   return api.delete('/data/doors')
 }
 
+// Dynamic Tools API
+export const getDynamicTools = () => {
+  return api.get('/tools')
+}
+
+export const addDynamicTool = (toolDef) => {
+  return api.post('/tools', toolDef)
+}
+
+export const getDynamicTool = (name) => {
+  return api.get(`/tools/${name}`)
+}
+
+export const deleteDynamicTool = (name) => {
+  return api.delete(`/tools/${name}`)
+}
+
 // 默认导出axios实例，便于其他模块直接使用
 export default api

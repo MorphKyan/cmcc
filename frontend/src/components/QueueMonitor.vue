@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import { getBaseUrl } from '../config'
+import { config } from '../config'
 
 export default {
   name: 'QueueMonitor',
@@ -71,7 +71,7 @@ export default {
   },
   methods: {
     connect() {
-      const baseUrl = getBaseUrl()
+      const baseUrl = config.getBackendUrl()
       const sseUrl = baseUrl.replace(/^https?/, 'http') + '/monitoring/queues/stream'
       
       this.eventSource = new EventSource(sseUrl)
