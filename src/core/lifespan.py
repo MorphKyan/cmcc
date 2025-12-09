@@ -46,6 +46,10 @@ async def lifespan(app: FastAPI):
             from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
             dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
             logger.info("使用ModelScope LLM处理器")
+        elif llm_config.provider.lower() == "dashscope":
+            from src.module.llm.dashscope_llm_handler import DashScopeLLMHandler
+            dependencies.llm_processor = DashScopeLLMHandler(llm_config)
+            logger.info("使用DashScope LLM处理器")
         else:
             from src.module.llm.ollama_llm_handler import OllamaLLMHandler
             dependencies.llm_processor = OllamaLLMHandler(llm_config)
