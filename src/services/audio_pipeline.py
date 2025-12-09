@@ -126,7 +126,7 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
                 recognized_text, metadata_types=[MetadataType.DOOR], top_k=5
             )
             video_docs = await dependencies.rag_processor.retrieve_context(
-                recognized_text, metadata_types=[MetadataType.VIDEO], top_k=5
+                recognized_text, metadata_types=[MetadataType.MEDIA], top_k=5
             )
             device_docs = await dependencies.rag_processor.retrieve_context(
                 recognized_text, metadata_types=[MetadataType.DEVICE], top_k=5

@@ -41,7 +41,7 @@ class VADProcessor:
              if overflow > 0:
                  self.history_buffer = self.history_buffer[overflow:]
                  self.history_buffer_head_index += overflow
-                 logger.warning(f"history_buffer超出限制，强制裁剪 {overflow} 样本")
+                 logger.debug(f"history_buffer超出限制，强制裁剪 {overflow} 样本")
 
         # 处理为chunk
         while len(self.input_buffer) >= self.chunk_size_samples:

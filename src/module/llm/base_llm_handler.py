@@ -147,7 +147,8 @@ class BaseLLMHandler(ABC):
                 "DOORS_INFO": "",
                 "AREAS_INFO": "",
                 "VIDEOS_INFO": "",
-                "USER_INPUT": "健康检查"
+                "USER_INPUT": "健康检查",
+                "USER_LOCATION": ""
             }
 
             import asyncio
