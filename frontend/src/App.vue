@@ -133,6 +133,13 @@
           <DoorManager />
         </div>
 
+        <!-- 队列监控 -->
+        <div v-if="activeTab === 'monitoring'" class="page-content">
+          <section class="section">
+            <QueueMonitor />
+          </section>
+        </div>
+
       </div>
     </main>
   </div>
@@ -144,6 +151,7 @@ import DeviceManager from './components/DeviceManager.vue'
 import ResourceManager from './components/ResourceManager.vue'
 import AreaManager from './components/AreaManager.vue'
 import DoorManager from './components/DoorManager.vue'
+import QueueMonitor from './components/QueueMonitor.vue'
 import {
   getCurrentConfig,
   healthCheck,
@@ -162,7 +170,8 @@ export default {
     DeviceManager,
     ResourceManager,
     AreaManager,
-    DoorManager
+    DoorManager,
+    QueueMonitor
   },
   data() {
     return {
@@ -172,7 +181,8 @@ export default {
         { id: 'devices', label: '设备管理', icon: '📱' },
         { id: 'resources', label: '资源管理', icon: '🎬' },
         { id: 'areas', label: '区域管理', icon: '🗺️' },
-        { id: 'doors', label: '门资源管理', icon: '🚪' }
+        { id: 'doors', label: '门资源管理', icon: '🚪' },
+        { id: 'monitoring', label: '队列监控', icon: '📈' }
       ],
       healthStatus: '未知',
       ragStatusInfo: '未知',
