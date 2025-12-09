@@ -1,157 +1,182 @@
 <template>
-  <div id="app">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="header-content">
-        <h1 class="app-title">
-          <span class="title-icon">🎛️</span>
-          智能控制系统
-        </h1>
-        <nav class="nav-tabs">
-          <button 
-            v-for="tab in tabs" 
-            :key="tab.id"
-            :class="['nav-tab', { active: activeTab === tab.id }]" 
-            @click="activeTab = tab.id"
-          >
-            <span class="tab-icon">{{ tab.icon }}</span>
-            <span class="tab-label">{{ tab.label }}</span>
-          </button>
-        </nav>
+  <div id="app" class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="app-logo">
+          <span class="logo-icon">🎛️</span>
+          <h1 class="logo-text">智能控制</h1>
+        </div>
       </div>
-    </header>
-    
-    <main class="app-main">
-      <div class="container">
-        <!-- 主页内容 -->
-        <div v-show="activeTab === 'home'" class="page-content">
-          <!-- 音频录制组件 -->
-          <section class="section">
-            <AudioRecorder />
-          </section>
-          
-          <!-- 系统状态卡片 -->
-          <section class="section">
-            <h2 class="section-title">
-              <span class="section-icon">📊</span>
-              系统状态
-            </h2>
-            <div class="status-grid">
-              <div class="status-card">
-                <div class="status-label">健康检查</div>
-                <div :class="['status-value', getStatusClass(healthStatus)]">{{ healthStatus }}</div>
-              </div>
-              <div class="status-card">
-                <div class="status-label">VAD 状态</div>
-                <div :class="['status-value', getStatusClass(vadStatusInfo)]">{{ vadStatusInfo }}</div>
-              </div>
-              <div class="status-card">
-                <div class="status-label">RAG 状态</div>
-                <div :class="['status-value', getStatusClass(ragStatusInfo)]">{{ ragStatusInfo }}</div>
-              </div>
-              <div class="status-card">
-                <div class="status-label">LLM 健康</div>
-                <div :class="['status-value', getStatusClass(llmHealthStatus)]">{{ llmHealthStatus }}</div>
-              </div>
-            </div>
-            <div class="action-buttons">
-              <button class="btn btn-primary" @click="checkHealth">检查健康</button>
-              <button class="btn btn-secondary" @click="getVadStatus">获取 VAD 状态</button>
-              <button class="btn btn-secondary" @click="reinitializeVad">重启 VAD</button>
-              <button class="btn btn-secondary" @click="getRagStatus">获取 RAG 状态</button>
-              <button class="btn btn-secondary" @click="refreshRag">刷新 RAG</button>
-              <button class="btn btn-secondary" @click="checkLLMHealth">检查 LLM 健康</button>
-            </div>
-          </section>
-          
-          <!-- 查询功能 -->
-          <section class="section">
-            <h2 class="section-title">
-              <span class="section-icon">🔍</span>
-              RAG 查询
-            </h2>
-            <div class="query-container">
-              <div class="query-input-wrapper">
-                <input 
-                  v-model="queryText" 
-                  class="input query-input" 
-                  placeholder="请输入查询内容..." 
-                  @keyup.enter="performQuery"
-                />
-                <button class="btn btn-primary" @click="performQuery">查询</button>
-              </div>
-              <div v-if="queryResult" class="query-result">
-                <h3>查询结果</h3>
-                <pre class="result-code">{{ queryResult }}</pre>
-              </div>
-            </div>
-          </section>
 
-          <!-- 配置显示 -->
-          <section class="section">
-            <h2 class="section-title">
-              <span class="section-icon">⚙️</span>
-              当前配置
-            </h2>
-            <div class="config-container">
-              <button class="btn btn-primary" @click="loadConfig" :disabled="configLoading">
-                <span v-if="configLoading" class="spinner"></span>
-                {{ configLoading ? '加载中...' : '加载配置' }}
-              </button>
-              <div v-if="currentConfig" class="config-grid">
-                <div v-for="(category, categoryName) in currentConfig" :key="categoryName" class="config-category">
-                  <h3 class="config-category-title">{{ categoryName.toUpperCase() }}</h3>
-                  <div class="config-items">
-                    <div v-for="(value, key) in category" :key="key" class="config-item">
-                      <span class="config-key">{{ key }}</span>
-                      <span class="config-value">{{ value }}</span>
+      <nav class="sidebar-nav">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          :class="['nav-item', { active: activeTab === tab.id }]"
+          @click="activeTab = tab.id"
+        >
+          <span class="nav-icon">{{ tab.icon }}</span>
+          <span class="nav-label">{{ tab.label }}</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Bar (Optional, for mobile trigger or global actions) -->
+      <header class="top-bar">
+        <h2 class="page-title">{{ activeTabName }}</h2>
+        <div class="top-actions">
+           <!-- Placeholder for global actions -->
+        </div>
+      </header>
+
+      <div class="content-scrollable">
+        <div class="container">
+          <!-- 主页内容 -->
+          <Transition name="fade" mode="out-in">
+            <div v-show="activeTab === 'home'" class="page-view" key="home">
+              <!-- 音频录制组件 -->
+              <section class="section glass-card">
+                <AudioRecorder />
+              </section>
+              
+              <!-- 系统状态卡片 -->
+              <section class="section glass-card">
+                <div class="section-header">
+                  <h2 class="section-title">
+                    <span class="section-icon">📊</span>
+                    系统状态
+                  </h2>
+                  <div class="header-actions">
+                     <button class="btn btn-sm btn-primary" @click="checkHealth">刷新</button>
+                  </div>
+                </div>
+                
+                <div class="status-grid">
+                  <div class="status-card">
+                    <div class="status-label">LLM 健康</div>
+                    <div :class="['status-value', getStatusClass(llmHealthStatus)]">{{ llmHealthStatus }}</div>
+                  </div>
+                  <div class="status-card">
+                    <div class="status-label">RAG 状态</div>
+                    <div :class="['status-value', getStatusClass(ragStatus)]">{{ ragStatus }}</div>
+                  </div>
+                  <div class="status-card">
+                    <div class="status-label">VAD 状态</div>
+                    <div :class="['status-value', getStatusClass(vadStatusText)]">{{ vadStatusText }}</div>
+                  </div>
+                </div>
+                
+                <div class="action-buttons">
+                  <button class="btn btn-secondary" @click="getVadStatus">VAD 状态</button>
+                  <button class="btn btn-secondary" @click="reinitializeVad">重置 VAD</button>
+                  <button class="btn btn-secondary" @click="refreshRag">刷新 RAG</button>
+                  <button class="btn btn-secondary" @click="checkLLMHealth">检查 LLM</button>
+                </div>
+              </section>
+              
+              <!-- 查询功能 -->
+              <section class="section glass-card">
+                <h2 class="section-title">
+                  <span class="section-icon">🔍</span>
+                  RAG 查询
+                </h2>
+                <div class="query-container">
+                  <div class="query-input-wrapper">
+                    <input 
+                      v-model="queryInput" 
+                      @keyup.enter="performQuery"
+                      type="text" 
+                      class="form-input query-input" 
+                      placeholder="输入查询内容..."
+                    >
+                    <button class="btn btn-primary" @click="performQuery" :disabled="isQuerying">
+                      {{ isQuerying ? '查询中...' : '查询' }}
+                    </button>
+                  </div>
+                  <div v-if="queryResult" class="query-result">
+                    <h3>查询结果</h3>
+                    <pre class="result-code">{{ queryResult }}</pre>
+                  </div>
+                </div>
+              </section>
+
+              <!-- 配置显示 -->
+              <section class="section glass-card">
+                <h2 class="section-title">
+                  <span class="section-icon">⚙️</span>
+                  当前配置
+                </h2>
+                <div class="config-container">
+                  <div v-for="(category, catName) in config" :key="catName" class="config-category">
+                    <h3 class="config-category-title">{{ catName }}</h3>
+                    <div class="config-items">
+                      <div v-for="(value, key) in category" :key="key" class="config-item">
+                        <span class="config-key">{{ key }}</span>
+                        <span class="config-value">{{ value }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
             </div>
-          </section>
-        </div>
+          </Transition>
 
-        <!-- 设备管理 -->
-        <div v-if="activeTab === 'devices'" class="page-content">
-          <DeviceManager />
-        </div>
+          <!-- 设备管理 -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="activeTab === 'devices'" class="page-view" key="devices">
+              <DeviceManager />
+            </div>
+          </Transition>
 
-        <!-- 资源管理 -->
-        <div v-if="activeTab === 'resources'" class="page-content">
-          <ResourceManager />
-        </div>
+          <!-- 资源管理 -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="activeTab === 'resources'" class="page-view" key="resources">
+              <ResourceManager />
+            </div>
+          </Transition>
 
-        <!-- 区域管理 -->
-        <div v-if="activeTab === 'areas'" class="page-content">
-          <AreaManager />
-        </div>
+          <!-- 区域管理 -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="activeTab === 'areas'" class="page-view" key="areas">
+              <AreaManager />
+            </div>
+          </Transition>
 
-        <!-- 门资源管理 -->
-        <div v-if="activeTab === 'doors'" class="page-content">
-          <DoorManager />
-        </div>
+          <!-- 门禁资源管理 -->
+           <Transition name="fade" mode="out-in">
+            <div v-if="activeTab === 'door_resources'" class="page-view" key="doors">
+              <DoorManager />
+            </div>
+          </Transition>
 
-        <!-- 工具管理 -->
-        <div v-if="activeTab === 'tools'" class="page-content">
-          <ToolManager />
-        </div>
+          <!-- 队列监控 -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="activeTab === 'queue'" class="page-view" key="queue">
+              <section class="section glass-card">
+                <QueueMonitor />
+              </section>
+            </div>
+          </Transition>
 
-        <!-- 队列监控 -->
-        <div v-if="activeTab === 'monitoring'" class="page-content">
-          <section class="section">
-            <QueueMonitor />
-          </section>
-        </div>
+            <!-- 性能监控 -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="activeTab === 'performance'" class="page-view" key="performance">
+               <section class="section glass-card">
+                <PerformanceChart />
+              </section>
+            </div>
+          </Transition>
 
-        <!-- 性能监控 -->
-        <div v-if="activeTab === 'performance'" class="page-content">
-          <section class="section">
-            <PerformanceChart />
-          </section>
+           <!-- 工具管理 -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="activeTab === 'tools'" class="page-view" key="tools">
+               <ToolManager />
+            </div>
+          </Transition>
         </div>
-
       </div>
     </main>
   </div>
@@ -197,25 +222,33 @@ export default {
         { id: 'devices', label: '设备管理', icon: '📱' },
         { id: 'resources', label: '资源管理', icon: '🎬' },
         { id: 'areas', label: '区域管理', icon: '🗺️' },
-        { id: 'doors', label: '门资源管理', icon: '🚪' },
-        { id: 'tools', label: '工具管理', icon: '🔧' },
-        { id: 'monitoring', label: '队列监控', icon: '📈' },
-        { id: 'performance', label: '性能监控', icon: '⏱️' }
+        { id: 'door_resources', label: '门禁资源管理', icon: '🚪' },
+        { id: 'queue', label: '队列监控', icon: '📈' },
+        { id: 'performance', label: '性能监控', icon: '⏱️' },
+        { id: 'tools', label: '工具管理', icon: '🔧' }
       ],
       healthStatus: '未知',
-      ragStatusInfo: '未知',
-      vadStatusInfo: '未知',
+      ragStatus: '未知',
+      vadStatusText: '未知',
       llmHealthStatus: '未知',
-      currentConfig: null,
+      config: null,
       configLoading: false,
-      queryText: '',
-      queryResult: null
+      queryInput: '',
+      queryResult: null,
+      isQuerying: false
+    }
+  },
+  computed: {
+    activeTabName() {
+      const tab = this.tabs.find(t => t.id === this.activeTab)
+      return tab ? tab.label : ''
     }
   },
   methods: {
     getStatusClass(status) {
-      if (status.includes('错误') || status.includes('不健康')) return 'status-error'
-      if (status === '未知') return 'status-unknown'
+      if (!status) return 'status-unknown'
+      if (status.includes('错误') || status.includes('不健康') || status.includes('失败')) return 'status-error'
+      if (status === '未知' || status === '未初始化') return 'status-unknown'
       return 'status-ok'
     },
     
@@ -232,9 +265,9 @@ export default {
       this.configLoading = true
       try {
         const response = await getCurrentConfig()
-        this.currentConfig = response.data.data
+        this.config = response.data.data
       } catch (error) {
-        alert('加载配置失败: ' + error.message)
+        console.error('加载配置失败: ' + error.message)
       } finally {
         this.configLoading = false
       }
@@ -253,53 +286,56 @@ export default {
       try {
         const response = await ragStatus()
         const ragData = response.data.data
-        this.ragStatusInfo = ragData.initialized
+        this.ragStatus = ragData.initialized
           ? `已初始化 (数据库存在: ${ragData.database_exists ? '是' : '否'})`
           : '未初始化'
       } catch (error) {
-        this.ragStatusInfo = '错误: ' + error.message
+        this.ragStatus = '错误: ' + error.message
       }
     },
 
     async getVadStatus() {
       try {
         const response = await vadStatus()
-        this.vadStatusInfo = response.data.data.status
+        this.vadStatusText = response.data.data.status
       } catch (error) {
-        this.vadStatusInfo = '错误: ' + error.message
+        this.vadStatusText = '错误: ' + error.message
       }
     },
 
     async reinitializeVad() {
       try {
         const response = await vadRestart()
-        this.vadStatusInfo = response.data.data.current_status
-        alert('VAD处理器重启请求已提交，当前状态: ' + response.data.data.current_status)
+        this.vadStatusText = response.data.data.current_status
+        alert('VAD重启请求已提交: ' + response.data.data.current_status)
       } catch (error) {
-        alert('重启VAD处理器失败: ' + error.message)
+        alert('重启VAD失败: ' + error.message)
       }
     },
     
     async refreshRag() {
       try {
         const response = await refreshRag()
-        this.ragStatusInfo = response.data.message
+        this.ragStatus = response.data.message
       } catch (error) {
-        this.ragStatusInfo = '错误: ' + error.message
+        this.ragStatus = '错误: ' + error.message
       }
     },
     
     async performQuery() {
-      if (!this.queryText) {
+      if (!this.queryInput) {
         alert('请输入查询内容')
         return
       }
       
+      this.isQuerying = true
       try {
-        const response = await queryRag(this.queryText)
+        const response = await queryRag(this.queryInput)
         this.queryResult = JSON.stringify(response.data, null, 2)
       } catch (error) {
         this.queryResult = '错误: ' + error.message
+      } finally {
+        this.isQuerying = false
       }
     },
 
@@ -316,6 +352,7 @@ export default {
       await this.getVadStatus()
       await this.getRagStatus()
       await this.checkLLMHealth()
+      await this.loadConfig()
     },
 
     startAutoUpdate() {
@@ -344,331 +381,479 @@ export default {
 </script>
 
 <style>
-/* ===== App Layout ===== */
-#app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+:root {
+  --primary-color: #646cff;
+  --bg-color: #0f172a;
+  --sidebar-bg: #1e1e1e;
+  --text-color: #f1f5f9;
+  --border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* ===== Header ===== */
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: linear-gradient(135deg, rgba(10, 15, 26, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-color);
-  padding: var(--space-md) 0;
-}
-
-.header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--space-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.app-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  font-size: 1.5rem;
+body {
   margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.title-icon {
-  font-size: 1.75rem;
-}
-
-/* ===== Navigation Tabs ===== */
-.nav-tabs {
+/* App Layout */
+.app-layout {
   display: flex;
-  gap: var(--space-xs);
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-bottom: var(--space-xs);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-color);
 }
 
-.nav-tabs::-webkit-scrollbar {
-  display: none;
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: rgba(15, 23, 42, 0.95);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  z-index: 100;
 }
 
-.nav-tab {
+.sidebar-header {
+  height: 64px;
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 0.9375rem;
-  font-weight: 500;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: bold;
+  color: #fff;
   cursor: pointer;
-  white-space: nowrap;
-  transition: all var(--transition-fast);
 }
 
-.nav-tab:hover {
-  color: var(--text-primary);
-  background: var(--glass-bg);
+.logo-icon {
+  font-size: 1.5rem;
 }
 
-.nav-tab.active {
-  color: var(--primary);
-  background: rgba(20, 184, 166, 0.1);
-  border-color: var(--primary);
+.logo-text {
+  font-size: 1.25rem;
+  margin: 0;
+  background: linear-gradient(to right, #60a5fa 0%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.tab-icon {
-  font-size: 1.125rem;
-}
-
-/* ===== Main Content ===== */
-.app-main {
+.sidebar-nav {
   flex: 1;
-  padding: var(--space-xl) 0;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.page-content {
-  animation: fadeIn 0.3s ease;
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: #94a3b8;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.95rem;
 }
 
-/* ===== Sections ===== */
-.section {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  transform: translateX(4px);
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.05));
+  color: #60a5fa;
+  border-left: 3px solid #60a5fa;
+  /* box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1); */
+}
+
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #94a3b8;
+  position: relative;
+}
+
+.status-dot.status-ok::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  background: #10b981;
+  opacity: 0.4;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.status-ok { background-color: #10b981; }
+.status-dot.status-error { background-color: #ef4444; }
+.status-dot.status-unknown { background-color: #64748b; }
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.4; }
+  70% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
+}
+
+.top-bar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+}
+
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.content-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  scroll-behavior: smooth;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Glass Cards & Sections */
+.glass-card {
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* .glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+} */
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--border-color);
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: #e2e8f0;
 }
 
 .section-icon {
   font-size: 1.25rem;
 }
 
-/* ===== Status Grid ===== */
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Status Grid */
 .status-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .status-card {
-  background: var(--bg-input);
+  background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  transition: all var(--transition-fast);
-}
-
-.status-card:hover {
-  border-color: var(--border-color-hover);
-  transform: translateY(-2px);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
 }
 
 .status-label {
+  color: #94a3b8;
   font-size: 0.75rem;
-  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: var(--space-xs);
+  margin-bottom: 0.5rem;
 }
 
 .status-value {
-  font-size: 0.9375rem;
-  font-weight: 500;
-  word-break: break-word;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
 }
 
-.status-ok {
-  color: var(--success);
-}
+.status-value.status-ok { color: #34d399; }
+.status-value.status-error { color: #f87171; }
 
-.status-error {
-  color: var(--error);
-}
-
-.status-unknown {
-  color: var(--text-muted);
-}
-
-/* ===== Action Buttons ===== */
+/* Buttons */
 .action-buttons {
   display: flex;
+  gap: 0.75rem;
   flex-wrap: wrap;
-  gap: var(--space-sm);
 }
 
-/* ===== Query Section ===== */
-.query-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+.btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
-.query-input-wrapper {
-  display: flex;
-  gap: var(--space-sm);
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 
-.query-input {
-  flex: 1;
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
 }
 
-.query-result {
-  background: var(--bg-input);
+.btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
 }
 
-.query-result h3 {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-bottom: var(--space-sm);
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
-.result-code {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--text-primary);
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin: 0;
-  max-height: 300px;
-  overflow-y: auto;
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
 }
 
-/* ===== Config Section ===== */
+/* Config & Query */
 .config-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
-}
-
-.config-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-md);
+  gap: 1.5rem;
 }
 
 .config-category {
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
 }
 
 .config-category-title {
-  font-size: 0.75rem;
-  color: var(--primary);
-  letter-spacing: 0.1em;
-  margin-bottom: var(--space-md);
-  padding-bottom: var(--space-sm);
+  color: #60a5fa;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-color);
-}
-
-.config-items {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
 }
 
 .config-item {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-md);
-  font-size: 0.8125rem;
-  padding: var(--space-xs) 0;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-.config-key {
-  color: var(--text-secondary);
+.config-item:last-child { border-bottom: none; }
+
+.config-key { color: #94a3b8; }
+.config-value { color: #f1f5f9; font-family: 'Fira Code', monospace; }
+
+.query-input-wrapper {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
-.config-value {
-  color: var(--text-primary);
-  font-weight: 500;
-  text-align: right;
+.form-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.form-input:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.result-code {
+  background: #0f172a; /* Darker bg for code */
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  color: #a5f3fc;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
   word-break: break-all;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-/* ===== Responsive Design ===== */
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+}
+
 @media (max-width: 768px) {
-  .header-content {
-    padding: 0 var(--space-sm);
-  }
-
-  .app-title {
-    font-size: 1.25rem;
-  }
-
-  .nav-tab {
-    padding: var(--space-xs) var(--space-sm);
-    font-size: 0.875rem;
-  }
-
-  .tab-label {
-    display: none;
-  }
-
-  .tab-icon {
-    font-size: 1.25rem;
-  }
-
-  .section {
-    padding: var(--space-md);
-    border-radius: var(--radius-lg);
-  }
-
-  .status-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .action-buttons {
+  .app-layout {
     flex-direction: column;
   }
-
-  .action-buttons .btn {
+  
+  .sidebar {
     width: 100%;
-  }
-
-  .query-input-wrapper {
-    flex-direction: column;
-  }
-
-  .config-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: 1024px) {
-  .header-content {
+    height: 64px;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    padding: 0;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .sidebar-header {
+    border-bottom: none;
+    padding: 0 1rem;
   }
 
-  .nav-tabs {
-    justify-content: flex-end;
+  /* Hide normal sidebar nav on mobile, use a different approach or simplified */
+  .sidebar-nav {
+    display: none; 
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  /* Reuse activeTabName in Top Bar for context */
+  .top-bar {
+    display: flex;
+    height: 50px;
+    padding: 0 1rem;
+  }
+  
+  /* Mobile Bottom Nav (Optional, if we want to add it, but for now fallback to tabs maybe?) 
+     Ideally we'd have a hamburger menu. 
+     For this task, I won't implement full mobile hamburger, just ensure it doesn't break.
+     The "Top Bar" in main-content will show the title.
+  */
+  .main-content {
+    height: calc(100vh - 64px);
   }
 }
 </style>
+  
