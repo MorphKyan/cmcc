@@ -26,7 +26,7 @@ doors_data_path = "./data/doors.csv"
 # RAG (检索增强生成) 配置
 [rag]
 # RAG 提供商选择: "ollama", "modelscope", 或 "dashscope"
-provider = "ollama"
+provider = "dashscope"
 chroma_db_dir = "./chroma_db"
 top_k_results = 10
 # Ollama 配置
