@@ -11,9 +11,10 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from loguru import logger
 
-from src.api.schemas import DeviceItem, DoorItem, MediaItem
+from src.api.schemas import AreaItem, DeviceItem, DoorItem, MediaItem
 from src.config.config import RAGSettings
 from src.module.rag.helper import (
+    convert_areas_to_documents,
     convert_devices_to_documents,
     convert_doors_to_documents,
     convert_media_to_documents,
@@ -142,3 +143,11 @@ class BaseRAGProcessor(ABC):
         documents = convert_devices_to_documents([item.model_dump() for item in items])
         await asyncio.to_thread(self.vector_store.add_documents, documents)
         logger.info("已添加 {count} 个设备文档", count=len(documents))
+
+    async def batch_add_areas(self, items: list[AreaItem]) -> None:
+        """批量添加区域数据"""
+        if not items or self.vector_store is None:
+            return
+        documents = convert_areas_to_documents([item.model_dump() for item in items])
+        await asyncio.to_thread(self.vector_store.add_documents, documents)
+        logger.info("已添加 {count} 个区域文档", count=len(documents))

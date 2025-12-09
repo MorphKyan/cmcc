@@ -21,7 +21,7 @@ async def upload_devices_batch(items: List[DeviceItem]) -> UploadResponse:
     try:
         await dependencies.data_service.add_devices(items)
         if dependencies.rag_processor:
-             await dependencies.rag_processor.refresh_database()
+             await dependencies.rag_processor.batch_add_devices(items)
         return UploadResponse(status="success", message="设备数据批量上传成功")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"批量上传设备数据失败: {str(e)}")
@@ -36,7 +36,7 @@ async def upload_areas_batch(items: List[AreaItem]) -> UploadResponse:
     try:
         await dependencies.data_service.add_areas(items)
         if dependencies.rag_processor:
-             await dependencies.rag_processor.refresh_database()
+             await dependencies.rag_processor.batch_add_areas(items)
         return UploadResponse(status="success", message="区域数据批量上传成功")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"批量上传区域数据失败: {str(e)}")
@@ -51,7 +51,7 @@ async def upload_media_batch(items: List[MediaItem]) -> UploadResponse:
     try:
         await dependencies.data_service.add_media(items)
         if dependencies.rag_processor:
-             await dependencies.rag_processor.refresh_database()
+             await dependencies.rag_processor.batch_add_media(items)
         return UploadResponse(status="success", message="媒体数据批量上传成功")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"批量上传媒体数据失败: {str(e)}")
@@ -138,7 +138,7 @@ async def upload_doors_batch(items: List[DoorItem]) -> UploadResponse:
     try:
         await dependencies.data_service.add_doors(items)
         if dependencies.rag_processor:
-             await dependencies.rag_processor.refresh_database()
+             await dependencies.rag_processor.batch_add_doors(items)
         return UploadResponse(status="success", message="门数据批量上传成功")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"批量上传门数据失败: {str(e)}")

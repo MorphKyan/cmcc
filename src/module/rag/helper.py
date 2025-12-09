@@ -75,3 +75,23 @@ def convert_media_to_documents(media_data: List[Dict[str, Any]]) -> List[Documen
         }
         documents.append(Document(page_content=content, metadata=metadata))
     return documents
+
+def convert_areas_to_documents(areas_data: List[Dict[str, Any]]) -> List[Document]:
+    documents = []
+    for area in areas_data:
+        content_parts = [f"{area.get('name', '')}"]
+        if area.get('aliases'):
+            content_parts.append(f"也称为{area['aliases']}")
+        if area.get('description'):
+            content_parts.append(f"描述为{area['description']}")
+
+        content = "，".join(content_parts)
+        metadata = {
+            "type": "area",
+            "name": area.get("name", ""),
+            "aliases": area.get("aliases", ""),
+            "description": area.get("description", ""),
+            "filename": ""
+        }
+        documents.append(Document(page_content=content, metadata=metadata))
+    return documents
