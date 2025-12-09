@@ -10,6 +10,7 @@ from langchain_core.messages import HumanMessage
 from src.api.context import Context
 from src.core import dependencies
 from src.module.llm.tool.definitions import ExecutableCommand, ExhibitionCommand
+from src.services.performance_metrics_manager import MetricType
 
 
 async def receive_loop(websocket: WebSocket, context: Context) -> None:
@@ -45,8 +46,10 @@ async def run_decode_vad_appender(context: Context) -> None:
             # 计算耗时
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
-            if duration > 0.01: # 仅记录超过10ms的操作
-                 logger.trace("[性能指标] 解码+VAD输入耗时: {duration:.4f}s", duration=duration)
+            # 记录性能指标
+            dependencies.metrics_manager.record(MetricType.VAD_INPUT, duration, context.context_id)
+            if duration > 0.01:  # 仅记录超过10ms的日志
+                logger.trace("[性能指标] VAD输入耗时: {duration:.4f}s", duration=duration)
                  
         except Exception as e:
             logger.exception("解码与VAD输入处理错误")
@@ -63,6 +66,8 @@ async def run_vad_processor(context: Context) -> None:
             
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
+            # 记录性能指标
+            dependencies.metrics_manager.record(MetricType.VAD_PROCESS, duration, context.context_id)
             if duration > 0.01:
                 logger.debug("[性能指标] VAD处理耗时: {duration:.4f}s", duration=duration)
             
@@ -88,6 +93,8 @@ async def run_asr_processor(context: Context) -> None:
             
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
+            # 记录性能指标
+            dependencies.metrics_manager.record(MetricType.ASR_RECOGNIZE, duration, context.context_id)
             logger.info("[性能指标] ASR识别耗时: {duration:.3f}s", duration=duration)
             
             if recognized_text and recognized_text.strip():
@@ -146,6 +153,8 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             # 计算总耗时
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
+            # 记录性能指标
+            dependencies.metrics_manager.record(MetricType.LLM_GENERATE, duration, context.context_id)
             logger.info("[性能指标] LLM/RAG处理耗时: {duration:.3f}s", duration=duration)
             
             logger.info("[大模型响应] 返回 {count} 个命令", count=len(commands))
@@ -231,7 +240,10 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                 await websocket.send_text(summary_payload)
             
             end_time = asyncio.get_running_loop().time()
-            logger.info("[性能指标] 命令执行耗时: {duration:.4f}s", duration=end_time - start_time)
+            duration = end_time - start_time
+            # 记录性能指标
+            dependencies.metrics_manager.record(MetricType.CMD_EXECUTE, duration, context.context_id)
+            logger.info("[性能指标] 命令执行耗时: {duration:.4f}s", duration=duration)
                 
         except Exception as e:
             logger.exception("[命令执行错误]")

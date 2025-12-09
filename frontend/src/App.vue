@@ -140,6 +140,13 @@
           </section>
         </div>
 
+        <!-- 性能监控 -->
+        <div v-if="activeTab === 'performance'" class="page-content">
+          <section class="section">
+            <PerformanceChart />
+          </section>
+        </div>
+
       </div>
     </main>
   </div>
@@ -152,6 +159,7 @@ import ResourceManager from './components/ResourceManager.vue'
 import AreaManager from './components/AreaManager.vue'
 import DoorManager from './components/DoorManager.vue'
 import QueueMonitor from './components/QueueMonitor.vue'
+import PerformanceChart from './components/PerformanceChart.vue'
 import {
   getCurrentConfig,
   healthCheck,
@@ -171,7 +179,8 @@ export default {
     ResourceManager,
     AreaManager,
     DoorManager,
-    QueueMonitor
+    QueueMonitor,
+    PerformanceChart
   },
   data() {
     return {
@@ -182,7 +191,8 @@ export default {
         { id: 'resources', label: '资源管理', icon: '🎬' },
         { id: 'areas', label: '区域管理', icon: '🗺️' },
         { id: 'doors', label: '门资源管理', icon: '🚪' },
-        { id: 'monitoring', label: '队列监控', icon: '📈' }
+        { id: 'monitoring', label: '队列监控', icon: '📈' },
+        { id: 'performance', label: '性能监控', icon: '⏱️' }
       ],
       healthStatus: '未知',
       ragStatusInfo: '未知',

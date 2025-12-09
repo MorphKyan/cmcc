@@ -100,3 +100,77 @@ async def get_context_queue_stats(context_id: str):
         "timestamp": datetime.now().isoformat(),
         **context.get_queue_stats()
     }
+
+
+# ==================== 性能指标 API ====================
+
+@router.get("/metrics")
+async def get_performance_metrics(minutes: int = 5):
+    """
+    获取最近 N 分钟的性能指标数据
+    
+    Args:
+        minutes: 获取最近多少分钟的数据，默认5分钟，最大5分钟
+        
+    Returns:
+        各处理阶段的耗时数据时序列表
+    """
+    # 限制最大查询范围为5分钟
+    minutes = min(minutes, 5)
+    return {
+        "timestamp": datetime.now().isoformat(),
+        **dependencies.metrics_manager.get_metrics(minutes)
+    }
+
+
+@router.get("/metrics/stats")
+async def get_performance_stats():
+    """
+    获取性能指标统计摘要
+    
+    Returns:
+        各处理阶段的平均值、最大值、最小值、计数等统计信息
+    """
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "stats": dependencies.metrics_manager.get_stats()
+    }
+
+
+@router.get("/metrics/stream")
+async def stream_performance_metrics():
+    """
+    SSE 实时推送性能指标
+    
+    每秒推送一次最近1分钟的性能指标数据和统计摘要。
+    
+    使用方式:
+    ```javascript
+    const eventSource = new EventSource('/api/monitoring/metrics/stream');
+    eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Performance metrics:', data);
+    };
+    ```
+    """
+    async def generate():
+        while True:
+            data = {
+                "timestamp": datetime.now().isoformat(),
+                **dependencies.metrics_manager.get_metrics(minutes=1),
+                "stats": dependencies.metrics_manager.get_stats()
+            }
+            
+            yield f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+            await asyncio.sleep(1)  # 每秒推送一次
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # 禁用 nginx 缓冲
+        }
+    )
+
