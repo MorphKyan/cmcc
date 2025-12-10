@@ -8,7 +8,7 @@ from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableSerializable
-from langchain_core.messages import ToolMessage, AIMessage, trim_messages
+from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 from loguru import logger
 
 from src.config.config import LLMSettings
@@ -54,15 +54,8 @@ class BaseLLMHandler(ABC):
             ("user", settings.user_context_template)
         ])
 
-        # 创建消息修剪器 (Trimmer)
-        self.trimmer = trim_messages(
-            strategy="last",
-            max_tokens=5,
-            token_counter=len,
-            include_system=False,
-            allow_partial=False,
-            start_on="human"
-        )
+        # 消息轮数限制（5轮对话）
+        self.max_chat_rounds = 5
 
         logger.info("LLM处理器基类初始化完成，工具数: {} (原生: {}, 动态: {})", 
                     len(self.tools), len(self._native_tools), 
@@ -92,8 +85,8 @@ class BaseLLMHandler(ABC):
         # 将工具绑定到模型
         self.model_with_tools = self.model.bind_tools(self.tools)
         
-        # 构建处理链
-        self.chain = self.prompt_template | self.trimmer | self.model_with_tools
+        # 构建处理链（trimmer 在 _prepare_chain_input 中应用）
+        self.chain = self.prompt_template | self.model_with_tools
         
         logger.debug("处理链构建完成")
 
@@ -110,7 +103,7 @@ class BaseLLMHandler(ABC):
         # 如果模型已初始化，重建处理链
         if self.model is not None:
             self.model_with_tools = self.model.bind_tools(self.tools)
-            self.chain = self.prompt_template | self.trimmer | self.model_with_tools
+            self.chain = self.prompt_template | self.model_with_tools
             logger.info("LLM工具热重载完成，当前工具数: {} (原生: {}, 动态: {})",
                         len(self.tools), len(self._native_tools),
                         len(self._dynamic_manager.get_langchain_tools()))
@@ -219,19 +212,41 @@ class BaseLLMHandler(ABC):
                 raise ValueError("Model with tools not initialized.")
 
         messages = []
+        max_retries = getattr(self.settings, 'max_validation_retries', 3)
         
-        # 初始调用
-        try:
-            ai_msg = await self.chain.ainvoke(chain_input)
-        except Exception as e:
-            logger.error(f"Initial LLM call failed: {e}")
-            error_msg = AIMessage(content=f"错误: {e}")
-            return error_msg, self.create_error_response("llm_error", str(e))
+        # 初始调用（带重试机制）
+        ai_msg = None
+        for initial_attempt in range(max_retries):
+            try:
+                ai_msg = await self.chain.ainvoke(chain_input)
+                break  # 成功则退出循环
+            except Exception as e:
+                error_str = str(e)
+                # 检测是否是 tool_calls 未响应的错误
+                if "tool_call" in error_str.lower() and "tool messages" in error_str.lower():
+                    logger.warning(f"Initial LLM call failed due to incomplete tool_calls in history (attempt {initial_attempt + 1}/{max_retries}): {e}")
+                    # 清理 chat_history 中可能存在问题的消息
+                    chat_history = chain_input.get("chat_history", [])
+                    if chat_history:
+                        # 移除末尾可能未响应的 tool_calls 消息
+                        cleaned_history = self._clean_incomplete_tool_calls(chat_history)
+                        chain_input["chat_history"] = cleaned_history
+                        logger.info(f"Cleaned chat_history: {len(chat_history)} -> {len(cleaned_history)} messages")
+                    continue  # 重试
+                else:
+                    # 其他类型的错误，直接返回
+                    logger.error(f"Initial LLM call failed: {e}")
+                    error_msg = AIMessage(content=f"错误: {e}")
+                    return error_msg, self.create_error_response("llm_error", str(e))
+        
+        if ai_msg is None:
+            logger.error("All initial LLM call attempts failed")
+            error_msg = AIMessage(content="错误: LLM调用多次重试后仍失败")
+            return error_msg, self.create_error_response("llm_error", "All retry attempts failed")
 
         messages.append(ai_msg)
         
         # 3. 进入重试/执行循环
-        max_retries = getattr(self.settings, 'max_validation_retries', 3)
         
         for attempt in range(max_retries):
             if not ai_msg.tool_calls:
@@ -301,9 +316,56 @@ class BaseLLMHandler(ABC):
         # 循环结束（达到最大重试次数或最后一次仍有错）        
         return ai_msg, self._format_response(ai_msg)
 
+    def _clean_incomplete_tool_calls(self, chat_history: list) -> list:
+        """
+        清理 chat_history 中未完成工具调用响应的消息。
+        
+        当 chat_history 中存在带有 tool_calls 的 AIMessage，
+        但缺少对应的 ToolMessage 响应时，会导致 API 报错。
+        此方法会移除这些不完整的消息。
+        
+        Args:
+            chat_history: 聊天历史消息列表
+            
+        Returns:
+            list: 清理后的聊天历史
+        """
+        if not chat_history:
+            return chat_history
+        
+        # 找出所有 tool_call_ids 及其对应的 ToolMessage 响应
+        tool_call_ids_in_history = set()
+        responded_tool_call_ids = set()
+        
+        for msg in chat_history:
+            if isinstance(msg, AIMessage) and hasattr(msg, 'tool_calls') and msg.tool_calls:
+                for tc in msg.tool_calls:
+                    tool_call_ids_in_history.add(tc.get("id"))
+            elif isinstance(msg, ToolMessage):
+                responded_tool_call_ids.add(msg.tool_call_id)
+        
+        # 如果有未响应的 tool_calls，移除相关消息
+        unresponded_ids = tool_call_ids_in_history - responded_tool_call_ids
+        if not unresponded_ids:
+            return chat_history
+        
+        logger.debug(f"Found {len(unresponded_ids)} unresponded tool_call IDs, cleaning history")
+        
+        # 过滤掉包含未响应 tool_calls 的 AIMessage
+        cleaned = []
+        for msg in chat_history:
+            if isinstance(msg, AIMessage) and hasattr(msg, 'tool_calls') and msg.tool_calls:
+                msg_tool_ids = {tc.get("id") for tc in msg.tool_calls}
+                if msg_tool_ids & unresponded_ids:
+                    # 该消息包含未响应的 tool_calls，跳过
+                    continue
+            cleaned.append(msg)
+        
+        return cleaned
+
     def _prepare_chain_input(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> dict[str, Any]:
         """
-        准备Prompt的输入变量。
+        准备Prompt的输入变量，并裁剪聊天历史。
         """
         video_docs = rag_docs.get("video", [])
         door_docs = rag_docs.get("door", [])
@@ -314,6 +376,9 @@ class BaseLLMHandler(ABC):
         devices_info = DocumentFormatter.format_device_documents(device_docs)
         areas_info = DocumentFormatter.format_area_info(self.data_service.get_all_areas_data())
 
+        # 应用自定义 trimmer 裁剪聊天历史
+        trimmed_history = self._trim_chat_history(chat_history)
+
         return {
             "DEVICES_INFO": devices_info,
             "DOORS_INFO": doors_info,
@@ -321,8 +386,53 @@ class BaseLLMHandler(ABC):
             "VIDEOS_INFO": videos_info,
             "USER_INPUT": user_input,
             "USER_LOCATION": user_location,
-            "chat_history": chat_history
+            "chat_history": trimmed_history
         }
+
+    def _trim_chat_history(self, messages: list) -> list:
+        """
+        按轮数裁剪聊天历史，确保 tool_calls 和 tool_responses 配对完整。
+        
+        每一轮从 HumanMessage 开始，包含该轮的所有后续消息（AIMessage、ToolMessage 等），
+        直到下一个 HumanMessage 或消息结束。
+        
+        Args:
+            messages: 消息列表
+            
+        Returns:
+            list: 裁剪后的消息列表，保留最近的 max_chat_rounds 轮
+        """
+        if not messages:
+            return []
+        
+        # 按轮分组：每轮从 HumanMessage 开始
+        rounds: list[list] = []
+        current_round: list = []
+        
+        for msg in messages:
+            if isinstance(msg, HumanMessage):
+                # 遇到新的 HumanMessage，保存上一轮并开始新一轮
+                if current_round:
+                    rounds.append(current_round)
+                current_round = [msg]
+            else:
+                # AIMessage、ToolMessage 等归入当前轮
+                current_round.append(msg)
+        
+        # 保存最后一轮
+        if current_round:
+            rounds.append(current_round)
+        
+        # 保留最近的 N 轮
+        kept_rounds = rounds[-self.max_chat_rounds:] if len(rounds) > self.max_chat_rounds else rounds
+        
+        # 展平返回
+        result = [msg for round_msgs in kept_rounds for msg in round_msgs]
+        
+        if len(rounds) > self.max_chat_rounds:
+            logger.debug(f"Chat history trimmed: {len(rounds)} rounds -> {len(kept_rounds)} rounds, {len(messages)} msgs -> {len(result)} msgs")
+        
+        return result
 
     def _format_response(self, response) -> list[ExhibitionCommand]:
         """
