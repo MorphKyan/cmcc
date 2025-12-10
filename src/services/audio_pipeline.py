@@ -251,14 +251,14 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
 
 async def _execute_local_command(cmd: ExhibitionCommand, context: Context) -> dict:
     """执行本地命令，返回执行结果"""
-    if cmd.action == "update_location" and cmd.target:
+    if cmd.action == "update_location" and cmd.value:
         old_location = context.location
-        context.location = cmd.target
-        logger.info("[位置更新] {old} -> {new}", old=old_location, new=cmd.target)
+        context.location = cmd.value
+        logger.info("[位置更新] {old} -> {new}", old=old_location, new=cmd.value)
         return {
             "success": True,
             "action": cmd.action,
-            "message": f"位置从「{old_location}」更新为「{cmd.target}」" if old_location else f"位置设置为「{cmd.target}」"
+            "message": f"位置从「{old_location}」更新为「{cmd.value}」" if old_location else f"位置设置为「{cmd.value}」"
         }
     return {
         "success": False,
