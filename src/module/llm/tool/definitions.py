@@ -19,15 +19,15 @@ class CommandAction(str, Enum):
     SET_VOLUME = "set_volume"
     ADJUST_VOLUME = "adjust_volume"
     UPDATE_LOCATION = "update_location"
+    CONTROL_DOOR = "control_door"
     ERROR = "error"
 
 
 class ExhibitionCommand(BaseModel):
     """Smart exhibition hall command structure for structured output."""
-    action: str = Field(description="Command action to perform")
-    target: Optional[str] = Field(default=None, description="Target device or screen name")
-    device: Optional[str] = Field(default=None, description="Device identifier")
-    value: Optional[str | int] = Field(default=None, description="Command value (string or integer)")
+    action: str = Field(description="需要执行的具体命令动作，必须是预定义的合法动作之一")
+    device: Optional[str] = Field(default=None, description="命令的目标设备标识符（如果适用）")
+    value: Optional[str | int] = Field(default=None, description="命令的具体参数值（字符串或整数）")
 
 
 class ExecutableCommand(BaseModel):
@@ -55,51 +55,46 @@ class ExecutableCommand(BaseModel):
 
 class OpenMediaInput(BaseModel):
     """Input for open media command."""
-    target: str = Field(description="要打开的媒体资源名称")
-    device: str = Field(description="要在其上打开媒体的屏幕名称")
+    target: str = Field(description="媒体资源的名称或路径")
+    device: str = Field(description="执行播放的设备标识符")
 
 
 class ControlDoorInput(BaseModel):
     """Input for control door command."""
-    target: str = Field(description="门的全称")
-    action: Literal["open", "close"] = Field(description="要执行的操作：open（打开）或close（关闭）")
+    target: str = Field(description="目标门的标识符")
+    action: Literal["open", "close"] = Field(description="控制动作：'open' 表示打开，'close' 表示关闭")
 
 
 class SeekVideoInput(BaseModel):
     """Input for seek video command."""
-    device: str = Field(description="要跳转进度的屏幕名称")
-    value: int = Field(description="跳转到的秒数")
+    device: str = Field(description="需要跳转进度的设备标识符")
+    value: int = Field(description="目标时间点（单位：秒）")
 
 
 class SetVolumeInput(BaseModel):
     """Input for set volume command."""
-    device: str = Field(description="要设置音量的屏幕名称")
-    value: int = Field(
-        ge=0,
-        le=100,
-        description="音量值（0-100）"
-    )
+    device: str = Field(description="要设置音量的设备名称")
+    value: int = Field(ge=0, le=100, description="音量值（0-100）")
 
 
 class AdjustVolumeInput(BaseModel):
     """Input for adjust volume command."""
-    device: str = Field(description="要调整音量的屏幕名称")
+    device: str = Field(description="要调整音量的设备名称")
     value: Literal["up", "down"] = Field(description="音量调整方向：up（提高）或down（降低）")
 
 
 class UpdateLocationInput(BaseModel):
     """Input for update location command."""
-    target: str = Field(description="用户移动到的目标区域名称")
+    target: str = Field(description="用户移动到的区域名称")
 
 
 @tool(args_schema=OpenMediaInput)
 def open_media(target: str, device: str) -> ExhibitionCommand:
     """打开指定的媒体资源"""
     return ExhibitionCommand(
-        action="open_media",
-        target=target,
+        action=CommandAction.OPEN_MEDIA.value,
         device=device,
-        value=None
+        value=target
     )
 
 
@@ -107,10 +102,9 @@ def open_media(target: str, device: str) -> ExhibitionCommand:
 def control_door(target: str, action: Literal["open", "close"]) -> ExhibitionCommand:
     """控制门的开关"""
     return ExhibitionCommand(
-        action=action,
-        target=target,
-        device=None,
-        value=None
+        action=CommandAction.CONTROL_DOOR.value,
+        device=target,
+        value=action
     )
 
 
@@ -118,8 +112,7 @@ def control_door(target: str, action: Literal["open", "close"]) -> ExhibitionCom
 def seek_video(device: str, value: int) -> ExhibitionCommand:
     """跳转到视频的指定时间点"""
     return ExhibitionCommand(
-        action="seek",
-        target=None,
+        action=CommandAction.SEEK.value,
         device=device,
         value=value
     )
@@ -129,8 +122,7 @@ def seek_video(device: str, value: int) -> ExhibitionCommand:
 def set_volume(device: str, value: int) -> ExhibitionCommand:
     """设置音量到指定的绝对值"""
     return ExhibitionCommand(
-        action="set_volume",
-        target=None,
+        action=CommandAction.SET_VOLUME.value,
         device=device,
         value=value
     )
@@ -140,8 +132,7 @@ def set_volume(device: str, value: int) -> ExhibitionCommand:
 def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionCommand:
     """相对提高或降低音量"""
     return ExhibitionCommand(
-        action="adjust_volume",
-        target=None,
+        action=CommandAction.ADJUST_VOLUME.value,
         device=device,
         value=value
     )
@@ -151,10 +142,9 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
 def update_location(target: str) -> ExhibitionCommand:
     """更新用户当前的位置"""
     return ExhibitionCommand(
-        action="update_location",
-        target=target,
+        action=CommandAction.UPDATE_LOCATION.value,
         device=None,
-        value=None
+        value=target
     )
 
 
