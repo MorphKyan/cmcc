@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from loguru import logger
-from src.core import dependencies
 
 class ToolValidator:
     """
-    工具参数验证器（单例模式）
-    负责验证各种工具调用的参数是否有效
-    直接从 dependencies 获取 data_service
+    Tool Parameter Validator (Singleton)
+    Validates arguments for tool calls against the data service.
     """
 
     _instance = None
@@ -20,117 +18,79 @@ class ToolValidator:
 
     @classmethod
     def get_instance(cls) -> "ToolValidator":
-        """
-        获取ToolValidator的单例实例
-
-        Returns:
-            ToolValidator单例实例
-        """
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
-    def validate_open_media_args(self, target: str, device: str) -> tuple[bool, str | None]:
-        """
-        验证打开媒体工具的参数
+    def validate_open_media_args(self, media_name: str, device_id: str) -> tuple[bool, str | None]:
+        from src.core import dependencies
+        if not dependencies.data_service.media_exists(media_name):
+            return False, f"Media '{media_name}' not found."
 
-        Args:
-            target: 媒体资源名称
-            device: 设备名称
-
-        Returns:
-            (是否有效, 错误信息)
-        """
-        if not dependencies.data_service.media_exists(target):
-            return False, f"Media '{target}' not found in media.csv"
-
-        if not dependencies.data_service.device_exists(device):
-            return False, f"Device '{device}' not found in devices.csv"
+        if not dependencies.data_service.device_exists(device_id):
+            return False, f"Device '{device_id}' not found."
 
         return True, None
 
-    def validate_control_door_args(self, target: str, action: str) -> tuple[bool, str | None]:
-        """
-        验证控制门工具的参数
-
-        Args:
-            target: 门名称
-            action: 动作 (open/close)
-
-        Returns:
-            (是否有效, 错误信息)
-        """
-        if not dependencies.data_service.door_exists(target):
-            return False, f"Door '{target}' not found in doors.csv"
+    def validate_control_door_args(self, door_id: str, action: str) -> tuple[bool, str | None]:
+        from src.core import dependencies
+        if not dependencies.data_service.door_exists(door_id):
+            return False, f"Door '{door_id}' not found."
 
         if action not in ["open", "close"]:
-            return False, f"Invalid door action '{action}'. Must be 'open' or 'close'"
+            return False, f"Invalid door action '{action}'. Must be 'open' or 'close'."
 
         return True, None
 
-    def validate_device_args(self, device: str, tool_name: str) -> tuple[bool, str | None]:
-        """
-        验证需要设备参数的工具
-
-        Args:
-            device: 设备名称
-            tool_name: 工具名称（用于错误信息）
-
-        Returns:
-            (是否有效, 错误信息)
-        """
-        if not dependencies.data_service.device_exists(device):
-            return False, f"Device '{device}' not found in devices.csv for {tool_name} tool"
+    def validate_device_args(self, device_id: str, tool_name: str) -> tuple[bool, str | None]:
+        from src.core import dependencies
+        if not dependencies.data_service.device_exists(device_id):
+            return False, f"Device '{device_id}' not found for tool '{tool_name}'."
 
         return True, None
 
-    def validate_update_location_args(self, target: str) -> tuple[bool, str | None]:
-        """
-        验证更新位置工具的参数
-
-        Args:
-            target: 区域名称
-
-        Returns:
-            (是否有效, 错误信息)
-        """
-        if not dependencies.data_service.area_exists(target):
-            return False, f"Area '{target}' not found in areas.csv"
+    def validate_update_location_args(self, area_name: str) -> tuple[bool, str | None]:
+        from src.core import dependencies
+        if not dependencies.data_service.area_exists(area_name):
+            return False, f"Area '{area_name}' not found."
 
         return True, None
 
     def validate_tool_args(self, tool_name: str, tool_args: dict) -> tuple[bool, str | None]:
         """
-        根据工具名称验证工具参数
-
-        Args:
-            tool_name: 工具名称
-            tool_args: 工具参数字典
-
-        Returns:
-            (是否有效, 错误信息)
+        Validates tool arguments based on the schema defined in definitions.py.
         """
         try:
+            # Map tool names to validation logic
             if tool_name == "open_media":
-                target = tool_args.get("target", "")
-                device = tool_args.get("device", "")
-                return self.validate_open_media_args(target, device)
+                # args: device (media_name), value (device_id)
+                return self.validate_open_media_args(
+                    media_name=tool_args.get("device", ""),
+                    device_id=tool_args.get("value", "")
+                )
 
             elif tool_name == "control_door":
-                target = tool_args.get("target", "")
-                action = tool_args.get("action", "")
-                return self.validate_control_door_args(target, action)
+                # args: device (door_id), value (action)
+                return self.validate_control_door_args(
+                    door_id=tool_args.get("device", ""),
+                    action=tool_args.get("value", "")
+                )
 
             elif tool_name in ["seek_video", "set_volume", "adjust_volume"]:
-                device = tool_args.get("device", "")
-                return self.validate_device_args(device, tool_name)
+                # args: device, value (value not validated against DB)
+                return self.validate_device_args(
+                    device_id=tool_args.get("device", ""),
+                    tool_name=tool_name
+                )
 
             elif tool_name == "update_location":
-                target = tool_args.get("target", "")
-                return self.validate_update_location_args(target)
+                # args: value (area_name)
+                return self.validate_update_location_args(
+                    area_name=tool_args.get("value", "")
+                )
 
             else:
-                # 未知工具，默认通过验证
+                # Unknown tool, assume valid (or log warning)
                 return True, None
 
         except Exception as e:

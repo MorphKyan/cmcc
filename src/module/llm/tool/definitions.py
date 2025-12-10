@@ -55,13 +55,13 @@ class ExecutableCommand(BaseModel):
 
 class OpenMediaInput(BaseModel):
     """Input for open media command."""
-    target: str = Field(description="媒体资源的名称或路径")
-    device: str = Field(description="执行播放的设备标识符")
+    device: str = Field(description="媒体资源的名称或路径")
+    value: str = Field(description="执行播放的设备标识符")
 
 
 class ControlDoorInput(BaseModel):
     """Input for control door command."""
-    target: str = Field(description="目标门的标识符")
+    device: str = Field(description="目标门的标识符")
     action: Literal["open", "close"] = Field(description="控制动作：'open' 表示打开，'close' 表示关闭")
 
 
@@ -85,26 +85,26 @@ class AdjustVolumeInput(BaseModel):
 
 class UpdateLocationInput(BaseModel):
     """Input for update location command."""
-    target: str = Field(description="用户移动到的区域名称")
+    value: str = Field(description="用户移动到的区域名称")
 
 
 @tool(args_schema=OpenMediaInput)
-def open_media(target: str, device: str) -> ExhibitionCommand:
+def open_media(device: str, value: str) -> ExhibitionCommand:
     """打开指定的媒体资源"""
     return ExhibitionCommand(
         action=CommandAction.OPEN_MEDIA.value,
         device=device,
-        value=target
+        value=value
     )
 
 
 @tool(args_schema=ControlDoorInput)
-def control_door(target: str, action: Literal["open", "close"]) -> ExhibitionCommand:
+def control_door(device: str, value: Literal["open", "close"]) -> ExhibitionCommand:
     """控制门的开关"""
     return ExhibitionCommand(
         action=CommandAction.CONTROL_DOOR.value,
-        device=target,
-        value=action
+        device=device,
+        value=value
     )
 
 
@@ -139,12 +139,12 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
 
 
 @tool(args_schema=UpdateLocationInput)
-def update_location(target: str) -> ExhibitionCommand:
+def update_location(value: str) -> ExhibitionCommand:
     """更新用户当前的位置"""
     return ExhibitionCommand(
         action=CommandAction.UPDATE_LOCATION.value,
         device=None,
-        value=target
+        value=value
     )
 
 
