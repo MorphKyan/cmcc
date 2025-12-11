@@ -15,7 +15,7 @@ from src.config.config import LLMSettings
 from src.core import dependencies
 from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
 from src.module.llm.tool.dynamic_tool_manager import DynamicToolManager
-from src.module.llm.tool.validator import ToolValidator
+from src.module.llm.helper import DocumentFormatter
 from src.module.llm.helper import DocumentFormatter
 
 
@@ -270,10 +270,7 @@ class BaseLLMHandler(ABC):
                     continue
                     
                 try:
-                    # Semantic Validation
-                    is_valid, error_message = ToolValidator.get_instance().validate_tool_args(tool_name, tool_args)
-                    if not is_valid:
-                        raise ValueError(f"Validation failed: {error_message}")
+
 
                     # Execute tool
                     result = tool_function.invoke(tool_args)
