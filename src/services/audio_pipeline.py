@@ -143,7 +143,7 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             chat_history_messages = context.chat_history
 
             # 执行指令重试，获取AI消息和命令列表
-            ai_message, commands = await dependencies.llm_processor.get_response_with_retries(
+            ai_message, commands, tool_messages = await dependencies.llm_processor.get_response_with_retries(
                 user_input=recognized_text,
                 rag_docs=retrieved_docs_by_type,
                 user_location=context.location,
@@ -162,6 +162,8 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             # 自动保存对话到历史
             context.chat_history.append(HumanMessage(content=recognized_text))
             context.chat_history.append(ai_message)
+            if tool_messages:
+                context.chat_history.extend(tool_messages)
 
             # 当LLM未返回任何命令时，向前端发送提示
             if not commands:

@@ -188,7 +188,7 @@ class BaseLLMHandler(ABC):
             logger.exception("调用LLM API时出错: {error}", error=str(api_error))
             return self.create_error_response("api_failure", str(api_error))
 
-    async def get_response_with_retries(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> tuple[AIMessage, list[ExhibitionCommand]]:
+    async def get_response_with_retries(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> tuple[AIMessage, list[ExhibitionCommand], list[ToolMessage]]:
         """
         带重试机制的响应获取方法。
         使用LangChain的bind_tools和自定义循环来处理工具调用和错误恢复。
@@ -200,7 +200,7 @@ class BaseLLMHandler(ABC):
             chat_history: 聊天历史
             
         Returns:
-            tuple[AIMessage, list[ExhibitionCommand]]: (AI消息用于历史记录, 命令列表用于执行)
+            tuple[AIMessage, list[ExhibitionCommand], list[ToolMessage]]: (AI消息, 命令列表, 工具执行结果消息列表)
         """
         # 1. 准备输入
         chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
@@ -237,23 +237,24 @@ class BaseLLMHandler(ABC):
                     # 其他类型的错误，直接返回
                     logger.error(f"Initial LLM call failed: {e}")
                     error_msg = AIMessage(content=f"错误: {e}")
-                    return error_msg, self.create_error_response("llm_error", str(e))
+                    return error_msg, self.create_error_response("llm_error", str(e)), []
         
         if ai_msg is None:
             logger.error("All initial LLM call attempts failed")
             error_msg = AIMessage(content="错误: LLM调用多次重试后仍失败")
-            return error_msg, self.create_error_response("llm_error", "All retry attempts failed")
+            return error_msg, self.create_error_response("llm_error", "All retry attempts failed"), []
 
         messages.append(ai_msg)
         
         # 3. 进入重试/执行循环
+        tool_outputs = []
         
         for attempt in range(max_retries):
             if not ai_msg.tool_calls:
                 break
                 
             # 执行工具
-            tool_outputs = []
+            tool_outputs = []  # 重置当前轮的输出
             has_error = False
             
             for tool_call in ai_msg.tool_calls:
@@ -284,13 +285,13 @@ class BaseLLMHandler(ABC):
                         tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id))
                         
                 except Exception as e:
-                    error_msg = f"Error executing {tool_name}: {str(e)}. Please correct the arguments."
+                    error_msg = f"Error executing {tool_name}: {str(e)}."
                     tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id))
                     has_error = True
             
             if not has_error:
-                # 所有工具执行成功，返回 AI消息和命令列表
-                return ai_msg, self._format_response(ai_msg)
+                # 所有工具执行成功，返回 AI消息、命令列表和工具消息列表
+                return ai_msg, self._format_response(ai_msg), tool_outputs
                 
             # 如果有错误，我们需要把 tool_outputs 反馈给模型，让其修正
             # 更新 chain_input 中的 chat_history 或者 messages            
@@ -311,10 +312,10 @@ class BaseLLMHandler(ABC):
             except Exception as e:
                 logger.error(f"LLM retry call failed: {e}")
                 error_msg = AIMessage(content=f"重试错误: {e}")
-                return error_msg, self.create_error_response("llm_retry_error", str(e))
+                return error_msg, self.create_error_response("llm_retry_error", str(e)), tool_outputs
 
         # 循环结束（达到最大重试次数或最后一次仍有错）        
-        return ai_msg, self._format_response(ai_msg)
+        return ai_msg, self._format_response(ai_msg), tool_outputs
 
     def _clean_incomplete_tool_calls(self, chat_history: list) -> list:
         """
@@ -438,19 +439,18 @@ class BaseLLMHandler(ABC):
         """
         将AI响应转换为命令列表。
         """
-        if isinstance(response, AIMessage) and response.tool_calls:
-            commands = []
-            for tool_call in response.tool_calls:
-                cmd = ExhibitionCommand(
-                    action=tool_call["name"],
-                    target=tool_call["args"].get("target"),
-                    device=tool_call["args"].get("device"),
-                    value=tool_call["args"].get("value")
-                )
-                commands.append(cmd)
-            return commands
-            
-        return []
+        if not isinstance(response, AIMessage) or not response.tool_calls:
+            return []
+
+        commands = []
+        for tool_call in response.tool_calls:
+            cmd = ExhibitionCommand(
+                action=tool_call["name"],
+                device=tool_call["args"].get("device"),
+                value=tool_call["args"].get("value")
+            )
+            commands.append(cmd)
+        return commands
 
     @property
     def data_service(self):
@@ -465,7 +465,6 @@ class BaseLLMHandler(ABC):
         error_value = f"{reason}: {message}" if message else reason
         error_command = ExhibitionCommand(
             action="error",
-            target=None,
             device=None,
             value=error_value
         )
