@@ -42,6 +42,11 @@ export const refreshRag = () => {
   return api.post('/rag/refresh')
 }
 
+// RAG重新初始化
+export const reinitializeRag = () => {
+  return api.post('/rag/reinitialize')
+}
+
 export const queryRag = (query) => {
   return api.post('/rag/query', { query })
 }

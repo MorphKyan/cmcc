@@ -73,6 +73,9 @@
                   <button class="btn btn-secondary" @click="getVadStatus">VAD 状态</button>
                   <button class="btn btn-secondary" @click="reinitializeVad">重置 VAD</button>
                   <button class="btn btn-secondary" @click="refreshRag">刷新 RAG</button>
+                  <button class="btn btn-secondary" @click="reinitializeRagHandler" :disabled="isReinitializing">
+                    {{ isReinitializing ? '初始化中...' : '初始化 RAG' }}
+                  </button>
                   <button class="btn btn-secondary" @click="checkLLMHealth">检查 LLM</button>
                 </div>
               </section>
@@ -198,6 +201,7 @@ import {
   queryRag,
   ragStatus,
   refreshRag,
+  reinitializeRag,
   vadRestart,
   vadStatus
 } from './api'
@@ -235,7 +239,8 @@ export default {
       configLoading: false,
       queryInput: '',
       queryResult: null,
-      isQuerying: false
+      isQuerying: false,
+      isReinitializing: false
     }
   },
   computed: {
@@ -319,6 +324,19 @@ export default {
         this.ragStatus = response.data.message
       } catch (error) {
         this.ragStatus = '错误: ' + error.message
+      }
+    },
+
+    async reinitializeRagHandler() {
+      this.isReinitializing = true
+      try {
+        await reinitializeRag()
+        this.ragStatus = '初始化中...'
+        alert('RAG 重新初始化请求已提交，将在后台进行')
+      } catch (error) {
+        alert('RAG 初始化失败: ' + error.message)
+      } finally {
+        this.isReinitializing = false
       }
     },
     
