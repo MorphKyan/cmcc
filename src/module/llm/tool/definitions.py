@@ -62,7 +62,7 @@ class OpenMediaInput(BaseModel):
 class ControlDoorInput(BaseModel):
     """Input for control door command."""
     device: str = Field(description="目标门的标识符")
-    action: Literal["open", "close"] = Field(description="控制动作：'open' 表示打开，'close' 表示关闭")
+    value: Literal["open", "close"] = Field(description="控制动作：'open' 表示打开，'close' 表示关闭")
 
 
 class SeekVideoInput(BaseModel):
@@ -91,6 +91,18 @@ class UpdateLocationInput(BaseModel):
 @tool(args_schema=OpenMediaInput)
 def open_media(device: str, value: str) -> ExhibitionCommand:
     """打开指定的媒体资源"""
+    from src.core import dependencies
+    if not dependencies.data_service.media_exists(device):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            value=f"Media '{device}' not found."
+        )
+    if not dependencies.data_service.device_exists(value):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            value=f"Device '{value}' not found."
+        )
+
     return ExhibitionCommand(
         action=CommandAction.OPEN_MEDIA.value,
         device=device,
@@ -101,6 +113,13 @@ def open_media(device: str, value: str) -> ExhibitionCommand:
 @tool(args_schema=ControlDoorInput)
 def control_door(device: str, value: Literal["open", "close"]) -> ExhibitionCommand:
     """控制门的开关"""
+    from src.core import dependencies
+    if not dependencies.data_service.door_exists(device):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            value=f"Door '{device}' not found."
+        )
+
     return ExhibitionCommand(
         action=CommandAction.CONTROL_DOOR.value,
         device=device,
@@ -111,6 +130,13 @@ def control_door(device: str, value: Literal["open", "close"]) -> ExhibitionComm
 @tool(args_schema=SeekVideoInput)
 def seek_video(device: str, value: int) -> ExhibitionCommand:
     """跳转到视频的指定时间点"""
+    from src.core import dependencies
+    if not dependencies.data_service.device_exists(device):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            value=f"Device '{device}' not found."
+        )
+
     return ExhibitionCommand(
         action=CommandAction.SEEK.value,
         device=device,
@@ -121,6 +147,13 @@ def seek_video(device: str, value: int) -> ExhibitionCommand:
 @tool(args_schema=SetVolumeInput)
 def set_volume(device: str, value: int) -> ExhibitionCommand:
     """设置音量到指定的绝对值"""
+    from src.core import dependencies
+    if not dependencies.data_service.device_exists(device):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            value=f"Device '{device}' not found."
+        )
+
     return ExhibitionCommand(
         action=CommandAction.SET_VOLUME.value,
         device=device,
@@ -131,6 +164,13 @@ def set_volume(device: str, value: int) -> ExhibitionCommand:
 @tool(args_schema=AdjustVolumeInput)
 def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionCommand:
     """相对提高或降低音量"""
+    from src.core import dependencies
+    if not dependencies.data_service.device_exists(device):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            value=f"Device '{device}' not found."
+        )
+
     return ExhibitionCommand(
         action=CommandAction.ADJUST_VOLUME.value,
         device=device,
@@ -141,6 +181,13 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
 @tool(args_schema=UpdateLocationInput)
 def update_location(value: str) -> ExhibitionCommand:
     """更新用户当前的位置"""
+    from src.core import dependencies
+    if not dependencies.data_service.area_exists(value):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            value=f"Area '{value}' not found."
+        )
+
     return ExhibitionCommand(
         action=CommandAction.UPDATE_LOCATION.value,
         device=None,
