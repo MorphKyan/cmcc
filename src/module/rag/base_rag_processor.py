@@ -3,6 +3,7 @@
 
 import asyncio
 import functools
+import os
 from abc import ABC, abstractmethod
 from enum import Enum
 
@@ -36,33 +37,128 @@ class MetadataType(Enum):
 
 
 class BaseRAGProcessor(ABC):
+    """RAG处理器基类，提供通用的初始化、检索和数据库操作方法。
+    
+    子类只需实现 `_create_embedding_model()` 和可选的 `_pre_initialize()` 方法。
+    """
+    
     def __init__(self, settings: RAGSettings) -> None:
         self.settings = settings
         self.chroma_db_dir = settings.chroma_db_dir
         self.vector_store: Chroma | None = None
+        self.retriever = None
+        self.embedding_model: Embeddings | None = None
         self.status = RAGStatus.UNINITIALIZED
         self.error_message: str | None = None
         self._init_lock = asyncio.Lock()
         logger.info("{class_name}已创建", class_name=self.__class__.__name__)
 
     @abstractmethod
-    async def initialize(self) -> None:
-        """初始化RAG处理器（幂等且线程安全）"""
+    def _create_embedding_model(self) -> Embeddings:
+        """创建embedding模型实例，由子类实现。
+        
+        Returns:
+            配置好的Embeddings实例
+        """
         pass
 
-    @abstractmethod
+    async def _pre_initialize(self) -> None:
+        """初始化前的准备工作，子类可重写。
+        
+        例如：检查服务连接、验证API密钥等。
+        默认实现为空操作。
+        """
+        pass
+
+    async def initialize(self) -> None:
+        """初始化RAG处理器：执行预检查、加载模型、创建或加载数据库。
+        
+        此方法是幂等且线程安全的。
+        """
+        async with self._init_lock:
+            if self.status == RAGStatus.INITIALIZING:
+                logger.warning("初始化已在进行中，请等待。")
+                return
+            self.status = RAGStatus.INITIALIZING
+            logger.info("开始初始化{class_name}...", class_name=self.__class__.__name__)
+
+            try:
+                # 子类可重写的预初始化钩子
+                await self._pre_initialize()
+                
+                # 创建embedding模型
+                self.embedding_model = self._create_embedding_model()
+                
+                # 加载或创建向量数据库
+                if not os.path.exists(self.chroma_db_dir):
+                    logger.info("未找到本地向量数据库，正在创建...")
+                    await self._create_and_persist_db(self.embedding_model)
+                else:
+                    logger.info("正在从本地加载向量数据库...")
+                    self.vector_store = await asyncio.to_thread(
+                        Chroma,
+                        persist_directory=self.settings.chroma_db_dir,
+                        embedding_function=self.embedding_model
+                    )
+
+                # 创建检索器
+                self.retriever = self.vector_store.as_retriever(
+                    search_kwargs={"k": self.settings.top_k_results}
+                )
+                
+                self.status = RAGStatus.READY
+                self.error_message = None
+                logger.success("{class_name}初始化完成，状态: READY。", 
+                             class_name=self.__class__.__name__)
+            except Exception as e:
+                self.status = RAGStatus.ERROR
+                self.error_message = f"{self.__class__.__name__}初始化失败: {str(e)}"
+                logger.exception(self.error_message)
+                raise
+
     async def retrieve_context(
         self,
         query: str,
         metadata_types: list[MetadataType] | None = None,
         top_k: int | None = None
     ) -> list[Document]:
-        """根据查询检索相关上下文"""
-        pass
+        """根据用户查询异步检索相关上下文。
+        
+        Args:
+            query: 查询文本
+            metadata_types: 可选的元数据类型过滤列表，为None时检索所有类型
+            top_k: 返回的文档数量，为None时使用配置默认值
+            
+        Returns:
+            检索到的Document列表
+            
+        Raises:
+            RuntimeError: 当处理器未准备就绪时
+        """
+        if self.status != RAGStatus.READY:
+            raise RuntimeError(f"RAG处理器未准备就绪，当前状态: {self.status}")
+        
+        k = top_k if top_k is not None else self.settings.top_k_results
+        logger.info("正在为查询检索上下文: '{query}', 类型过滤: {types}, top_k: {k}", 
+                    query=query, types=metadata_types, k=k)
+        
+        if metadata_types is None:
+            # 无过滤
+            docs = await self.vector_store.asimilarity_search(query, k=k)
+        else:
+            # 使用metadata过滤
+            type_values = [t.value for t in metadata_types]
+            filter_dict = {"type": {"$in": type_values}}
+            docs = await self.vector_store.asimilarity_search(
+                query, k=k, filter=filter_dict
+            )
+        
+        logger.info("检索到 {num_docs} 个相关文档。", num_docs=len(docs))
+        return docs
 
     @abstractmethod
     async def close(self) -> None:
-        """关闭RAG处理器资源"""
+        """关闭RAG处理器资源，由子类实现。"""
         pass
 
     def _load_all_documents(self) -> list[Document]:

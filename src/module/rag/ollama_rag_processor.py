@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import asyncio
-import os
 from urllib.parse import urljoin
 
 import httpx
-from langchain_chroma import Chroma
-from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from langchain_ollama import OllamaEmbeddings
 from loguru import logger
 
 from src.config.config import RAGSettings
-from src.module.rag.base_rag_processor import BaseRAGProcessor, RAGStatus, MetadataType
+from src.module.rag.base_rag_processor import BaseRAGProcessor
 
 
 class OllamaRAGProcessor(BaseRAGProcessor):
+    """使用Ollama本地服务的RAG处理器。"""
+    
     def __init__(self, settings: RAGSettings) -> None:
         """初始化Ollama RAG处理器。
 
@@ -23,49 +22,21 @@ class OllamaRAGProcessor(BaseRAGProcessor):
             settings: RAG配置
         """
         super().__init__(settings)
-        self.embedding_model: OllamaEmbeddings | None = None
         self._http_client = httpx.AsyncClient(timeout=10.0)
-        logger.info("RAGProcessor已创建，状态: UNINITIALIZED。")
 
-    async def initialize(self) -> None:
-        """初始化RAG处理器：检查连接、加载模型、创建或加载数据库。"""
-        async with self._init_lock:
-            if self.status == RAGStatus.INITIALIZING:
-                logger.warning("初始化已在进行中，请等待。")
-                return
-            self.status = RAGStatus.INITIALIZING
-            logger.info("开始初始化RAG处理器...")
+    def _create_embedding_model(self) -> Embeddings:
+        """创建Ollama Embedding模型。"""
+        return OllamaEmbeddings(
+            model=self.settings.ollama_embedding_model,
+            base_url=self.settings.ollama_base_url
+        )
 
-            try:
-                await self._check_ollama_connection()
-                self.embedding_model = OllamaEmbeddings(
-                    model=self.settings.ollama_embedding_model,
-                    base_url=self.settings.ollama_base_url
-                )
-                if not os.path.exists(self.chroma_db_dir):
-                    logger.info("未找到本地向量数据库，正在创建...")
-                    await self._create_and_persist_db(self.embedding_model)
-                else:
-                    logger.info("正在从本地加载向量数据库...")
-                    self.vector_store = await asyncio.to_thread(
-                        Chroma,
-                        persist_directory=self.settings.chroma_db_dir,
-                        embedding_function=self.embedding_model
-                    )
-
-                self.retriever = self.vector_store.as_retriever(
-                    search_kwargs={"k": self.settings.top_k_results}
-                )
-                self.status = RAGStatus.READY
-                self.error_message = None
-                logger.success("RAG处理器初始化完成，状态: READY。")
-            except Exception as e:
-                self.status = RAGStatus.ERROR
-                self.error_message = f"RAG初始化失败: {str(e)}"
-                logger.exception(self.error_message)
-                raise
+    async def _pre_initialize(self) -> None:
+        """初始化前检查Ollama服务连接和模型可用性。"""
+        await self._check_ollama_connection()
 
     async def _check_ollama_connection(self) -> None:
+        """检查Ollama服务连接和模型可用性。"""
         logger.info("正在检查Ollama服务连接: {url}", url=self.settings.ollama_base_url)
         try:
             response = await self._http_client.get(self.settings.ollama_base_url)
@@ -83,47 +54,19 @@ class OllamaRAGProcessor(BaseRAGProcessor):
                 )
                 raise RuntimeError(error_msg)
 
-            logger.info("所需Embedding模型 '{model}' 在Ollama中可用。", model=self.settings.ollama_embedding_model)
+            logger.info("所需Embedding模型 '{model}' 在Ollama中可用。", 
+                       model=self.settings.ollama_embedding_model)
 
         except httpx.RequestError as e:
-            raise ConnectionError(f"无法连接到Ollama服务: {self.settings.ollama_base_url}。请确保Ollama正在运行。") from e
+            raise ConnectionError(
+                f"无法连接到Ollama服务: {self.settings.ollama_base_url}。请确保Ollama正在运行。"
+            ) from e
         except Exception as e:
+            if isinstance(e, (RuntimeError, ConnectionError)):
+                raise
             raise RuntimeError(f"检查Ollama时发生未知错误: {e}") from e
 
-    async def retrieve_context(
-        self, 
-        query: str, 
-        metadata_types: list[MetadataType] | None = None,
-        top_k: int | None = None
-    ) -> list[Document]:
-        """根据用户查询异步检索相关上下文。
-        
-        Args:
-            query: 查询文本
-            metadata_types: 可选的元数据类型过滤列表，为None时检索所有类型
-            top_k: 返回的文档数量，为None时使用配置默认值
-        """
-        if self.status != RAGStatus.READY:
-            raise RuntimeError(f"RAG处理器未准备就绪，当前状态: {self.status}")
-        
-        k = top_k if top_k is not None else self.settings.top_k_results
-        logger.info("正在为查询检索上下文: '{query}', 类型过滤: {types}, top_k: {k}", 
-                    query=query, types=metadata_types, k=k)
-        
-        if metadata_types is None:
-            # 无过滤
-            docs = await self.vector_store.asimilarity_search(query, k=k)
-        else:
-            # 使用metadata过滤
-            type_values = [t.value for t in metadata_types]
-            filter_dict = {"type": {"$in": type_values}}
-            docs = await self.vector_store.asimilarity_search(
-                query, k=k, filter=filter_dict
-            )
-        
-        logger.info("检索到 {num_docs} 个相关文档。", num_docs=len(docs))
-        return docs
-
     async def close(self) -> None:
-        logger.info("正在清理RAG资源...")
+        """清理Ollama RAG资源。"""
+        logger.info("正在清理Ollama RAG资源...")
         await self._http_client.aclose()
