@@ -4,6 +4,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
+from src.config.config import get_settings
 from src.module.input.stream_decoder import StreamDecoder
 from src.module.vad.vad_core import VADCore
 from src.module.vad.vad_processor import VADProcessor
@@ -24,10 +25,11 @@ class Context:
 
     def __init__(self, context_id: str, decoder: StreamDecoder, vad_core: VADCore):
         self.context_id: str = context_id
+        vad_settings = get_settings().vad
         self.decoder: StreamDecoder = decoder
         self.audio_input_queue: asyncio.Queue[bytes] = asyncio.Queue(maxsize=self.AUDIO_INPUT_QUEUE_SIZE)
         self.audio_np_queue: asyncio.Queue[npt.NDArray[np.float32]] = asyncio.Queue(maxsize=self.AUDIO_NP_QUEUE_SIZE)
-        self.VADProcessor: VADProcessor = VADProcessor(vad_core, True)
+        self.VADProcessor: VADProcessor = VADProcessor(vad_core, vad_settings)
         self.audio_segment_queue: asyncio.Queue[npt.NDArray[np.float32]] = asyncio.Queue(maxsize=self.AUDIO_SEGMENT_QUEUE_SIZE)
         self.asr_output_queue: asyncio.Queue[str] = asyncio.Queue(maxsize=self.ASR_OUTPUT_QUEUE_SIZE)
         self.command_queue: asyncio.Queue[ExecutableCommand] = asyncio.Queue(maxsize=self.COMMAND_QUEUE_SIZE)

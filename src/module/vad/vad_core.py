@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from typing import Any
+
 import numpy.typing as npt
 from loguru import logger
 
@@ -60,7 +62,7 @@ class VADCore(BaseVADProcessor):
         logger.info("开始强制重启VAD处理器...")
         await self.initialize()
 
-    def process_chunk(self, chunk: npt.NDArray, cache) -> list:
+    def process_chunk(self, chunk: npt.NDArray, cache: dict[str, Any]) -> list:
         """
         处理音频块并返回语音活动检测结果。
         """

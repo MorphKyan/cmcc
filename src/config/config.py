@@ -309,6 +309,9 @@ class VADSettings(BaseSettings):
     model: str = "fsmn-vad"
     max_single_segment_time: int = 20000  # 最大切割音频时长(ms)
     save_audio_segments: bool = True  # 是否保存切割出来的音频片段
+    history_buffer_duration_sec: int = 30  # 历史缓冲区最大时长(秒)
+    chunk_queue_maxsize: int = 10000  # 音频块队列最大容量
+    safety_margin_sec: int = 5  # 提取音频后保留的安全边界(秒)
 
 
 class FunASRSettings(BaseSettings):

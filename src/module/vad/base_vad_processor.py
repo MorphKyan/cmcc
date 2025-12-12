@@ -4,6 +4,7 @@
 import asyncio
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Any
 
 import numpy.typing as npt
 from loguru import logger
@@ -41,6 +42,11 @@ class BaseVADProcessor(ABC):
         pass
 
     @abstractmethod
-    def process_chunk(self, chunk: npt.NDArray, cache) -> list:
+    async def restart(self) -> None:
+        """强制重启VAD处理器，用于从任何状态恢复。"""
+        pass
+
+    @abstractmethod
+    def process_chunk(self, chunk: npt.NDArray, cache: dict[str, Any]) -> list:
         """处理音频块并返回语音活动检测结果。"""
         pass

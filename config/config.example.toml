@@ -6,6 +6,12 @@ model = "fsmn-vad"
 # VAD 最大切割音频时长(ms)
 max_single_segment_time = 20000
 save_audio_segments = false
+# 历史缓冲区最大时长(秒)
+history_buffer_duration_sec = 30
+# 音频块队列最大容量
+chunk_queue_maxsize = 10000
+# 提取音频后保留的安全边界(秒)
+safety_margin_sec = 5
 
 # FunASR 语音识别配置
 [asr]
