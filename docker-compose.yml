@@ -1,3 +1,5 @@
+version: '2.1'
+
 services:
   backend:
     build:
@@ -14,11 +16,12 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+    networks:
+      - cmcc-network
 
   frontend:
     build:
@@ -36,7 +39,9 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - cmcc-network
 
 networks:
-  default:
-    name: cmcc-network
+  cmcc-network:
+    driver: bridge
