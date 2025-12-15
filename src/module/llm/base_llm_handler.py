@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import asyncio
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Any
 
 from langchain_core.documents import Document
@@ -16,7 +18,14 @@ from src.core import dependencies
 from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
 from src.module.llm.tool.dynamic_tool_manager import DynamicToolManager
 from src.module.llm.helper import DocumentFormatter
-from src.module.llm.helper import DocumentFormatter
+
+
+class LLMStatus(Enum):
+    """LLM处理器状态枚举。"""
+    UNINITIALIZED = "UNINITIALIZED"
+    INITIALIZING = "INITIALIZING"
+    READY = "READY"
+    ERROR = "ERROR"
 
 
 class BaseLLMHandler(ABC):
@@ -38,6 +47,11 @@ class BaseLLMHandler(ABC):
         self.model_with_tools = None
         self.chain: RunnableSerializable[dict, Any] | None = None
 
+        # 状态管理
+        self.status = LLMStatus.UNINITIALIZED
+        self.error_message: str | None = None
+        self._init_lock = asyncio.Lock()
+
         # 初始化动态工具管理器并注册更新回调
         self._dynamic_manager = DynamicToolManager()
         self._dynamic_manager.on_update(self._on_tools_updated)
@@ -57,9 +71,7 @@ class BaseLLMHandler(ABC):
         # 消息轮数限制（5轮对话）
         self.max_chat_rounds = 5
 
-        logger.info("LLM处理器基类初始化完成，工具数: {} (原生: {}, 动态: {})", 
-                    len(self.tools), len(self._native_tools), 
-                    len(self._dynamic_manager.get_langchain_tools()))
+        logger.info(f"{self.__class__.__name__}已创建，状态: UNINITIALIZED，工具数: {len(self.tools)} (原生: {len(self._native_tools)}, 动态: {len(self._dynamic_manager.get_langchain_tools())})")
 
     @abstractmethod
     def _create_model(self) -> BaseChatModel:
@@ -112,27 +124,40 @@ class BaseLLMHandler(ABC):
 
     async def initialize(self) -> None:
         """
-        异步初始化模型和处理链。
+        异步初始化模型和处理链，支持重新初始化，线程安全。
         
         子类可以覆盖此方法以添加额外的初始化逻辑，但应调用 super().initialize()。
         """
-        if self.model is not None:
-            return
-        
-        # 创建模型（由子类实现）
-        self.model = self._create_model()
-        
-        # 构建处理链
-        self._build_chain()
-        
-        logger.info(f"{self.__class__.__name__} 初始化完成")
+        async with self._init_lock:
+            if self.status == LLMStatus.INITIALIZING:
+                logger.warning("LLM处理器正在初始化中，请等待。")
+                return
+            
+            self.status = LLMStatus.INITIALIZING
+            self.error_message = None
+            logger.info(f"开始初始化{self.__class__.__name__}...")
+
+            try:
+                # 创建模型（由子类实现）
+                self.model = self._create_model()
+                
+                # 构建处理链
+                self._build_chain()
+                
+                self.status = LLMStatus.READY
+                logger.success(f"{self.__class__.__name__}初始化完成，状态: READY。")
+            except Exception as e:
+                self.status = LLMStatus.ERROR
+                self.error_message = f"{self.__class__.__name__}初始化失败: {str(e)}"
+                logger.exception(self.error_message)
+                raise
 
     async def check_health(self) -> bool:
         """
         检查服务的健康状态。
         """
         try:
-            if self.chain is None:
+            if self.status != LLMStatus.READY:
                 await self.initialize()
 
             health_check_input = {
@@ -175,7 +200,7 @@ class BaseLLMHandler(ABC):
         Returns:
             list[ExhibitionCommand]: 命令列表
         """
-        if self.chain is None:
+        if self.status != LLMStatus.READY:
             await self.initialize()
 
         logger.info("用户指令: {user_input}", user_input=user_input)
@@ -206,10 +231,10 @@ class BaseLLMHandler(ABC):
         chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
         
         # 2. 确保模型已初始化
-        if not self.model_with_tools:
+        if self.status != LLMStatus.READY:
             await self.initialize()
-            if not self.model_with_tools:
-                raise ValueError("Model with tools not initialized.")
+            if self.status != LLMStatus.READY:
+                raise ValueError("LLM处理器初始化失败。")
 
         messages = []
         max_retries = getattr(self.settings, 'max_validation_retries', 3)

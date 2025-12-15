@@ -29,8 +29,8 @@ export const vadStatus = () => {
   return api.get('/vad/status')
 }
 
-export const vadRestart = () => {
-  return api.post('/vad/restart')
+export const vadReinitialize = () => {
+  return api.post('/vad/reinitialize')
 }
 
 // RAG相关API

@@ -5,7 +5,7 @@ from loguru import logger
 
 from src.api.schemas import RefreshResponse, StatusResponse, QueryResponse, QueryRequest
 from src.core import dependencies
-from src.module.rag.ollama_rag_processor import RAGStatus
+from src.module.rag.base_rag_processor import RAGStatus
 
 router = APIRouter(
     prefix="/rag",

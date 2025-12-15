@@ -15,10 +15,10 @@ from src.config.config import FunASRSettings
 
 class ASRStatus(Enum):
     """ASR处理器状态枚举。"""
-    UNINITIALIZED = "uninitialized"
-    INITIALIZING = "initializing"
-    READY = "ready"
-    ERROR = "error"
+    UNINITIALIZED = "UNINITIALIZED"
+    INITIALIZING = "INITIALIZING"
+    READY = "READY"
+    ERROR = "ERROR"
 
 
 class ASRProcessor:
@@ -47,14 +47,10 @@ class ASRProcessor:
         logger.info("ASR处理器使用 {device} 进行推理...", device=self.device)
 
     async def initialize(self) -> None:
-        """异步初始化FunASR语音识别模型。"""
+        """异步初始化FunASR语音识别模型，支持重新初始化。"""
         async with self._init_lock:
             if self.status == ASRStatus.INITIALIZING:
-                logger.warning("ASR处理器正在初始化中，请勿重复调用。")
-                return
-            
-            if self.status == ASRStatus.READY:
-                logger.warning("ASR处理器已初始化完成，请勿重复调用。")
+                logger.warning("ASR处理器正在初始化中，请等待。")
                 return
             
             self.status = ASRStatus.INITIALIZING

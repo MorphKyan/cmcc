@@ -202,7 +202,7 @@ import {
   ragStatus,
   refreshRag,
   reinitializeRag,
-  vadRestart,
+  vadReinitialize,
   vadStatus
 } from './api'
 
@@ -310,11 +310,11 @@ export default {
 
     async reinitializeVad() {
       try {
-        const response = await vadRestart()
+        const response = await vadReinitialize()
         this.vadStatusText = response.data.data.current_status
-        alert('VAD重启请求已提交: ' + response.data.data.current_status)
+        alert('VAD重新初始化完成: ' + response.data.data.current_status)
       } catch (error) {
-        alert('重启VAD失败: ' + error.message)
+        alert('重新初始化VAD失败: ' + error.message)
       }
     },
     

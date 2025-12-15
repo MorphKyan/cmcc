@@ -28,13 +28,14 @@ class VADCore(BaseVADProcessor):
 
     async def initialize(self) -> None:
         """
-        异步初始化VAD模型。
+        异步初始化VAD模型，支持重新初始化。
         """
         async with self._init_lock:
             if self.status == VADStatus.INITIALIZING:
                 logger.warning("初始化已在进行中，请等待。")
                 return
             self.status = VADStatus.INITIALIZING
+            self.error_message = None
             logger.info("开始初始化VAD处理器...")
 
             try:
@@ -45,22 +46,12 @@ class VADCore(BaseVADProcessor):
                 logger.info("VAD模型加载完成。")
 
                 self.status = VADStatus.READY
-                self.error_message = None
                 logger.success("VAD处理器初始化完成，状态: READY。")
             except Exception as e:
                 self.status = VADStatus.ERROR
                 self.error_message = f"VAD初始化失败: {e}"
                 logger.exception(self.error_message)
-                # 向上抛出异常，让调用者知道失败了
                 raise
-
-    async def restart(self) -> None:
-        """
-        强制重启VAD处理器，可用于从任何状态恢复。
-        此方法是幂等的，并且是线程安全的。
-        """
-        logger.info("开始强制重启VAD处理器...")
-        await self.initialize()
 
     def process_chunk(self, chunk: npt.NDArray, cache: dict[str, Any]) -> list:
         """

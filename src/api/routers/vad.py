@@ -35,24 +35,24 @@ async def vad_status() -> StatusResponse:
         logger.exception("获取VAD状态时发生异常")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"获取VAD状态时发生异常: {str(e)}")
 
-@router.post("/restart", response_model=StatusResponse)
-async def vad_restart() -> StatusResponse:
+@router.post("/reinitialize", response_model=StatusResponse)
+async def vad_reinitialize() -> StatusResponse:
     """
-    强制重启VAD处理器，可用于从任何状态恢复。
+    重新初始化VAD处理器，可用于从任何状态恢复。
     """
     try:
         if dependencies.vad_core is None:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="VAD服务当前不可用，尚未初始化")
 
-        await dependencies.vad_core.restart()
+        await dependencies.vad_core.initialize()
 
         return StatusResponse(
             status="success",
             data={
-                "message": "VAD处理器重启请求已提交",
+                "message": "VAD处理器重新初始化完成",
                 "current_status": dependencies.vad_core.status.value
             }
         )
     except Exception as e:
-        logger.exception("重启VAD处理器时发生异常")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"重启VAD处理器时发生异常: {str(e)}")
+        logger.exception("重新初始化VAD处理器时发生异常")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"重新初始化VAD处理器时发生异常: {str(e)}")

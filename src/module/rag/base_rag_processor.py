@@ -73,13 +73,14 @@ class BaseRAGProcessor(ABC):
     async def initialize(self) -> None:
         """初始化RAG处理器：执行预检查、加载模型、创建或加载数据库。
         
-        此方法是幂等且线程安全的。
+        此方法支持重新初始化，且线程安全。
         """
         async with self._init_lock:
             if self.status == RAGStatus.INITIALIZING:
                 logger.warning("初始化已在进行中，请等待。")
                 return
             self.status = RAGStatus.INITIALIZING
+            self.error_message = None
             logger.info("开始初始化{class_name}...", class_name=self.__class__.__name__)
 
             try:
