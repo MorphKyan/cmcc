@@ -30,6 +30,33 @@ sudo systemctl enable docker
 sudo systemctl start docker
 ```
 
+### 配置 Docker 镜像加速（推荐）
+
+国内网络环境下，建议配置镜像加速以提升拉取速度：
+
+```bash
+# 创建或编辑 Docker daemon 配置文件
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://dockerhub.icu",
+    "https://docker.1panel.live"
+  ]
+}
+EOF
+
+# 重新加载配置并重启 Docker
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+> **说明**：项目的 Dockerfile 已内置以下国内镜像配置：
+> - **apt 源**：阿里云镜像 (`mirrors.aliyun.com`)
+> - **pip 源**：清华镜像 (`pypi.tuna.tsinghua.edu.cn`)
+> - **npm 源**：淘宝镜像 (`registry.npmmirror.com`)
+
 ## 项目结构
 
 确保以下文件已上传到服务器（可通过 `scp`、`git clone` 或 USB 传输）：

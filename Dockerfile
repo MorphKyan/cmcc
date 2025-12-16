@@ -7,11 +7,17 @@ ARG ENABLE_OLLAMA=false
 
 WORKDIR /app
 
+# 配置 apt 使用阿里云镜像（加速国内构建）
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
+# 配置 pip 使用清华镜像
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
 # 安装系统依赖（av 需要 ffmpeg）
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+  ffmpeg \
+  git \
+  && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
 COPY requirements/ /tmp/requirements/
@@ -21,16 +27,16 @@ RUN pip install --no-cache-dir -r /tmp/requirements/base.txt
 
 # 条件安装可选依赖 - 本地麦克风输入
 RUN if [ "$ENABLE_MIC_INPUT" = "true" ]; then \
-      apt-get update && apt-get install -y --no-install-recommends \
-        portaudio19-dev && \
-      rm -rf /var/lib/apt/lists/* && \
-      pip install --no-cache-dir -r /tmp/requirements/mic.txt; \
-    fi
+  apt-get update && apt-get install -y --no-install-recommends \
+  portaudio19-dev && \
+  rm -rf /var/lib/apt/lists/* && \
+  pip install --no-cache-dir -r /tmp/requirements/mic.txt; \
+  fi
 
 # 条件安装可选依赖 - Ollama 支持
 RUN if [ "$ENABLE_OLLAMA" = "true" ]; then \
-      pip install --no-cache-dir -r /tmp/requirements/ollama.txt; \
-    fi
+  pip install --no-cache-dir -r /tmp/requirements/ollama.txt; \
+  fi
 
 # 清理临时文件
 RUN rm -rf /tmp/requirements
