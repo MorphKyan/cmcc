@@ -6,6 +6,7 @@ from loguru import logger
 
 from src.config.config import get_settings
 from src.core import dependencies
+from src.core.feature_flags import FeatureFlags
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.vad.vad_core import VADCore
 from src.services.data_service import DataService
@@ -15,6 +16,9 @@ from src.services.data_service import DataService
 async def lifespan(app: FastAPI):
     # --- 应用启动时执行 ---
     logger.info("应用启动... 正在初始化处理器...")
+
+    # 记录功能开关状态
+    FeatureFlags.log_feature_status()
 
     settings = get_settings()
     vad_config = settings.vad
@@ -28,32 +32,43 @@ async def lifespan(app: FastAPI):
         dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
 
         # Initialize RAG processor based on provider configuration
-        if rag_config.provider.lower() == "modelscope":
+        rag_provider = rag_config.provider.lower()
+        if rag_provider == "modelscope":
             from src.module.rag.modelscope_rag_processor import ModelScopeRAGProcessor
             dependencies.rag_processor = ModelScopeRAGProcessor(rag_config)
             logger.info("使用ModelScope RAG处理器")
-        elif rag_config.provider.lower() == "dashscope":
+        elif rag_provider == "dashscope":
             from src.module.rag.dashscope_rag_processor import DashScopeRAGProcessor
             dependencies.rag_processor = DashScopeRAGProcessor(rag_config)
             logger.info("使用百炼RAG处理器")
-        else:
+        elif rag_provider == "ollama":
+            # 验证 Ollama 功能是否启用
+            FeatureFlags.validate_ollama_config()
             from src.module.rag.ollama_rag_processor import OllamaRAGProcessor
             dependencies.rag_processor = OllamaRAGProcessor(rag_config)
             logger.info("使用Ollama RAG处理器")
+        else:
+            raise RuntimeError(f"未知的 RAG provider: {rag_provider}")
 
         # Initialize LLM processor based on provider configuration
-        if llm_config.provider.lower() == "modelscope":
+        llm_provider = llm_config.provider.lower()
+        if llm_provider == "modelscope":
             from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
             dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
             logger.info("使用ModelScope LLM处理器")
-        elif llm_config.provider.lower() == "dashscope":
+        elif llm_provider == "dashscope":
             from src.module.llm.dashscope_llm_handler import DashScopeLLMHandler
             dependencies.llm_processor = DashScopeLLMHandler(llm_config)
             logger.info("使用DashScope LLM处理器")
-        else:
+        elif llm_provider == "ollama":
+            # 验证 Ollama 功能是否启用
+            FeatureFlags.validate_ollama_config()
             from src.module.llm.ollama_llm_handler import OllamaLLMHandler
             dependencies.llm_processor = OllamaLLMHandler(llm_config)
             logger.info("使用Ollama LLM处理器")
+        else:
+            raise RuntimeError(f"未知的 LLM provider: {llm_provider}")
+
         # Start async initialization for VAD, RAG, LLM and ASR processors
         asyncio.create_task(dependencies.rag_processor.initialize())
         asyncio.create_task(dependencies.llm_processor.initialize())
@@ -71,3 +86,4 @@ async def lifespan(app: FastAPI):
     logger.info("应用关闭... 正在清理资源...")
     dependencies.active_contexts.clear()
     logger.info("资源清理完毕.")
+

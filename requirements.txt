@@ -1,23 +1,22 @@
-contextvars
+# 核心依赖
 loguru
-pyaudio
 numpy
 funasr
 torch
+torchaudio
 pandas
 pydantic-settings
-openpyxl
 chromadb
-sentence-transformers
 langchain
-langchain-community
 langchain-openai
-langchain-ollama
-ollama
+langchain-chroma
 fastapi
 uvicorn[standard]
 python-multipart
 av
 httpx
-requests
 modelscope
+
+# 可选依赖（根据需求安装）
+# 本地麦克风输入: pip install pyaudio
+# Ollama 支持: pip install langchain-ollama

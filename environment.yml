@@ -1,31 +1,34 @@
 name: cmcc_env
 channels:
   - conda-forge
+  - pytorch
   - defaults
 dependencies:
   - python=3.12
   - pip
+  # PyTorch CPU 版本
+  - cpuonly
+  - pytorch
+  - torchaudio
   - pip:
+    # === 核心依赖 ===
     - loguru
-    - pyaudio
     - numpy
     - funasr
-    - torch
     - pandas
     - pydantic-settings
-    - openpyxl
     - chromadb
-    - sentence-transformers
     - langchain
-    - langchain-community
     - langchain-openai
-    - langchain-ollama
     - langchain-chroma
-    - ollama
     - fastapi
     - uvicorn[standard]
     - python-multipart
     - av
     - httpx
-    - requests
     - modelscope
+    # === 可选依赖 ===
+    # 本地麦克风输入 (开发环境)
+    - pyaudio
+    # Ollama 支持 (如需使用本地 Ollama)
+    - langchain-ollama

@@ -1,0 +1,3 @@
+# Ollama 本地服务支持依赖
+# 需要设置 ENABLE_OLLAMA=true 环境变量
+langchain-ollama

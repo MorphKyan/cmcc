@@ -4,7 +4,11 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile
+      args:
+        # 构建时功能开关 - 控制是否安装可选依赖
+        ENABLE_MIC_INPUT: "false"
+        ENABLE_OLLAMA: "false"
     container_name: cmcc-backend
     restart: always
     ports:
@@ -13,8 +17,12 @@ services:
       - ./data:/app/data
       - ./config:/app/config
       - ./logs:/app/logs
+      - ./chroma_db:/app/chroma_db
     environment:
       - PYTHONUNBUFFERED=1
+      # 运行时功能开关
+      - ENABLE_MIC_INPUT=false
+      - ENABLE_OLLAMA=false
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health" ]
       interval: 30s

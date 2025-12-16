@@ -1,0 +1,18 @@
+# 核心依赖 - 生产环境必须安装
+loguru
+numpy
+funasr
+torch --index-url https://download.pytorch.org/whl/cpu
+torchaudio --index-url https://download.pytorch.org/whl/cpu
+pandas
+pydantic-settings
+chromadb
+langchain
+langchain-openai
+langchain-chroma
+fastapi
+uvicorn[standard]
+python-multipart
+av
+httpx
+modelscope

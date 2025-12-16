@@ -36,11 +36,14 @@ sudo systemctl start docker
 
 ```
 cmcc/
-├── Dockerfile.backend        # 后端 Docker 镜像配置
+├── Dockerfile                # 后端 Docker 镜像配置
 ├── Dockerfile.frontend       # 前端 Docker 镜像配置
 ├── docker-compose.yml        # Docker Compose 编排配置
-├── requirements.txt          # Python 依赖
-├── main.py                   # 后端入口
+├── requirements/             # Python 依赖（分层）
+│   ├── base.txt              # 核心依赖
+│   ├── mic.txt               # 麦克风输入依赖（可选）
+│   └── ollama.txt            # Ollama 支持依赖（可选）
+├── requirements.txt          # Python 依赖（汇总）
 ├── src/                      # 后端源码
 ├── frontend/                 # 前端源码
 │   ├── nginx.conf            # Nginx 配置
@@ -48,6 +51,7 @@ cmcc/
 │   └── local_morphk_icu.key  # SSL 私钥
 ├── config/                   # 配置文件
 ├── data/                     # 数据目录
+├── chroma_db/                # 向量数据库存储
 └── logs/                     # 日志目录
 ```
 
@@ -81,13 +85,42 @@ cd /path/to/cmcc
 ### 2. 创建必要的目录
 
 ```bash
-mkdir -p logs/nginx
+mkdir -p logs/nginx chroma_db
 ```
 
-### 3. 构建并启动服务
+### 3. 配置功能开关（可选）
+
+项目支持通过 Docker 构建参数和环境变量控制可选功能：
+
+| 功能 | 构建参数 | 环境变量 | 默认值 |
+|------|----------|----------|--------|
+| 本地麦克风输入 | `ENABLE_MIC_INPUT` | `ENABLE_MIC_INPUT` | `false` |
+| Ollama 本地服务 | `ENABLE_OLLAMA` | `ENABLE_OLLAMA` | `false` |
+
+如需启用 Ollama 支持，修改 `docker-compose.yml`：
+
+```yaml
+services:
+  backend:
+    build:
+      args:
+        ENABLE_OLLAMA: "true"    # 构建时安装 langchain-ollama
+    environment:
+      - ENABLE_OLLAMA=true       # 运行时启用功能
+```
+
+> **注意**：如果 `config/config.toml` 中 `rag.provider` 或 `llm.provider` 设置为 `"ollama"`，
+> 必须启用 `ENABLE_OLLAMA`，否则应用启动时会报错。
+
+### 4. 构建并启动服务
 
 ```bash
+# 默认构建（不含 Ollama 和麦克风输入）
 docker compose up -d --build
+
+# 或手动指定构建参数
+docker compose build --build-arg ENABLE_OLLAMA=true
+docker compose up -d
 ```
 
 此命令将：
@@ -95,7 +128,7 @@ docker compose up -d --build
 - 创建并启动容器
 - 后端启动后，前端才会启动（通过健康检查确保）
 
-### 4. 验证部署
+### 5. 验证部署
 
 检查容器运行状态：
 ```bash
@@ -109,7 +142,7 @@ cmcc-backend    Up (healthy)             0.0.0.0:8000->8000/tcp
 cmcc-frontend   Up                       0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
 ```
 
-### 5. 访问应用
+### 6. 访问应用
 
 - **前端页面**: `https://<服务器IP>`（HTTP 自动跳转 HTTPS）
 - **后端 API**: `https://<服务器IP>/api`（通过 Nginx 代理）
