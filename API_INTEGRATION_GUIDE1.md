@@ -483,6 +483,7 @@
 | `resource` | string | 是 | 资源名称 |
 ```json
   {
+	"cmdId":"",
     "name": "顶灯",
     "type": "control",
     "subType": "灯光",
@@ -499,7 +500,7 @@
     "success": true,
     "message": "指令已发送 ",
     "code": 200,
-    "result": null,
+    "result": name,
     "timestamp": 1765421379834
 }
 ```
