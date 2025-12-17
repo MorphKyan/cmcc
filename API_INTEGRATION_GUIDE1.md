@@ -475,22 +475,24 @@
 
 | 字段 | 类型 | 必填 | 说明 |
 | :--- | :--- | :--- | :--- |
+| `id` | string | 是 | 请求的UUID |
 | `name` | string | 是 | 设备名称 |
 | `type` | string | 是 | 设备类型，player：播放器，led：标题屏，control：电控设备 |
 | `subType` | string | 否 | 设备子类型，电控设备的子类型，host：主机，screen：屏幕，lcd：拼接屏，light：灯光，LED：LED屏，audio：音响，sand：沙盘，etc：其他 |
 | `command` | string | 否 | 命令名称 |
-| `view` | string |否 | 视窗名称 |
+| `view` | string | 否 | 视窗名称 |
 | `resource` | string | 是 | 资源名称 |
+| `sign` | string | 是 | JSON中除了sign字段以外的字段，按Key字母顺序以key1=value1&key2=value2&...格式拼接为字符串，再取加盐的MD5 |
 ```json
   {
-	"cmdId":"",
+	  "id":"",
     "name": "顶灯",
     "type": "control",
     "subType": "灯光",
     "command": "开机",
-    "resource": "",
     "view": "左上角区域",
-	"sign": ""
+    "resource": "",
+	  "sign": ""
   }
 ```
 
@@ -501,7 +503,8 @@
     "message": "指令已发送 ",
     "code": 200,
     "result": name,
-    "timestamp": 1765421379834
+    "timestamp": 1765421379834,
+    "device_name": "设备名称"
 }
 ```
 

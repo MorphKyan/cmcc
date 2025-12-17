@@ -389,6 +389,15 @@ class LLMSettings(BaseSettings):
     connection_timeout: int = 10  # Connection timeout in seconds
 
 
+class AEPSettings(BaseSettings):
+    """AEP中控系统API配置"""
+    model_config = SettingsConfigDict(env_prefix="AEP_")
+
+    base_url: str = "http://localhost:8080"  # AEP中控系统URL
+    sign_salt: str = ""  # MD5签名计算的盐值
+    request_timeout: int = 10  # 请求超时时间(秒)
+
+
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_nested_delimiter='_',
@@ -401,6 +410,7 @@ class AppSettings(BaseSettings):
     asr: FunASRSettings = FunASRSettings()
     rag: RAGSettings = RAGSettings()
     llm: LLMSettings = LLMSettings()
+    aep: AEPSettings = AEPSettings()
 
     def __init__(self, **kwargs):
         # 加载 TOML 配置 (自动检测优先级)

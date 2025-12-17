@@ -71,3 +71,9 @@ connection_timeout = 10
 ark_api_key = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
 ark_base_url = "https://ark.cn-beijing.volces.com/api/v3"
 llm_model_name = "doubao-seed-1-6-flash-250715"
+
+# AEP中控系统配置
+[aep]
+base_url = "http://localhost:8080"
+sign_salt = "your_secret_salt_here"
+request_timeout = 10

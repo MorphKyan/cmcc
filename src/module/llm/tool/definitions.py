@@ -25,10 +25,20 @@ class CommandAction(str, Enum):
 
 
 class ExhibitionCommand(BaseModel):
-    """Smart exhibition hall command structure for structured output."""
+    """Smart exhibition hall command structure for structured output.
+    
+    包含所有 AEP API 所需的字段，工具函数内部负责从 DataService 补全信息。
+    """
     action: str = Field(description="需要执行的具体命令动作，必须是预定义的合法动作之一")
-    device: Optional[str] = Field(default=None, description="命令的目标设备标识符（如果适用）")
+    # 基础字段
+    device_name: Optional[str] = Field(default=None, description="命令的目标设备名称")
     value: Optional[str | int] = Field(default=None, description="命令的具体参数值（字符串或整数）")
+    # AEP API 扩展字段
+    device_type: str = Field(default="", description="设备类型 (player/led/control)")
+    command: str = Field(default="", description="设备的自定义命令名称")
+    sub_type: str = Field(default="", description="设备子类型")
+    view: str = Field(default="", description="视窗名称")
+    resource: str = Field(default="", description="资源名称")
 
 
 class ExecutableCommand(BaseModel):
@@ -56,8 +66,9 @@ class ExecutableCommand(BaseModel):
 
 class OpenMediaInput(BaseModel):
     """Input for open media command."""
-    device: str = Field(description="媒体资源的名称或路径")
-    value: str = Field(description="执行播放的设备标识符")
+    device: str = Field(description="执行播放的设备标识符")
+    value: str = Field(description="媒体资源的名称或路径")
+    view: str = Field(default="", description="视窗名称，用户指定视窗区域")
 
 
 class ControlDoorInput(BaseModel):
@@ -97,7 +108,7 @@ class UpdateLocationInput(BaseModel):
 
 
 @tool(args_schema=OpenMediaInput)
-def open_media(device: str, value: str) -> ExhibitionCommand:
+def open_media(device: str, value: str, view: str = "") -> ExhibitionCommand:
     """打开指定的媒体资源"""
     from src.core import dependencies
     if not dependencies.data_service.media_exists(device):
@@ -110,11 +121,21 @@ def open_media(device: str, value: str) -> ExhibitionCommand:
             action=CommandAction.ERROR.value,
             value=f"Device '{value}' not found."
         )
-
+    
+    # 从 DataService 获取设备信息并补全
+    device_info = dependencies.data_service.get_device_info(value)
+    view_list = device_info.get("view", []) if device_info else []
+    
     return ExhibitionCommand(
         action=CommandAction.OPEN_MEDIA.value,
-        device=device,
-        value=value
+        device_name=device,
+        value=value,
+        # AEP 字段补全
+        device_type=device_info.get("type", "") if device_info else "",
+        command="",
+        sub_type=device_info.get("subType", "") if device_info else "",
+        view=view if view else (", ".join(view_list) if isinstance(view_list, list) else str(view_list)),
+        resource=device
     )
 
 
@@ -130,7 +151,7 @@ def control_door(device: str, value: Literal["open", "close"]) -> ExhibitionComm
 
     return ExhibitionCommand(
         action=CommandAction.CONTROL_DOOR.value,
-        device=device,
+        device_name=device,
         value=value
     )
 
@@ -147,7 +168,7 @@ def seek_video(device: str, value: int) -> ExhibitionCommand:
 
     return ExhibitionCommand(
         action=CommandAction.SEEK.value,
-        device=device,
+        device_name=device,
         value=value
     )
 
@@ -164,7 +185,7 @@ def set_volume(device: str, value: int) -> ExhibitionCommand:
 
     return ExhibitionCommand(
         action=CommandAction.SET_VOLUME.value,
-        device=device,
+        device_name=device,
         value=value
     )
 
@@ -181,7 +202,7 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
 
     return ExhibitionCommand(
         action=CommandAction.ADJUST_VOLUME.value,
-        device=device,
+        device_name=device,
         value=value
     )
 
@@ -205,11 +226,20 @@ def control_device(name: str, type: str, command: str) -> ExhibitionCommand:
                 action=CommandAction.ERROR.value,
                 value=f"Command '{command}' is not supported by device '{name}'. Supported commands: {supported_commands}"
             )
-
+    
+    # 从 DataService 获取设备信息并补全
+    view_list = device_info.get("view", []) if device_info else []
+    
     return ExhibitionCommand(
         action=CommandAction.CONTROL_DEVICE.value,
-        device=name,
-        value=command
+        device_name=name,
+        value=command,
+        # AEP 字段补全
+        device_type=device_info.get("type", "") if device_info else type,
+        command=command,
+        sub_type=device_info.get("subType", "") if device_info else "",
+        view=", ".join(view_list) if isinstance(view_list, list) else str(view_list),
+        resource=""
     )
 
 
@@ -225,7 +255,7 @@ def update_location(value: str) -> ExhibitionCommand:
 
     return ExhibitionCommand(
         action=CommandAction.UPDATE_LOCATION.value,
-        device=None,
+        device_name=None,
         value=value
     )
 

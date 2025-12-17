@@ -9,8 +9,9 @@ from langchain_core.messages import HumanMessage
 
 from src.api.context import Context
 from src.core import dependencies
-from src.module.llm.tool.definitions import ExecutableCommand, ExhibitionCommand
+from src.module.llm.tool.definitions import ExecutableCommand, ExhibitionCommand, CommandAction
 from src.services.performance_metrics_manager import MetricType
+from src.services.aep_client import get_aep_client
 
 
 async def receive_loop(websocket: WebSocket, context: Context) -> None:
@@ -216,21 +217,33 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                 logger.info("[本地命令结果] action={action}, success={success}, message={message}",
                             action=cmd.action, success=result.get("success"), message=result.get("message"))
 
-            # 2. 发送远程命令到前端
+            # 2. 发送远程命令
             remote_commands = executable_cmd.get_remote_commands()
-            if remote_commands:
-                payload = executable_cmd.to_websocket_payload()
-                logger.info("[发送命令] user={user_id}, count={count}, content={content}",
-                            user_id=executable_cmd.user_id, count=len(remote_commands), content=remote_commands)
-                await websocket.send_text(payload)
+            for cmd in remote_commands:
+                # control_device命令通过AEP HTTP API发送
+                if cmd.action == CommandAction.CONTROL_DEVICE.value:
+                    aep_result = await _execute_aep_command(cmd, context, websocket, executable_cmd.user_id)
+                    execution_results.append(aep_result)
+                else:
+                    # 其他远程命令仍通过WebSocket发送到前端
+                    single_cmd_payload = json.dumps({
+                        "user_id": executable_cmd.user_id,
+                        "commands": [cmd.model_dump()]
+                    }, ensure_ascii=False)
+                    logger.info("[发送命令] user={user_id}, action={action}, device={device}",
+                                user_id=executable_cmd.user_id, action=cmd.action, device=cmd.device_name)
+                    await websocket.send_text(single_cmd_payload)
+                    execution_results.append({
+                        "success": True,
+                        "action": cmd.action,
+                        "message": _get_command_description(cmd)
+                    })
 
             # 3. 发送执行摘要到前端（用户友好的提示）
             summary_messages: list[str] = []
             for result in execution_results:
                 if result.get("success"):
                     summary_messages.append(result.get("message", "操作成功"))
-            for cmd in remote_commands:
-                summary_messages.append(_get_command_description(cmd))
 
             if summary_messages:
                 summary_payload = json.dumps({
@@ -272,15 +285,99 @@ async def _execute_local_command(cmd: ExhibitionCommand, context: Context) -> di
 def _get_command_description(cmd: ExhibitionCommand) -> str:
     """获取命令的用户友好描述"""
     action_descriptions = {
-        "play": lambda c: f"在「{c.device}」上播放「{c.value}」",
-        "open_media": lambda c: f"在「{c.device}」上打开「{c.value}」",
+        "open_media": lambda c: f"在「{c.device_name}」上打开「{c.value}」",
         "open": lambda c: f"打开「{c.value}」",
         "close": lambda c: f"关闭「{c.value}」",
-        "seek": lambda c: f"将「{c.device}」跳转到{c.value}秒",
-        "set_volume": lambda c: f"将「{c.device}」音量设置为{c.value}",
-        "adjust_volume": lambda c: f"{'提高' if c.value == 'up' else '降低'}「{c.device}」音量",
+        "seek": lambda c: f"将「{c.device_name}」跳转到{c.value}秒",
+        "set_volume": lambda c: f"将「{c.device_name}」音量设置为{c.value}",
+        "adjust_volume": lambda c: f"{'提高' if c.value == 'up' else '降低'}「{c.device_name}」音量",
+        "control_device": lambda c: f"控制设备「{c.device_name}」执行「{c.value}」",
     }
 
     if cmd.action in action_descriptions:
         return action_descriptions[cmd.action](cmd)
     return f"执行{cmd.action}操作"
+
+
+async def _execute_aep_command(
+    cmd: ExhibitionCommand,
+    context: Context,
+    websocket: WebSocket,
+    user_id: str
+) -> dict:
+    """通过AEP HTTP API执行control_device命令
+    
+    Args:
+        cmd: 要执行的命令
+        context: 用户上下文
+        websocket: WebSocket连接用于发送错误消息
+        user_id: 用户ID
+        
+    Returns:
+        执行结果字典，包含success、action、message字段
+    """
+    try:
+        # 调用AEP API（cmd中已包含所有AEP字段，由工具函数填充）
+        aep_client = get_aep_client()
+        response = await aep_client.send_command(cmd)
+
+        if response.success:
+            # 保存device_name到context
+            if response.device_name:
+                context.last_device_name = response.device_name
+                logger.info("[AEP] 保存设备名称: {name}", name=response.device_name)
+
+            # 根据设备所属区域更新用户位置
+            device_info = dependencies.data_service.get_device_info(cmd.device_name)
+            if device_info:
+                device_area = device_info.get("area", "")
+                if device_area:
+                    old_location = context.location
+                    context.location = device_area
+                    logger.info("[位置更新] 根据设备区域: {old} -> {new}", old=old_location, new=device_area)
+
+            return {
+                "success": True,
+                "action": cmd.action,
+                "message": f"设备「{cmd.device_name}」执行「{cmd.command}」"
+            }
+        else:
+            # API返回失败，发送错误到前端
+            await _send_command_error(websocket, user_id, cmd, response.message, response.code)
+            return {
+                "success": False,
+                "action": cmd.action,
+                "message": response.message
+            }
+
+    except Exception as e:
+        error_msg = f"AEP API调用失败: {str(e)}"
+        logger.exception("[AEP] 命令执行异常")
+        await _send_command_error(websocket, user_id, cmd, error_msg, 500)
+        return {
+            "success": False,
+            "action": cmd.action,
+            "message": error_msg
+        }
+
+
+async def _send_command_error(
+    websocket: WebSocket,
+    user_id: str,
+    cmd: ExhibitionCommand,
+    message: str,
+    code: int
+) -> None:
+    """发送命令错误到前端"""
+    error_payload = json.dumps({
+        "type": "command_error",
+        "user_id": user_id,
+        "command": cmd.model_dump(),
+        "error": {
+            "message": message,
+            "code": code
+        }
+    }, ensure_ascii=False)
+    await websocket.send_text(error_payload)
+    logger.warning("[命令错误] user={user_id}, action={action}, error={error}",
+                   user_id=user_id, action=cmd.action, error=message)
