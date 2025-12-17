@@ -31,24 +31,46 @@ def convert_doors_to_documents(doors_data: List[Dict[str, Any]]) -> List[Documen
     return documents
 
 def convert_devices_to_documents(devices_data: List[Dict[str, Any]]) -> List[Document]:
+    import json
     documents = []
     for device in devices_data:
         content_parts = [f"{device.get('name', '')}"]
         if device.get('type'):
             content_parts.append(f"类型为{device['type']}")
+        if device.get('subType'):
+            content_parts.append(f"子类型为{device['subType']}")
         if device.get('area'):
             content_parts.append(f"位于{device['area']}")
+        if device.get('view'):
+            views = device['view']
+            if isinstance(views, list) and views:
+                content_parts.append(f"视窗区域包括{','.join(views)}")
         if device.get('aliases'):
             content_parts.append(f"也称为{device['aliases']}")
+        if device.get('command'):
+            commands = device['command']
+            if isinstance(commands, list) and commands:
+                content_parts.append(f"支持命令{','.join(commands)}")
         if device.get('description'):
-            content_parts.append(f"内容描述了{device['description']}")
+            content_parts.append(f"此设备为{device['description']}")
 
         content = "，".join(content_parts)
+        
+        # 使用JSON格式存储列表字段，避免分隔符冲突
+        command_list = device.get("command", [])
+        command_json = json.dumps(command_list if isinstance(command_list, list) else [], ensure_ascii=False)
+        
+        view_list = device.get("view", [])
+        view_json = json.dumps(view_list if isinstance(view_list, list) else [], ensure_ascii=False)
+        
         metadata = {
             "type": "device",
             "name": device.get("name", ""),
             "device_type": device.get("type", ""),
+            "sub_type": device.get("subType", ""),
+            "command": command_json,
             "area": device.get("area", ""),
+            "view": view_json,
             "aliases": device.get("aliases", ""),
             "description": device.get("description", ""),
             "filename": ""

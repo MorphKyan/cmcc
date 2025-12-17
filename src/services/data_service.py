@@ -125,17 +125,44 @@ class DataService:
         return areas_dict
 
     def _process_devices_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+        import json
         devices_dict = {}
         if df.empty: return devices_dict
+        
+        def get_str_value(row, key, default=""):
+            """获取字符串值，处理NaN情况"""
+            val = row.get(key, default)
+            if pd.isna(val):
+                return default
+            return str(val).strip()
+        
+        def parse_list_field(raw_value):
+            """解析列表字段：JSON字符串格式，其他情况返回空列表"""
+            if raw_value and not pd.isna(raw_value):
+                if isinstance(raw_value, list):
+                    return raw_value
+                elif isinstance(raw_value, str) and raw_value.strip():
+                    try:
+                        parsed = json.loads(raw_value)
+                        if isinstance(parsed, list):
+                            return parsed
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+            return []
+        
         for _, row in df.iterrows():
-            name = str(row.get("name", "")).strip()
+            name = get_str_value(row, "name")
             if not name: continue
+            
             devices_dict[name] = {
                 "name": name,
-                "type": str(row.get("type", "")),
-                "area": str(row.get("area", "")),
-                "aliases": str(row.get("aliases", "")),
-                "description": str(row.get("description", ""))
+                "type": get_str_value(row, "type"),
+                "subType": get_str_value(row, "subType"),
+                "command": parse_list_field(row.get("command", "")),
+                "area": get_str_value(row, "area"),
+                "view": parse_list_field(row.get("view", "")),
+                "aliases": get_str_value(row, "aliases"),
+                "description": get_str_value(row, "description")
             }
         return devices_dict
 
@@ -209,7 +236,7 @@ class DataService:
 
     async def add_devices(self, items: List[DeviceItem]) -> None:
         settings = get_settings()
-        await self._append_to_csv(settings.data.devices_data_path, items, ['name', 'type', 'area', 'aliases', 'description'])
+        await self._append_to_csv(settings.data.devices_data_path, items, ['name', 'type', 'subType', 'command', 'area', 'view', 'aliases', 'description'])
         self.reload()
 
     async def add_areas(self, items: List[AreaItem]) -> None:
@@ -263,7 +290,7 @@ class DataService:
     async def clear_devices(self) -> None:
         """Clear all device data."""
         settings = get_settings()
-        await self._clear_csv_file(settings.data.devices_data_path, ['name', 'type', 'area', 'aliases', 'description'])
+        await self._clear_csv_file(settings.data.devices_data_path, ['name', 'type', 'subType', 'command', 'area', 'view', 'aliases', 'description'])
         self.reload()
 
     async def clear_areas(self) -> None:

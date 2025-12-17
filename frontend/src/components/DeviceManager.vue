@@ -38,7 +38,10 @@
             <tr>
               <th>名称</th>
               <th>类型</th>
+              <th>子类型</th>
+              <th>命令</th>
               <th>区域</th>
+              <th>视窗</th>
               <th>别名</th>
               <th>描述</th>
             </tr>
@@ -51,7 +54,10 @@
               <td>
                 <span class="item-type">{{ device.type }}</span>
               </td>
+              <td>{{ device.subType || '-' }}</td>
+              <td>{{ device.command ? device.command.join(', ') : '-' }}</td>
               <td>{{ device.area }}</td>
+              <td>{{ device.view ? device.view.join(', ') : '-' }}</td>
               <td>{{ device.aliases }}</td>
               <td>{{ device.description }}</td>
             </tr>
@@ -72,7 +78,7 @@
       
       <div class="hint-box">
         <span class="hint-icon">💡</span>
-        <code class="hint-code">[{"name": "设备名", "type": "screen", "area": "区域名", "aliases": "别名", "description": "描述"}]</code>
+        <code class="hint-code">[{"name": "设备名", "type": "control", "subType": "light", "command": ["开机","关机"], "area": "区域名", "view": ["左上角","右上角"], "aliases": "别名", "description": "描述"}]</code>
       </div>
       
       <textarea 

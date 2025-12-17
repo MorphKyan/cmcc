@@ -92,12 +92,37 @@ class DocumentFormatter:
         result = []
         for doc in docs:
             meta = doc.metadata
-            result.append({
+            
+            # 使用JSON解析列表字段
+            command_json = meta.get("command", "[]")
+            try:
+                command_list = json.loads(command_json) if command_json else []
+            except (json.JSONDecodeError, TypeError):
+                command_list = []
+            
+            # 使用JSON解析view字段
+            view_json = meta.get("view", "[]")
+            try:
+                view_list = json.loads(view_json) if view_json else []
+            except (json.JSONDecodeError, TypeError):
+                view_list = []
+            
+            device_info = {
                 "name": meta.get("name", ""),
                 "type": meta.get("device_type", ""),
                 "area": meta.get("area", ""),
                 "description": f"{meta.get('description', '')}，也称为{meta.get('aliases', '')}"
-            })
+            }
+            
+            # 添加可选字段（仅当存在值时）
+            if meta.get("sub_type"):
+                device_info["subType"] = meta.get("sub_type")
+            if command_list:
+                device_info["command"] = command_list
+            if view_list:
+                device_info["view"] = view_list
+                
+            result.append(device_info)
         return json.dumps(result, ensure_ascii=False, indent=2)
 
     @staticmethod

@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 from pydantic import BaseModel
 
@@ -62,7 +62,10 @@ class ConfigResponse(BaseModel):
 class DeviceItem(BaseModel):
     name: str
     type: str
+    subType: Optional[str] = None
+    command: Optional[List[str]] = None
     area: str
+    view: Optional[List[str]] = None
     aliases: Optional[str] = None
     description: Optional[str] = None
 
