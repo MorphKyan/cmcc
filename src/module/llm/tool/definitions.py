@@ -88,7 +88,7 @@ class ControlDeviceInput(BaseModel):
     """Input for control device command."""
     name: str = Field(description="设备名称")
     type: str = Field(description="设备类型")
-    command: str = Field(description="设备特有的命令，必须是该设备支持的命令之一")
+    command: str = Field(description="设备的自定义命令，必须是该设备的自定义命令之一")
 
 
 class UpdateLocationInput(BaseModel):
