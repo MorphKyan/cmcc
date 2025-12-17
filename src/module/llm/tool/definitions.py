@@ -20,6 +20,7 @@ class CommandAction(str, Enum):
     ADJUST_VOLUME = "adjust_volume"
     UPDATE_LOCATION = "update_location"
     CONTROL_DOOR = "control_door"
+    CONTROL_DEVICE = "control_device"
     ERROR = "error"
 
 
@@ -81,6 +82,13 @@ class AdjustVolumeInput(BaseModel):
     """Input for adjust volume command."""
     device: str = Field(description="要调整音量的设备名称")
     value: Literal["up", "down"] = Field(description="音量调整方向：up（提高）或down（降低）")
+
+
+class ControlDeviceInput(BaseModel):
+    """Input for control device command."""
+    name: str = Field(description="设备名称")
+    type: str = Field(description="设备类型")
+    command: str = Field(description="设备特有的命令，必须是该设备支持的命令之一")
 
 
 class UpdateLocationInput(BaseModel):
@@ -178,6 +186,33 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
     )
 
 
+@tool(args_schema=ControlDeviceInput)
+def control_device(name: str, type: str, command: str) -> ExhibitionCommand:
+    """控制设备执行特定命令"""
+    from src.core import dependencies
+    if not dependencies.data_service.device_exists(name):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            value=f"Device '{name}' not found."
+        )
+    
+    # 验证命令是否是该设备支持的命令
+    device_info = dependencies.data_service.get_device_info(name)
+    if device_info:
+        supported_commands = device_info.get("command", [])
+        if supported_commands and command not in supported_commands:
+            return ExhibitionCommand(
+                action=CommandAction.ERROR.value,
+                value=f"Command '{command}' is not supported by device '{name}'. Supported commands: {supported_commands}"
+            )
+
+    return ExhibitionCommand(
+        action=CommandAction.CONTROL_DEVICE.value,
+        device=name,
+        value=command
+    )
+
+
 @tool(args_schema=UpdateLocationInput)
 def update_location(value: str) -> ExhibitionCommand:
     """更新用户当前的位置"""
@@ -200,6 +235,7 @@ def get_tools():
     return [
         open_media,
         control_door,
+        control_device,
         seek_video,
         set_volume,
         adjust_volume,

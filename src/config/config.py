@@ -97,6 +97,7 @@ SYSTEM_PROMPT_TEMPLATE = """
 *   **open_media**: 根据知识库模糊匹配资源和设备。
 *   **seek_video**: 将时间描述统一转换为秒数（Int）。
 *   **control_door**: 动作映射为 'open' 或 'close'。
+*   **control_device**: 控制设备执行设备自身的自定义命令，自定义命令为设备的`Command`字段。
 *   **Volume**: 绝对值用`set_volume`，相对调整用`adjust_volume`('up'/'down')。
 """
 

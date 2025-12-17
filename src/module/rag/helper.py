@@ -50,7 +50,7 @@ def convert_devices_to_documents(devices_data: List[Dict[str, Any]]) -> List[Doc
         if device.get('command'):
             commands = device['command']
             if isinstance(commands, list) and commands:
-                content_parts.append(f"支持命令{','.join(commands)}")
+                content_parts.append(f"支持自定义命令{','.join(commands)}")
         if device.get('description'):
             content_parts.append(f"此设备为{device['description']}")
 
