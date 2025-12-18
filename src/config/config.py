@@ -344,7 +344,7 @@ class RAGSettings(BaseSettings):
 
     # Common settings
     chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
-    top_k_results: int = 3  # 检索返回的文档数
+    top_k_results: int = 10  # 检索返回的文档数
 
     # Ollama-specific settings
     ollama_embedding_model: str = "qwen3-embedding:0.6b"

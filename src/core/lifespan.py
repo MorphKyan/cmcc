@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     try:
         dependencies.data_service = DataService()
         dependencies.vad_core = VADCore(vad_config)
-        dependencies.asr_processor = ASRProcessor(asr_config, device="auto")
+        dependencies.asr_processor = ASRProcessor(asr_config, device="cpu")
 
         # Initialize RAG processor based on provider configuration
         rag_provider = rag_config.provider.lower()

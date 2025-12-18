@@ -111,19 +111,19 @@ class UpdateLocationInput(BaseModel):
 def open_media(device: str, value: str, view: str = "") -> ExhibitionCommand:
     """打开指定的媒体资源"""
     from src.core import dependencies
-    if not dependencies.data_service.media_exists(device):
+    if not dependencies.data_service.media_exists(value):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Media '{device}' not found."
+            value=f"Media '{value}' not found."
         )
-    if not dependencies.data_service.device_exists(value):
+    if not dependencies.data_service.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Device '{value}' not found."
+            value=f"Device '{device}' not found."
         )
     
     # 从 DataService 获取设备信息并补全
-    device_info = dependencies.data_service.get_device_info(value)
+    device_info = dependencies.data_service.get_device_info(device)
     view_list = device_info.get("view", []) if device_info else []
     
     return ExhibitionCommand(
