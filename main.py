@@ -51,7 +51,7 @@ async def root() -> HealthResponse:
     return HealthResponse(status="healthy", service="Main API Service")
 
 
-def run_api(host: str = '0.0.0.0', port: int = 8000) -> None:
+def run_api(host: str = '0.0.0.0', port: int = 5000) -> None:
     """运行API服务（HTTP模式，由nginx处理HTTPS终结）"""
     import uvicorn
     uvicorn.run(app, host=host, port=port, reload=False)
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='API Service')
     parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
-    parser.add_argument('--port', type=int, default=8000, help='Port to bind to')
+    parser.add_argument('--port', type=int, default=5000, help='Port to bind to')
     args = parser.parse_args()
 
     logger.info("启动API服务: http://{host}:{port}", host=args.host, port=args.port)
