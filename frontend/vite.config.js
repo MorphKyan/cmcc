@@ -69,13 +69,16 @@ export default defineConfig(({ command, mode }) => {
       port: 5173,
       cors: true,
       open: true,
-      https: {
-        cert: fs.readFileSync(path.resolve(__dirname, sslCert)),
-        key: fs.readFileSync(path.resolve(__dirname, sslKey))
-      },
-      // Explicitly set HMR host to match the custom domain to avoid WebSocket connection errors (wss:// vs https://)
+      // Server options
+      host: '0.0.0.0',
+      port: 5173,
+      cors: true,
+      open: true,
+      // HMR settings for Reverse Proxy (Cloudflare/NPM -> Vite)
+      // When accessed via HTTPS, the browser expects WSS. 
+      // NPM handles SSL, so Vite runs in HTTP mode but tells the client to connect via port 443 (HTTPS default)
       hmr: {
-        host: 'local.morphk.icu',
+        clientPort: 443,
       },
       proxy: {
         '/api': {
