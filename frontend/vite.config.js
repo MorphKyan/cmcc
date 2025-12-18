@@ -16,7 +16,7 @@ export default defineConfig(({ command, mode }) => {
   // Configuration from environment variables with fallbacks
   const sslCert = env.VITE_SSL_CERT || 'local_morphk_icu.pem'
   const sslKey = env.VITE_SSL_KEY || 'local_morphk_icu.key'
-  const backendUrl = env.VITE_BACKEND_URL || 'https://localhost:5000'
+  const backendUrl = env.VITE_BACKEND_URL || 'http://localhost:8000'
   // Library build mode for AI Assistant widget
   if (mode === 'lib') {
     return {

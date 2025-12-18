@@ -11,15 +11,9 @@ const getBackendUrl = () => {
     return import.meta.env.VITE_BACKEND_URL;
   }
 
-  // Check if we're in production (built app)
-  if (import.meta.env.PROD) {
-    // In production, use the same origin as the frontend
-    return window.location.origin;
-  }
-
-  // Fallback: construct from domain env var or use localhost
-  const devDomain = import.meta.env.VITE_DEV_DOMAIN || 'localhost';
-  return `https://${devDomain}:5000`;
+  // In production, use the same origin (nginx proxies /api to backend)
+  // In development, vite proxy handles /api requests
+  return window.location.origin;
 };
 
 // Get WebSocket URL based on current protocol and backend configuration
