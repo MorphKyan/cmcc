@@ -5,7 +5,6 @@ central control system via POST /aep/voice/command endpoint.
 """
 
 import hashlib
-import uuid
 from typing import Optional
 
 import httpx
@@ -18,11 +17,12 @@ from src.config.config import get_settings
 
 class AEPVoiceCommandRequest(BaseModel):
     """Request model for /aep/voice/command endpoint."""
-    id: str
+    cmdId: str
     name: str
     type: str
     subType: str = ""
     command: str = ""
+    param: str = ""
     view: str = ""
     resource: str = ""
     sign: str = ""
@@ -61,7 +61,7 @@ class AEPClient:
         sign_string = "&".join(f"{k}={v}" for k, v in sorted_items)
         # Add salt and calculate MD5
         sign_string_with_salt = sign_string + self._salt
-        return hashlib.md5(sign_string_with_salt.encode()).hexdigest()
+        return hashlib.md5(sign_string_with_salt.encode()).hexdigest().upper()
 
     async def send_voice_command(
         self,
@@ -89,11 +89,12 @@ class AEPClient:
 
         # Build request params (without sign)
         params = {
-            "id": request_id,
+            "cmdId": request_id,
             "name": name,
             "type": device_type,
             "subType": sub_type,
             "command": command,
+            "param": "",
             "view": view,
             "resource": resource
         }
@@ -109,7 +110,7 @@ class AEPClient:
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
                 response = await client.post(
-                    f"{self._base_url}/aep/voice/command",
+                    self._base_url,
                     json=params
                 )
                 response.raise_for_status()

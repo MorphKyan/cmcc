@@ -74,6 +74,6 @@ llm_model_name = "doubao-seed-1-6-flash-250715"
 
 # AEP中控系统配置
 [aep]
-base_url = "http://localhost:8080"
-sign_salt = "your_secret_salt_here"
+base_url = "http://114.242.9.52:9088/aep/voice/command"
+sign_salt = "cE0aM0qC0dB4aD2"
 request_timeout = 10
