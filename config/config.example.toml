@@ -35,6 +35,10 @@ doors_data_path = "./data/doors.csv"
 provider = "ollama"
 chroma_db_dir = "./chroma_db"
 top_k_results = 10
+# 分类检索 top_k 配置
+door_top_k = 30
+media_top_k = 30
+device_top_k = 30
 # Ollama 配置
 ollama_embedding_model = "qwen3-embedding:0.6b"
 ollama_base_url = "http://127.0.0.1:11434"
