@@ -28,7 +28,7 @@ class ExhibitionCommand(BaseModel):
     包含所有 AEP API 所需的字段，工具函数内部负责从 DataService 补全信息。
     """
     action: str = Field(description="需要执行的具体命令动作，必须是预定义的合法动作之一")
-    message: str = Field(description="错误提示")
+    message: Optional[str] = Field(default=None, description="错误提示")
     device_name: Optional[str] = Field(default=None, description="命令的目标设备名称")
     device_type: str = Field(default="", description="设备类型 (player/led/control)")
     sub_type: str = Field(default="", description="设备子类型")
@@ -43,15 +43,15 @@ class ExecutableCommand(BaseModel):
     user_id: str = Field(description="执行命令的用户ID")
     commands: list[ExhibitionCommand] = Field(default_factory=list)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    
+
     def get_local_commands(self) -> list[ExhibitionCommand]:
         """获取需要本地执行的命令（如更新位置）"""
         return [cmd for cmd in self.commands if cmd.action == CommandAction.UPDATE_LOCATION.value]
-    
+
     def get_remote_commands(self) -> list[ExhibitionCommand]:
         """获取需要发送到前端的命令"""
         return [cmd for cmd in self.commands if cmd.action != CommandAction.UPDATE_LOCATION.value]
-    
+
     def to_websocket_payload(self) -> str:
         """转换为 WebSocket 发送的 JSON 格式"""
         remote_cmds = self.get_remote_commands()
@@ -109,7 +109,7 @@ def open_media(device: str, value: str, view: str | None = None) -> ExhibitionCo
     """打开指定的媒体资源"""
     from src.core import dependencies
     ds = dependencies.data_service
-    
+
     if not ds.media_exists(value):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
@@ -120,17 +120,17 @@ def open_media(device: str, value: str, view: str | None = None) -> ExhibitionCo
             action=CommandAction.ERROR.value,
             message=f"Device '{device}' not found."
         )
-    
+
     device_info = ds.get_device_info(device) or {}
     view_list = device_info.get("view", [])
-    
+
     # 校验 view 是否存在于设备的 view 列表中
     if view and view not in view_list:
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
             message=f"View '{view}' not found in device '{device}'. Available views: {view_list}"
         )
-    
+
     return ExhibitionCommand(
         action=CommandAction.OPEN_MEDIA.value,
         device_name=device,
@@ -145,13 +145,13 @@ def control_door(door: str, value: Literal["open", "close"]) -> ExhibitionComman
     """控制门的开关"""
     from src.core import dependencies
     ds = dependencies.data_service
-    
+
     if not ds.door_exists(door):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
             message=f"Door '{door}' not found."
         )
-    
+
     door_info = ds.get_door_info(door) or {}
 
     return ExhibitionCommand(
@@ -167,13 +167,13 @@ def seek_video(device: str, value: int) -> ExhibitionCommand:
     """跳转到视频的指定时间点"""
     from src.core import dependencies
     ds = dependencies.data_service
-    
+
     if not ds.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
             message=f"Device '{device}' not found."
         )
-    
+
     device_info = ds.get_device_info(device) or {}
 
     return ExhibitionCommand(
@@ -189,13 +189,13 @@ def set_volume(device: str, value: int) -> ExhibitionCommand:
     """设置音量到指定的绝对值"""
     from src.core import dependencies
     ds = dependencies.data_service
-    
+
     if not ds.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
             message=f"Device '{device}' not found."
         )
-    
+
     device_info = ds.get_device_info(device) or {}
 
     return ExhibitionCommand(
@@ -211,13 +211,13 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
     """相对提高或降低音量"""
     from src.core import dependencies
     ds = dependencies.data_service
-    
+
     if not ds.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
             message=f"Device '{device}' not found."
         )
-    
+
     device_info = ds.get_device_info(device) or {}
 
     return ExhibitionCommand(
@@ -229,19 +229,19 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
 
 
 @tool(args_schema=ControlDeviceInput)
-def control_device(name: str, type: str, command: str) -> ExhibitionCommand:
+def control_device(name: str, device_type: str, command: str) -> ExhibitionCommand:
     """控制设备执行特定命令"""
     from src.core import dependencies
     ds = dependencies.data_service
-    
+
     if not ds.device_exists(name):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
             message=f"Device '{name}' not found."
         )
-    
+
     device_info = ds.get_device_info(name) or {}
-    
+
     # 验证命令是否是该设备支持的命令
     supported_commands = device_info.get("command", [])
     if supported_commands and command not in supported_commands:
@@ -249,12 +249,11 @@ def control_device(name: str, type: str, command: str) -> ExhibitionCommand:
             action=CommandAction.ERROR.value,
             message=f"Command '{command}' is not supported by device '{name}'. Supported commands: {supported_commands}"
         )
-    
-    
+
     return ExhibitionCommand(
         action=CommandAction.CONTROL_DEVICE.value,
         device_name=name,
-        device_type=device_info.get("type", "") or type,
+        device_type=device_info.get("type", "") or device_type,
         sub_type=device_info.get("subType", ""),
         command=command,
     )
@@ -272,7 +271,7 @@ def update_location(value: str) -> ExhibitionCommand:
 
     return ExhibitionCommand(
         action=CommandAction.UPDATE_LOCATION.value,
-        value=value
+        message=value
     )
 
 

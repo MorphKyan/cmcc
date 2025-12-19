@@ -287,13 +287,13 @@ async def _execute_local_command(cmd: ExhibitionCommand, context: Context) -> di
 def _get_command_description(cmd: ExhibitionCommand) -> str:
     """获取命令的用户友好描述"""
     action_descriptions = {
-        "open_media": lambda c: f"在「{c.device_name}」上打开「{c.value}」",
-        "open": lambda c: f"打开「{c.value}」",
-        "close": lambda c: f"关闭「{c.value}」",
-        "seek": lambda c: f"将「{c.device_name}」跳转到{c.value}秒",
-        "set_volume": lambda c: f"将「{c.device_name}」音量设置为{c.value}",
-        "adjust_volume": lambda c: f"{'提高' if c.value == 'up' else '降低'}「{c.device_name}」音量",
-        "control_device": lambda c: f"控制设备「{c.device_name}」执行「{c.value}」",
+        "open_media": lambda c: f"在「{c.device_name}」上打开「{c.resource}」",
+        "open": lambda c: f"打开「{c.params}」",
+        "close": lambda c: f"关闭「{c.params}」",
+        "seek": lambda c: f"将「{c.device_name}」跳转到{c.params}秒",
+        "set_volume": lambda c: f"将「{c.device_name}」音量设置为{c.params}",
+        "adjust_volume": lambda c: f"{'提高' if c.params == 'up' else '降低'}「{c.device_name}」音量",
+        "control_device": lambda c: f"控制设备「{c.device_name}」执行「{c.command}」",
     }
 
     if cmd.action in action_descriptions:

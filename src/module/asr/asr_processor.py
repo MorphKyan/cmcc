@@ -86,7 +86,8 @@ class ASRProcessor:
             input=audio_data, cache={}, language=self.settings.language, use_itn=self.settings.use_itn,
             batch_size_s=self.settings.batch_size_s, merge_vad=self.settings.merge_vad,
             merge_length_s=self.settings.merge_length_s,
-            ban_emo_unk=True  # 禁止输出感情标签
+            ban_emo_unk=True,  # 禁止输出感情标签
+            disable_pbar=True  # 禁用进度条
         )
 
         if res and res[0].get("text"):
@@ -108,7 +109,8 @@ class ASRProcessor:
             input=audio_data, cache={}, language=self.settings.language, use_itn=self.settings.use_itn,
             batch_size_s=self.settings.batch_size_s, merge_vad=self.settings.merge_vad,
             merge_length_s=self.settings.merge_length_s,
-            ban_emo_unk=True
+            ban_emo_unk=True,
+            disable_pbar=True  # 禁用进度条
         )
 
         results = []
