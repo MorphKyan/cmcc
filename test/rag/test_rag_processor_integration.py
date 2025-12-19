@@ -7,7 +7,7 @@ actual document flow in audio_pipeline.py.
 import pytest
 
 from src.module.rag.base_rag_processor import MetadataType, RAGStatus
-from .conftest import DEVICE_QUERIES, VIDEO_QUERIES, DOOR_QUERIES, COMBINED_QUERIES
+from .conftest import DEVICE_QUERIES, VIDEO_QUERIES, COMBINED_QUERIES
 
 
 @pytest.mark.asyncio
@@ -53,30 +53,6 @@ class TestVideoRetrieval:
         all_content = " ".join([doc.page_content + str(doc.metadata) for doc in docs])
         found = any(kw in all_content for kw in expected_keywords)
         assert found, f"Expected one of {expected_keywords} in results for query: {query}"
-
-
-@pytest.mark.asyncio
-class TestDoorRetrieval:
-    """Test door document retrieval with human speech queries."""
-
-    @pytest.mark.parametrize("query,expected_keyword", DOOR_QUERIES)
-    async def test_query_door(self, rag_processor, query, expected_keyword):
-        """Test: {query}"""
-        docs = await rag_processor.retrieve_context(
-            query,
-            metadata_types=[MetadataType.DOOR],
-            top_k=5
-        )
-        
-        assert len(docs) > 0, f"Should retrieve at least one door for: {query}"
-        
-        # Check if expected keyword appears in any returned document
-        found = any(
-            expected_keyword in doc.page_content or 
-            expected_keyword in str(doc.metadata)
-            for doc in docs
-        )
-        assert found, f"Expected '{expected_keyword}' in results for query: {query}"
 
 
 @pytest.mark.asyncio

@@ -145,16 +145,41 @@ class BaseRAGProcessor(ABC):
         
         if metadata_types is None:
             # 无过滤
-            docs = await self.vector_store.asimilarity_search(query, k=k)
+            docs_with_scores = await self.vector_store.asimilarity_search_with_score(query, k=k)
         else:
             # 使用metadata过滤
             type_values = [t.value for t in metadata_types]
             filter_dict = {"type": {"$in": type_values}}
-            docs = await self.vector_store.asimilarity_search(
+            docs_with_scores = await self.vector_store.asimilarity_search_with_score(
                 query, k=k, filter=filter_dict
             )
         
-        logger.info("检索到 {num_docs} 个相关文档。", num_docs=len(docs))
+        logger.info("检索到 {num_docs} 个相关文档。", num_docs=len(docs_with_scores))
+        
+        # 输出详细的文档信息用于调试
+        if docs_with_scores:
+            logger.debug("=" * 60)
+            logger.debug("检索结果详情 (查询: '{query}')", query=query[:50] + "..." if len(query) > 50 else query)
+            logger.debug("=" * 60)
+            for idx, (doc, score) in enumerate(docs_with_scores, 1):
+                metadata = doc.metadata
+                doc_type = metadata.get("type", "unknown")
+                content_preview = doc.page_content[:100] + "..." if len(doc.page_content) > 100 else doc.page_content
+                # Chroma返回的是距离(distance)，越小越相似
+                # 将距离转换为相似度百分比: similarity = 1 / (1 + distance)
+                similarity_pct = (1 / (1 + score)) * 100
+                
+                logger.debug(
+                    "[文档 {idx}/{total}] 类型: {doc_type} | 距离: {distance:.4f} | 相似度: {similarity:.1f}%",
+                    idx=idx, total=len(docs_with_scores), doc_type=doc_type, 
+                    distance=score, similarity=similarity_pct
+                )
+                logger.debug("  内容预览: {content}", content=content_preview)
+                logger.debug("  元数据: {metadata}", metadata=metadata)
+                logger.debug("-" * 40)
+        
+        # 只返回文档，不返回得分
+        docs = [doc for doc, _ in docs_with_scores]
         return docs
 
     @abstractmethod
