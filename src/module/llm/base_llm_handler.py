@@ -298,10 +298,10 @@ class BaseLLMHandler(ABC):
 
 
                     # Execute tool
-                    result = tool_function.invoke(tool_args)
+                    result: ExhibitionCommand = tool_function.invoke(tool_args)
                     
                     if isinstance(result, ExhibitionCommand) and result.action == "error":
-                        tool_outputs.append(ToolMessage(content=f"Error: {result.value}", tool_call_id=tool_call_id))
+                        tool_outputs.append(ToolMessage(content=f"Error: {result.message}", tool_call_id=tool_call_id))
                         has_error = True
                     else:
                         tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id))

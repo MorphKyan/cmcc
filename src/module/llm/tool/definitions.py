@@ -12,9 +12,7 @@ from langchain_core.tools import tool
 
 class CommandAction(str, Enum):
     """命令动作类型枚举"""
-    OPEN = "open"
     OPEN_MEDIA = "open_media"
-    CLOSE = "close"
     SEEK = "seek"
     SET_VOLUME = "set_volume"
     ADJUST_VOLUME = "adjust_volume"
@@ -30,14 +28,13 @@ class ExhibitionCommand(BaseModel):
     包含所有 AEP API 所需的字段，工具函数内部负责从 DataService 补全信息。
     """
     action: str = Field(description="需要执行的具体命令动作，必须是预定义的合法动作之一")
-    # 基础字段
+    message: str = Field(description="错误提示")
     device_name: Optional[str] = Field(default=None, description="命令的目标设备名称")
-    value: Optional[str | int] = Field(default=None, description="命令的具体参数值（字符串或整数）")
-    # AEP API 扩展字段
     device_type: str = Field(default="", description="设备类型 (player/led/control)")
-    command: str = Field(default="", description="设备的自定义命令名称")
     sub_type: str = Field(default="", description="设备子类型")
     view: str = Field(default="", description="视窗名称")
+    command: str = Field(default="", description="设备的自定义命令名称")
+    params: Optional[str | int] = Field(default=None, description="命令的具体参数值（字符串或整数）")
     resource: str = Field(default="", description="资源名称")
 
 
@@ -66,20 +63,20 @@ class ExecutableCommand(BaseModel):
 
 class OpenMediaInput(BaseModel):
     """Input for open media command."""
-    device: str = Field(description="执行播放的设备标识符")
+    device: str = Field(description="执行播放的设备名称")
+    view: Optional[str] = Field(default=None, description="视窗名称，用户指定视窗区域")
     value: str = Field(description="媒体资源的名称或路径")
-    view: str = Field(default="", description="视窗名称，用户指定视窗区域")
 
 
 class ControlDoorInput(BaseModel):
     """Input for control door command."""
-    device: str = Field(description="目标门的标识符")
+    device: str = Field(description="目标门的名称")
     value: Literal["open", "close"] = Field(description="控制动作：'open' 表示打开，'close' 表示关闭")
 
 
 class SeekVideoInput(BaseModel):
     """Input for seek video command."""
-    device: str = Field(description="需要跳转进度的设备标识符")
+    device: str = Field(description="需要跳转进度的设备名称")
     value: int = Field(description="目标时间点（单位：秒）")
 
 
@@ -108,51 +105,60 @@ class UpdateLocationInput(BaseModel):
 
 
 @tool(args_schema=OpenMediaInput)
-def open_media(device: str, value: str, view: str = "") -> ExhibitionCommand:
+def open_media(device: str, value: str, view: str | None = None) -> ExhibitionCommand:
     """打开指定的媒体资源"""
     from src.core import dependencies
-    if not dependencies.data_service.media_exists(value):
+    ds = dependencies.data_service
+    
+    if not ds.media_exists(value):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Media '{value}' not found."
+            message=f"Media '{value}' not found."
         )
-    if not dependencies.data_service.device_exists(device):
+    if not ds.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Device '{device}' not found."
+            message=f"Device '{device}' not found."
         )
     
-    # 从 DataService 获取设备信息并补全
-    device_info = dependencies.data_service.get_device_info(device)
-    view_list = device_info.get("view", []) if device_info else []
+    device_info = ds.get_device_info(device) or {}
+    view_list = device_info.get("view", [])
+    
+    # 校验 view 是否存在于设备的 view 列表中
+    if view and view not in view_list:
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            message=f"View '{view}' not found in device '{device}'. Available views: {view_list}"
+        )
     
     return ExhibitionCommand(
         action=CommandAction.OPEN_MEDIA.value,
         device_name=device,
-        value=value,
-        # AEP 字段补全
-        device_type=device_info.get("type", "") if device_info else "",
-        command="",
-        sub_type=device_info.get("subType", "") if device_info else "",
-        view=view if view else (", ".join(view_list) if isinstance(view_list, list) else str(view_list)),
-        resource=device
+        device_type=device_info.get("type", ""),
+        view=view or "",
+        resource=value
     )
 
 
 @tool(args_schema=ControlDoorInput)
-def control_door(device: str, value: Literal["open", "close"]) -> ExhibitionCommand:
+def control_door(door: str, value: Literal["open", "close"]) -> ExhibitionCommand:
     """控制门的开关"""
     from src.core import dependencies
-    if not dependencies.data_service.door_exists(device):
+    ds = dependencies.data_service
+    
+    if not ds.door_exists(door):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Door '{device}' not found."
+            message=f"Door '{door}' not found."
         )
+    
+    door_info = ds.get_door_info(door) or {}
 
     return ExhibitionCommand(
         action=CommandAction.CONTROL_DOOR.value,
-        device_name=device,
-        value=value
+        device_name=door,
+        device_type=door_info.get("type", ""),
+        params=value
     )
 
 
@@ -160,16 +166,21 @@ def control_door(device: str, value: Literal["open", "close"]) -> ExhibitionComm
 def seek_video(device: str, value: int) -> ExhibitionCommand:
     """跳转到视频的指定时间点"""
     from src.core import dependencies
-    if not dependencies.data_service.device_exists(device):
+    ds = dependencies.data_service
+    
+    if not ds.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Device '{device}' not found."
+            message=f"Device '{device}' not found."
         )
+    
+    device_info = ds.get_device_info(device) or {}
 
     return ExhibitionCommand(
         action=CommandAction.SEEK.value,
         device_name=device,
-        value=value
+        device_type=device_info.get("type", ""),
+        params=value
     )
 
 
@@ -177,16 +188,21 @@ def seek_video(device: str, value: int) -> ExhibitionCommand:
 def set_volume(device: str, value: int) -> ExhibitionCommand:
     """设置音量到指定的绝对值"""
     from src.core import dependencies
-    if not dependencies.data_service.device_exists(device):
+    ds = dependencies.data_service
+    
+    if not ds.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Device '{device}' not found."
+            message=f"Device '{device}' not found."
         )
+    
+    device_info = ds.get_device_info(device) or {}
 
     return ExhibitionCommand(
         action=CommandAction.SET_VOLUME.value,
         device_name=device,
-        value=value
+        device_type=device_info.get("type", ""),
+        params=value
     )
 
 
@@ -194,16 +210,21 @@ def set_volume(device: str, value: int) -> ExhibitionCommand:
 def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionCommand:
     """相对提高或降低音量"""
     from src.core import dependencies
-    if not dependencies.data_service.device_exists(device):
+    ds = dependencies.data_service
+    
+    if not ds.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Device '{device}' not found."
+            message=f"Device '{device}' not found."
         )
+    
+    device_info = ds.get_device_info(device) or {}
 
     return ExhibitionCommand(
         action=CommandAction.ADJUST_VOLUME.value,
         device_name=device,
-        value=value
+        device_type=device_info.get("type", ""),
+        params=value
     )
 
 
@@ -211,35 +232,31 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
 def control_device(name: str, type: str, command: str) -> ExhibitionCommand:
     """控制设备执行特定命令"""
     from src.core import dependencies
-    if not dependencies.data_service.device_exists(name):
+    ds = dependencies.data_service
+    
+    if not ds.device_exists(name):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Device '{name}' not found."
+            message=f"Device '{name}' not found."
         )
     
-    # 验证命令是否是该设备支持的命令
-    device_info = dependencies.data_service.get_device_info(name)
-    if device_info:
-        supported_commands = device_info.get("command", [])
-        if supported_commands and command not in supported_commands:
-            return ExhibitionCommand(
-                action=CommandAction.ERROR.value,
-                value=f"Command '{command}' is not supported by device '{name}'. Supported commands: {supported_commands}"
-            )
+    device_info = ds.get_device_info(name) or {}
     
-    # 从 DataService 获取设备信息并补全
-    view_list = device_info.get("view", []) if device_info else []
+    # 验证命令是否是该设备支持的命令
+    supported_commands = device_info.get("command", [])
+    if supported_commands and command not in supported_commands:
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            message=f"Command '{command}' is not supported by device '{name}'. Supported commands: {supported_commands}"
+        )
+    
     
     return ExhibitionCommand(
         action=CommandAction.CONTROL_DEVICE.value,
         device_name=name,
-        value=command,
-        # AEP 字段补全
-        device_type=device_info.get("type", "") if device_info else type,
+        device_type=device_info.get("type", "") or type,
+        sub_type=device_info.get("subType", ""),
         command=command,
-        sub_type=device_info.get("subType", "") if device_info else "",
-        view=", ".join(view_list) if isinstance(view_list, list) else str(view_list),
-        resource=""
     )
 
 
@@ -250,12 +267,11 @@ def update_location(value: str) -> ExhibitionCommand:
     if not dependencies.data_service.area_exists(value):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            value=f"Area '{value}' not found."
+            message=f"Area '{value}' not found."
         )
 
     return ExhibitionCommand(
         action=CommandAction.UPDATE_LOCATION.value,
-        device_name=None,
         value=value
     )
 
