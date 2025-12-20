@@ -11,8 +11,8 @@ class TestUploadDevicesBatch:
     def test_upload_devices_batch_success(self, client, mock_data_service, mock_rag_processor):
         """Test successful batch upload of devices."""
         devices = [
-            {"name": "Device1", "type": "sensor", "area": "Area1", "aliases": "d1", "description": "Test device 1"},
-            {"name": "Device2", "type": "actuator", "area": "Area2"}
+            {"name": "主屏幕", "type": "screen", "area": "5G先锋体验区", "aliases": "中央大屏,迎宾屏,展厅巨幕", "description": "位于展厅正中央，通常播放欢迎视频或整体宣传片。"},
+            {"name": "左侧互动大屏", "type": "screen", "area": "5G先锋体验区", "aliases": "互动体验屏,业务查询屏,左边屏幕", "description": "位于入口左侧，提供触摸互动功能。"}
         ]
         
         response = client.post("/data/devices/batch", json=devices)
@@ -22,11 +22,11 @@ class TestUploadDevicesBatch:
         assert data["status"] == "success"
         assert "设备数据批量上传成功" in data["message"]
         mock_data_service.add_devices.assert_called_once()
-        mock_rag_processor.refresh_database.assert_called_once()
+        mock_rag_processor.batch_add_devices.assert_called_once()
 
     def test_upload_devices_batch_service_unavailable(self, client_no_service):
         """Test 503 error when DataService is not initialized."""
-        devices = [{"name": "Device1", "type": "sensor", "area": "Area1"}]
+        devices = [{"name": "主屏幕", "type": "screen", "area": "5G先锋体验区"}]
         
         response = client_no_service.post("/data/devices/batch", json=devices)
         
@@ -36,7 +36,7 @@ class TestUploadDevicesBatch:
     def test_upload_devices_batch_error(self, client, mock_data_service):
         """Test 500 error when an exception occurs during upload."""
         mock_data_service.add_devices = AsyncMock(side_effect=Exception("Database error"))
-        devices = [{"name": "Device1", "type": "sensor", "area": "Area1"}]
+        devices = [{"name": "主屏幕", "type": "screen", "area": "5G先锋体验区"}]
         
         response = client.post("/data/devices/batch", json=devices)
         
@@ -49,25 +49,22 @@ class TestGetDevices:
 
     def test_get_devices_success(self, client, mock_data_service):
         """Test successful retrieval of all devices."""
-        mock_data_service.get_all_devices.return_value = ["Device1", "Device2"]
-        # Use a dict-based side_effect to handle multiple calls per device
-        device_data = {
-            "Device1": {"name": "Device1", "type": "sensor", "area": "Area1"},
-            "Device2": {"name": "Device2", "type": "actuator", "area": "Area2"}
-        }
-        mock_data_service.get_device_info.side_effect = lambda name: device_data.get(name)
+        mock_data_service.get_all_devices_data.return_value = [
+            {"name": "主屏幕", "type": "screen", "area": "5G先锋体验区"},
+            {"name": "左侧互动大屏", "type": "screen", "area": "5G先锋体验区"}
+        ]
         
         response = client.get("/data/devices")
         
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
-        assert data[0]["name"] == "Device1"
-        assert data[1]["name"] == "Device2"
+        assert data[0]["name"] == "主屏幕"
+        assert data[1]["name"] == "左侧互动大屏"
 
     def test_get_devices_empty(self, client, mock_data_service):
         """Test retrieval when no devices exist."""
-        mock_data_service.get_all_devices.return_value = []
+        mock_data_service.get_all_devices_data.return_value = []
         
         response = client.get("/data/devices")
         

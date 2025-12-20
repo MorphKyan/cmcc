@@ -28,6 +28,10 @@ def mock_data_service():
     mock.get_all_areas = MagicMock(return_value=[])
     mock.get_all_media = MagicMock(return_value=[])
     mock.get_all_doors = MagicMock(return_value=[])
+    mock.get_all_devices_data = MagicMock(return_value=[])
+    mock.get_all_areas_data = MagicMock(return_value=[])
+    mock.get_all_media_data = MagicMock(return_value=[])
+    mock.get_all_doors_data = MagicMock(return_value=[])
     mock.get_device_info = MagicMock(return_value=None)
     mock.get_area_info = MagicMock(return_value=None)
     mock.get_media_info = MagicMock(return_value=None)
@@ -40,6 +44,10 @@ def mock_rag_processor():
     """Create a mock RAG processor instance."""
     mock = MagicMock()
     mock.refresh_database = AsyncMock()
+    mock.batch_add_devices = AsyncMock()
+    mock.batch_add_areas = AsyncMock()
+    mock.batch_add_media = AsyncMock()
+    mock.batch_add_doors = AsyncMock()
     return mock
 
 
