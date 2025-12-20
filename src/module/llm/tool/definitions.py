@@ -2,7 +2,6 @@
 LLM函数调用工具定义 - Modern Structured Output Approach.
 """
 import json
-from datetime import datetime
 from enum import Enum
 from typing import Literal, Optional
 
@@ -36,21 +35,6 @@ class ExhibitionCommand(BaseModel):
     command: str = Field(default="", description="设备的自定义命令名称")
     params: Optional[str | int] = Field(default=None, description="命令的具体参数值（字符串或整数）")
     resource: str = Field(default="", description="资源名称")
-
-
-class ExecutableCommand(BaseModel):
-    """可执行的命令包，包含完整上下文"""
-    user_id: str = Field(description="执行命令的用户ID")
-    commands: list[ExhibitionCommand] = Field(default_factory=list)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-    def get_local_commands(self) -> list[ExhibitionCommand]:
-        """获取需要本地执行的命令（如更新位置）"""
-        return [cmd for cmd in self.commands if cmd.action == CommandAction.UPDATE_LOCATION.value]
-
-    def get_remote_commands(self) -> list[ExhibitionCommand]:
-        """获取需要发送到前端的命令"""
-        return [cmd for cmd in self.commands if cmd.action != CommandAction.UPDATE_LOCATION.value]
 
 
 class OpenMediaInput(BaseModel):

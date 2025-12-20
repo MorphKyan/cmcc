@@ -9,7 +9,7 @@ from langchain_core.messages import HumanMessage
 
 from src.api.context import Context
 from src.core import dependencies
-from src.module.llm.tool.definitions import ExecutableCommand, ExhibitionCommand, CommandAction
+from src.module.llm.tool.definitions import ExhibitionCommand, CommandAction
 from src.services.performance_metrics_manager import MetricType
 from src.services.aep_client import get_aep_client
 
@@ -179,14 +179,8 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
                 logger.info("[提示] 未识别到有效指令，已通知用户")
                 continue
 
-            # 构建可执行命令对象
-            executable_cmd = ExecutableCommand(
-                user_id=context.context_id,
-                commands=commands
-            )
-
-            # 放入命令队列，由执行器异步处理
-            await context.command_queue.put(executable_cmd)
+            # 将命令列表放入队列，由执行器异步处理
+            await context.command_queue.put(commands)
 
         except Exception as e:
             logger.exception("[LLM/RAG错误]")
@@ -199,13 +193,14 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
     logger.info("命令执行器已启动")
     while True:
         try:
-            executable_cmd = await context.command_queue.get()
+            commands: list[ExhibitionCommand] = await context.command_queue.get()
+            user_id = context.context_id
 
             start_time = asyncio.get_running_loop().time()
             execution_results: list[dict] = []
 
             # 1. 先执行本地命令（仅 update_location 在本地执行）
-            local_commands = executable_cmd.get_local_commands()
+            local_commands = [cmd for cmd in commands if cmd.action == CommandAction.UPDATE_LOCATION.value]
             for cmd in local_commands:
                 logger.info("[本地命令] {cmd}", cmd=cmd.model_dump())
                 
@@ -214,7 +209,7 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                 # 发送本地命令执行结果到前端
                 local_result_payload = json.dumps({
                     "type": "command_result",
-                    "user_id": executable_cmd.user_id,
+                    "user_id": user_id,
                     "command": cmd.model_dump(),
                     "result": result
                 }, ensure_ascii=False)
@@ -222,11 +217,11 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                 logger.info("[本地命令结果] {result}", result=result)
 
             # 2. 发送远程命令到 AEP
-            remote_commands = executable_cmd.get_remote_commands()
+            remote_commands = [cmd for cmd in commands if cmd.action != CommandAction.UPDATE_LOCATION.value]
             for cmd in remote_commands:
                 logger.info("[AEP命令] {cmd}", cmd=cmd.model_dump())
                 
-                aep_result = await _execute_aep_command(cmd, context, websocket, executable_cmd.user_id)
+                aep_result = await _execute_aep_command(cmd, context, websocket, user_id)
                 execution_results.append(aep_result)
                 logger.info("[AEP命令结果] {result}", result=aep_result)
 
@@ -239,7 +234,7 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
             if summary_messages:
                 summary_payload = json.dumps({
                     "type": "execution_summary",
-                    "user_id": executable_cmd.user_id,
+                    "user_id": user_id,
                     "messages": summary_messages,
                     "summary": "正在执行：" + "；".join(summary_messages)
                 }, ensure_ascii=False)
