@@ -52,14 +52,6 @@ class ExecutableCommand(BaseModel):
         """获取需要发送到前端的命令"""
         return [cmd for cmd in self.commands if cmd.action != CommandAction.UPDATE_LOCATION.value]
 
-    def to_websocket_payload(self) -> str:
-        """转换为 WebSocket 发送的 JSON 格式"""
-        remote_cmds = self.get_remote_commands()
-        return json.dumps({
-            "user_id": self.user_id,
-            "commands": [cmd.model_dump() for cmd in remote_cmds]
-        }, ensure_ascii=False)
-
 
 class OpenMediaInput(BaseModel):
     """Input for open media command."""

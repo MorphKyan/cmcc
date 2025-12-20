@@ -10,6 +10,7 @@ from typing import List
 from loguru import logger
 
 from src.config.config import LLMSettings
+from src.module.llm.tool.definitions import CommandAction
 
 
 @dataclass
@@ -39,7 +40,7 @@ class SmartRetryHandler:
             errors = []
 
             for command in commands:
-                if command.get("action") == "error":
+                if command.get("action") == CommandAction.ERROR.value:
                     value = command.get("value", "")
                     if "validation_failed:" in value:
                         errors.append(value.replace("validation_failed:", "").strip())

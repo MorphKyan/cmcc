@@ -204,8 +204,11 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
             start_time = asyncio.get_running_loop().time()
             execution_results: list[dict] = []
 
-            # 1. 先执行本地命令（如更新位置）
-            for cmd in executable_cmd.get_local_commands():
+            # 1. 先执行本地命令（仅 update_location 在本地执行）
+            local_commands = executable_cmd.get_local_commands()
+            for cmd in local_commands:
+                logger.info("[本地命令] {cmd}", cmd=cmd.model_dump())
+                
                 result = await _execute_local_command(cmd, context)
                 execution_results.append(result)
                 # 发送本地命令执行结果到前端
@@ -216,32 +219,18 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
                     "result": result
                 }, ensure_ascii=False)
                 await websocket.send_text(local_result_payload)
-                logger.info("[本地命令结果] action={action}, success={success}, message={message}",
-                            action=cmd.action, success=result.get("success"), message=result.get("message"))
+                logger.info("[本地命令结果] {result}", result=result)
 
-            # 2. 发送远程命令
+            # 2. 发送远程命令到 AEP
             remote_commands = executable_cmd.get_remote_commands()
             for cmd in remote_commands:
-                # control_device命令通过AEP HTTP API发送
-                if cmd.action == CommandAction.CONTROL_DEVICE.value:
-                    aep_result = await _execute_aep_command(cmd, context, websocket, executable_cmd.user_id)
-                    execution_results.append(aep_result)
-                else:
-                    # 其他远程命令仍通过WebSocket发送到前端
-                    single_cmd_payload = json.dumps({
-                        "user_id": executable_cmd.user_id,
-                        "commands": [cmd.model_dump()]
-                    }, ensure_ascii=False)
-                    logger.info("[发送命令] user={user_id}, action={action}, device={device}",
-                                user_id=executable_cmd.user_id, action=cmd.action, device=cmd.device_name)
-                    await websocket.send_text(single_cmd_payload)
-                    execution_results.append({
-                        "success": True,
-                        "action": cmd.action,
-                        "message": _get_command_description(cmd)
-                    })
+                logger.info("[AEP命令] {cmd}", cmd=cmd.model_dump())
+                
+                aep_result = await _execute_aep_command(cmd, context, websocket, executable_cmd.user_id)
+                execution_results.append(aep_result)
+                logger.info("[AEP命令结果] {result}", result=aep_result)
 
-            # 3. 发送执行摘要到前端（用户友好的提示）
+            # 3. 发送执行摘要到前端
             summary_messages: list[str] = []
             for result in execution_results:
                 if result.get("success"):
@@ -268,14 +257,14 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
 
 async def _execute_local_command(cmd: ExhibitionCommand, context: Context) -> dict:
     """执行本地命令，返回执行结果"""
-    if cmd.action == "update_location" and cmd.value:
+    if cmd.action == CommandAction.UPDATE_LOCATION.value and cmd.params:
         old_location = context.location
-        context.location = cmd.value
-        logger.info("[位置更新] {old} -> {new}", old=old_location, new=cmd.value)
+        context.location = cmd.params
+        logger.info("[位置更新] {old} -> {new}", old=old_location, new=cmd.params)
         return {
             "success": True,
             "action": cmd.action,
-            "message": f"位置从「{old_location}」更新为「{cmd.value}」" if old_location else f"位置设置为「{cmd.value}」"
+            "message": f"位置从「{old_location}」更新为「{cmd.params}」" if old_location else f"位置设置为「{cmd.params}」"
         }
     return {
         "success": False,
@@ -286,14 +275,13 @@ async def _execute_local_command(cmd: ExhibitionCommand, context: Context) -> di
 
 def _get_command_description(cmd: ExhibitionCommand) -> str:
     """获取命令的用户友好描述"""
-    action_descriptions = {
-        "open_media": lambda c: f"在「{c.device_name}」上打开「{c.resource}」",
-        "open": lambda c: f"打开「{c.params}」",
-        "close": lambda c: f"关闭「{c.params}」",
-        "seek": lambda c: f"将「{c.device_name}」跳转到{c.params}秒",
-        "set_volume": lambda c: f"将「{c.device_name}」音量设置为{c.params}",
-        "adjust_volume": lambda c: f"{'提高' if c.params == 'up' else '降低'}「{c.device_name}」音量",
-        "control_device": lambda c: f"控制设备「{c.device_name}」执行「{c.command}」",
+    action_descriptions: dict[str, callable] = {
+        CommandAction.OPEN_MEDIA.value: lambda c: f"在「{c.device_name}」上打开「{c.resource}」",
+        CommandAction.CONTROL_DOOR.value: lambda c: f"{'打开' if c.params == 'open' else '关闭'}「{c.device_name}」",
+        CommandAction.SEEK.value: lambda c: f"将「{c.device_name}」跳转到{c.params}秒",
+        CommandAction.SET_VOLUME.value: lambda c: f"将「{c.device_name}」音量设置为{c.params}",
+        CommandAction.ADJUST_VOLUME.value: lambda c: f"{'提高' if c.params == 'up' else '降低'}「{c.device_name}」音量",
+        CommandAction.CONTROL_DEVICE.value: lambda c: f"控制设备「{c.device_name}」执行「{c.command}」",
     }
 
     if cmd.action in action_descriptions:

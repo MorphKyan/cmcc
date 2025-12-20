@@ -15,7 +15,7 @@ from loguru import logger
 
 from src.config.config import LLMSettings
 from src.core import dependencies
-from src.module.llm.tool.definitions import get_tools, ExhibitionCommand
+from src.module.llm.tool.definitions import get_tools, ExhibitionCommand, CommandAction
 from src.module.llm.tool.dynamic_tool_manager import DynamicToolManager
 from src.module.llm.helper import DocumentFormatter
 
@@ -300,7 +300,7 @@ class BaseLLMHandler(ABC):
                     # Execute tool
                     result: ExhibitionCommand = tool_function.invoke(tool_args)
                     
-                    if isinstance(result, ExhibitionCommand) and result.action == "error":
+                    if isinstance(result, ExhibitionCommand) and result.action == CommandAction.ERROR.value:
                         tool_outputs.append(ToolMessage(content=f"Error: {result.message}", tool_call_id=tool_call_id))
                         has_error = True
                     else:
@@ -486,7 +486,7 @@ class BaseLLMHandler(ABC):
         """
         error_value = f"{reason}: {message}" if message else reason
         error_command = ExhibitionCommand(
-            action="error",
+            action=CommandAction.ERROR.value,
             device=None,
             value=error_value
         )
