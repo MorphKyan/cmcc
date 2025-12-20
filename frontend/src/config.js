@@ -11,8 +11,6 @@ const getBackendUrl = () => {
     return import.meta.env.VITE_BACKEND_URL;
   }
 
-  // In production, use the same origin (nginx proxies /api to backend)
-  // In development, vite proxy handles /api requests
   return window.location.origin;
 };
 
@@ -20,30 +18,15 @@ const getBackendUrl = () => {
 const getWebSocketUrl = (clientId) => {
   const backendUrl = getBackendUrl();
 
-  // Parse the backend URL
+  // Parse the backend URL and construct WebSocket URL
   try {
     const url = new URL(backendUrl);
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${url.host}/audio/ws/${clientId}`;
+    // Always use wss:// protocol for WebSocket connection
+    return `wss://${url.host}/audio/ws/${clientId}`;
   } catch (error) {
-    console.warn('Invalid backend URL, using default:', backendUrl, error);
-    // Fallback to current implementation with protocol detection
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use environment variable if available, otherwise fallback to localhost
-    const devDomain = import.meta.env.VITE_DEV_DOMAIN || 'localhost';
-    let host = `${devDomain}:5000`;
-    if (backendUrl && backendUrl.startsWith('http')) {
-      try {
-        const tempUrl = new URL(backendUrl);
-        host = tempUrl.host;
-      } catch (e) {
-        // Keep default host
-      }
-    } else if (backendUrl && backendUrl.includes(':')) {
-      // Assume it's already a host:port format
-      host = backendUrl;
-    }
-    return `${protocol}//${host}/api/audio/ws/${clientId}`;
+    console.warn('Invalid backend URL, using window.location:', backendUrl, error);
+    // Fallback: use current page's host for WebSocket with wss:// protocol
+    return `wss://${window.location.host}/audio/ws/${clientId}`;
   }
 };
 

@@ -147,11 +147,11 @@ export default {
       const baseUrl = this.backendUrl || this.getDefaultBackendUrl();
       try {
         const url = new URL(baseUrl);
-        const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${protocol}//${url.host}/audio/ws/${this.userId}`;
+        // Always use wss:// protocol for WebSocket connection
+        return `wss://${url.host}/audio/ws/${this.userId}`;
       } catch {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${protocol}//${baseUrl}/audio/ws/${this.userId}`;
+        // Fallback: use wss:// protocol with the baseUrl as host
+        return `wss://${baseUrl}/audio/ws/${this.userId}`;
       }
     }
   },
@@ -185,15 +185,16 @@ export default {
     },
     
     getDefaultBackendUrl() {
+      // Check for explicit backend URL configuration first
       if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_URL) {
         return import.meta.env.VITE_BACKEND_URL;
       }
+      // In production, use the current page origin (nginx proxies requests)
       if (typeof import.meta !== 'undefined' && import.meta.env?.PROD) {
         return window.location.origin;
       }
-      // Fallback for development - use env var or localhost
-      const devDomain = import.meta.env?.VITE_DEV_DOMAIN || 'localhost';
-      return `https://${devDomain}:5000`;
+      // In development, use the external API server
+      return 'https://api.cmcc.morphk.icu:2052';
     },
 
     // ========== Drag Functionality ==========
