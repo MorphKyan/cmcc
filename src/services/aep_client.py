@@ -11,7 +11,7 @@ import httpx
 from loguru import logger
 from pydantic import BaseModel
 
-from src.module.llm.tool.definitions import ExhibitionCommand
+
 from src.config.config import get_settings
 
 
@@ -66,9 +66,9 @@ class AEPClient:
     async def send_voice_command(
         self,
         name: str,
-        device_type: str,
-        command: str = "",
+        type_: str,
         sub_type: str = "",
+        command: str = "",
         view: str = "",
         resource: str = ""
     ) -> AEPVoiceCommandResponse:
@@ -76,9 +76,9 @@ class AEPClient:
         
         Args:
             name: 设备名称
-            device_type: 设备类型 (player/led/control)
-            command: 命令名称
+            type_: 设备类型 (player/led/control)
             sub_type: 设备子类型
+            command: 命令名称
             view: 视窗名称
             resource: 资源名称
             
@@ -91,7 +91,7 @@ class AEPClient:
         params = {
             "cmdId": request_id,
             "name": name,
-            "type": device_type,
+            "type": type_,
             "subType": sub_type,
             "command": command,
             "param": "",
@@ -104,7 +104,7 @@ class AEPClient:
         params["sign"] = sign
 
         logger.info("[AEP] 发送语音命令: name={name}, type={type}, command={command}",
-                    name=name, type=device_type, command=command)
+                    name=name, type=type_, command=command)
         logger.debug("[AEP] 完整请求参数: {params}", params=params)
 
         try:
@@ -156,23 +156,6 @@ class AEPClient:
                 timestamp=0
             )
     
-    async def send_command(self, cmd: ExhibitionCommand) -> AEPVoiceCommandResponse:
-        """Send command using ExhibitionCommand's pre-populated AEP fields.
-        
-        Args:
-            cmd: ExhibitionCommand with AEP fields already populated by the tool function
-            
-        Returns:
-            AEPVoiceCommandResponse with success status and device_name
-        """
-        return await self.send_voice_command(
-            name=cmd.device_name,
-            device_type=cmd.device_type,
-            command=cmd.command,
-            sub_type=cmd.sub_type,
-            view=cmd.view,
-            resource=cmd.resource
-        )
 
 
 # Singleton instance

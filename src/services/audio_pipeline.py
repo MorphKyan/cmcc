@@ -302,9 +302,16 @@ async def _execute_aep_command(
         执行结果字典，包含success、action、message字段
     """
     try:
-        # 调用AEP API（cmd中已包含所有AEP字段，由工具函数填充）
+        # 调用AEP API
         aep_client = get_aep_client()
-        response = await aep_client.send_command(cmd)
+        response = await aep_client.send_voice_command(
+            name=cmd.device_name,
+            type_=cmd.device_type,
+            command=cmd.command,
+            sub_type=cmd.sub_type,
+            view=cmd.view,
+            resource=cmd.resource
+        )
 
         if response.success:
             # 保存device_name到context

@@ -63,6 +63,7 @@ class ASRProcessor:
                     trust_remote_code=False,
                     # vad_model=self.settings.VAD_MODEL,
                     # vad_kwargs=self.settings.VAD_KWARGS,
+                    ban_emo_unk=True,  # 禁止输出感情标签
                     device=self.device,
                 )
                 self.status = ASRStatus.READY
