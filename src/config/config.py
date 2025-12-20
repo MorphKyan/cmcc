@@ -94,7 +94,7 @@ SYSTEM_PROMPT_TEMPLATE = """
 5. **多意图聚合**：识别并执行指令中的所有操作，一次性按顺序返回所有工具调用。
 
 # 业务规则
-*   **open_media**: 根据知识库模糊匹配资源和设备。
+*   **open_media**: 根据用户描述语义匹配 `media` 列表中的资源，`value` 参数**必须**使用 `name` 字段的精确值（如 `5G_Revolution.mp4`），**禁止**使用用户的原始描述文本。
 *   **seek_video**: 将时间描述统一转换为秒数（Int）。
 *   **control_door**: 动作映射为 'open' 或 'close'。
 *   **control_device**: 控制设备执行设备自身的自定义命令，自定义命令为设备的`Command`字段。

@@ -1,32 +1,15 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-LLM Helper 模块
-
-提供将不同类型的 Document 对象格式化为 Prompt 字符串的工具函数。
-"""
+"""LLM Helper - 将 Document 格式化为 LLM Prompt"""
 
 import json
 from langchain_core.documents import Document
 
 
 class DocumentFormatter:
-    """
-    Document 格式化器，负责将检索到的 Document 对象转换为可用于 LLM Prompt 的字符串。
-    """
+    """将检索到的 Document 转换为 LLM Prompt 字符串"""
 
     @staticmethod
     def format_media_documents(docs: list[Document]) -> str:
-        """
-        格式化媒体类型的文档列表。
-
-        Args:
-            docs: 媒体 Document 对象列表
-
-        Returns:
-            格式化后的 JSON 字符串
-        """
+        """格式化媒体文档列表"""
         if not docs:
             return "[]"
         
@@ -34,22 +17,14 @@ class DocumentFormatter:
         for doc in docs:
             meta = doc.metadata
             result.append({
-                "name": meta.get("filename", ""),
-                "description": f"{meta.get('description', '')}，也称为{meta.get('aliases', '')}",
+                "name": meta.get("name", ""),
+                "description": meta.get("description", ""),
             })
         return json.dumps(result, ensure_ascii=False, indent=2)
 
     @staticmethod
     def format_door_documents(docs: list[Document]) -> str:
-        """
-        格式化门类型的文档列表。
-
-        Args:
-            docs: 门 Document 对象列表
-
-        Returns:
-            格式化后的 JSON 字符串
-        """
+        """格式化门文档列表"""
         if not docs:
             return "[]"
         
@@ -77,15 +52,7 @@ class DocumentFormatter:
 
     @staticmethod
     def format_device_documents(docs: list[Document]) -> str:
-        """
-        格式化设备类型的文档列表。
-
-        Args:
-            docs: 设备 Document 对象列表
-
-        Returns:
-            格式化后的 JSON 字符串
-        """
+        """格式化设备文档列表"""
         if not docs:
             return "[]"
         
@@ -93,49 +60,26 @@ class DocumentFormatter:
         for doc in docs:
             meta = doc.metadata
             
-            # 使用JSON解析列表字段
-            command_json = meta.get("command", "[]")
-            try:
-                command_list = json.loads(command_json) if command_json else []
-            except (json.JSONDecodeError, TypeError):
-                command_list = []
-            
-            # 使用JSON解析view字段
-            view_json = meta.get("view", "[]")
-            try:
-                view_list = json.loads(view_json) if view_json else []
-            except (json.JSONDecodeError, TypeError):
-                view_list = []
-            
             device_info = {
                 "name": meta.get("name", ""),
                 "type": meta.get("device_type", ""),
                 "area": meta.get("area", ""),
-                "description": f"{meta.get('description', '')}，也称为{meta.get('aliases', '')}"
+                "description": meta.get("description", "")
             }
             
-            # 添加可选字段（仅当存在值时）
             if meta.get("sub_type"):
                 device_info["subType"] = meta.get("sub_type")
-            if command_list:
-                device_info["command"] = command_list
-            if view_list:
-                device_info["view"] = view_list
+            if meta.get("command"):
+                device_info["command"] = meta.get("command")
+            if meta.get("view"):
+                device_info["view"] = meta.get("view")
                 
             result.append(device_info)
         return json.dumps(result, ensure_ascii=False, indent=2)
 
     @staticmethod
     def format_area_info(areas: list[dict]) -> str:
-        """
-        格式化区域信息列表。
-
-        Args:
-            areas: 区域信息字典列表，每个字典包含 name, aliases, description 字段
-
-        Returns:
-            格式化后的 JSON 字符串
-        """
+        """格式化区域信息列表"""
         if not areas:
             return "[]"
 

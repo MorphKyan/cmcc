@@ -97,7 +97,7 @@ class BaseLLMHandler(ABC):
         # 将工具绑定到模型
         self.model_with_tools = self.model.bind_tools(self.tools)
         
-        # 构建处理链（trimmer 在 _prepare_chain_input 中应用）
+        # 构建处理链
         self.chain = self.prompt_template | self.model_with_tools
         
         logger.debug("处理链构建完成")

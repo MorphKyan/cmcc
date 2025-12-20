@@ -41,7 +41,7 @@ class OpenMediaInput(BaseModel):
     """Input for open media command."""
     device: str = Field(description="执行播放的设备名称")
     view: Optional[str] = Field(default=None, description="视窗名称，用户指定视窗区域")
-    value: str = Field(description="媒体资源的名称或路径")
+    value: str = Field(description="媒体资源名称，必须是知识库 media 列表中 name 字段的精确值")
 
 
 class ControlDoorInput(BaseModel):
