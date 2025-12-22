@@ -12,7 +12,6 @@ import httpx
 from loguru import logger
 from pydantic import BaseModel
 
-
 from src.config.config import get_settings
 
 
@@ -65,13 +64,13 @@ class AEPClient:
         return hashlib.md5(sign_string_with_salt.encode()).hexdigest().upper()
 
     async def send_voice_command(
-        self,
-        name: str,
-        type_: str,
-        sub_type: str = "",
-        command: str = "",
-        view: str = "",
-        resource: str = ""
+            self,
+            name: str,
+            type_: str,
+            sub_type: str = "",
+            command: str = "",
+            view: str = "",
+            resource: str = ""
     ) -> AEPVoiceCommandResponse:
         """Send voice command to AEP central control system.
         
@@ -114,21 +113,18 @@ class AEPClient:
                 )
                 response.raise_for_status()
                 data = response.json()
-
+            logger.info("[AEP] 返回: {data}", data=data)
             result = AEPVoiceCommandResponse(**data)
-            
+
             if result.success:
-                logger.info("[AEP] 命令发送成功: device_name={device_name}",
-                            device_name=result.device_name)
+                logger.info("[AEP] 命令发送成功: device_name={device_name}", device_name=result.device_name)
             else:
-                logger.warning("[AEP] 命令发送失败: code={code}, message={message}",
-                               code=result.code, message=result.message)
-                
+                logger.warning("[AEP] 命令发送失败: code={code}, message={message}", code=result.code, message=result.message)
+
             return result
-            
+
         except httpx.HTTPStatusError as e:
-            logger.error("[AEP] HTTP错误: {status} - {text}",
-                         status=e.response.status_code, text=e.response.text)
+            logger.error("[AEP] HTTP错误: {status} - {text}", status=e.response.status_code, text=e.response.text)
             return AEPVoiceCommandResponse(
                 success=False,
                 message=f"HTTP错误: {e.response.status_code}",
@@ -154,7 +150,6 @@ class AEPClient:
                 result=None,
                 timestamp=0
             )
-    
 
 
 # Singleton instance

@@ -289,6 +289,13 @@ class BaseLLMHandler(ABC):
                 tool_args = tool_call["args"]
                 tool_call_id = tool_call["id"]
                 
+                logger.info(
+                    "LLM工具调用 | 工具: {tool_name} | 参数: {tool_args} | 调用ID: {tool_call_id}",
+                    tool_name=tool_name,
+                    tool_args=tool_args,
+                    tool_call_id=tool_call_id
+                )
+                
                 tool_function = self._tool_map.get(tool_name)
                 if not tool_function:
                     error_msg = f"Error: Unknown tool '{tool_name}'"
