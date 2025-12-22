@@ -18,6 +18,9 @@ class CommandAction(str, Enum):
     UPDATE_LOCATION = "update_location"
     CONTROL_DOOR = "control_door"
     CONTROL_DEVICE = "control_device"
+    CONTROL_VIDEO = "control_video"
+    CONTROL_PPT = "control_ppt"
+    POWER_CONTROL = "power_control"
     ERROR = "error"
 
 
@@ -47,7 +50,7 @@ class OpenMediaInput(BaseModel):
 class ControlDoorInput(BaseModel):
     """Input for control door command."""
     device: str = Field(description="目标门的名称，必须是知识库中 door 列表返回的精确 name 值")
-    value: Literal["open", "close"] = Field(description="控制动作：'open' 表示打开，'close' 表示关闭")
+    command: Literal["open", "close"] = Field(description="控制动作：'open' 表示打开，'close' 表示关闭")
 
 
 class SeekVideoInput(BaseModel):
@@ -59,13 +62,13 @@ class SeekVideoInput(BaseModel):
 class SetVolumeInput(BaseModel):
     """Input for set volume command."""
     device: str = Field(description="要设置音量的设备名称，必须是知识库中 device 列表返回的精确 name 值")
-    value: int = Field(ge=0, le=100, description="音量值（0-100），由用户指定")
+    value: int = Field(ge=0, le=100, description="音量值（0-100），由用户指定。如果用户请求静音，则 value=0")
 
 
 class AdjustVolumeInput(BaseModel):
     """Input for adjust volume command."""
     device: str = Field(description="要调整音量的设备名称，必须是知识库中 device 列表返回的精确 name 值")
-    value: Literal["up", "down"] = Field(description="音量调整方向：up（提高）或down（降低）")
+    param: Literal["up", "down"] = Field(description="音量调整方向：up（提高）或down（降低）")
 
 
 class ControlDeviceInput(BaseModel):
@@ -73,6 +76,25 @@ class ControlDeviceInput(BaseModel):
     name: str = Field(description="设备名称，必须是知识库中 device 列表返回的精确 name 值")
     type: str = Field(description="设备类型，必须是知识库中该设备对应的 type 字段值")
     command: str = Field(description="设备的自定义命令，必须是知识库中该设备 command 列表中的某个精确值")
+
+
+class ControlVideoInput(BaseModel):
+    """Input for video playback control command."""
+    device: str = Field(description="需要控制播放的设备名称，必须是知识库中 device 列表返回的精确 name 值")
+    command: Literal["暂停", "继续"] = Field(description="播放控制动作：'暂停' 表示暂停，'继续' 表示继续播放")
+
+
+class ControlPPTInput(BaseModel):
+    """Input for PPT control command."""
+    device: str = Field(description="需要控制PPT的设备名称，必须是知识库中 device 列表返回的精确 name 值")
+    command: Literal["首页", "上一页", "下一页", "末页", "PPT跳转"] = Field(description="PPT控制动作，'PPT跳转'指跳转到指定页")
+    param: Optional[int] = Field(default=None, description="跳转的目标页码，仅当 value='PPT跳转' 时需要指定")
+
+
+class ControlPowerInput(BaseModel):
+    """Input for power control command."""
+    device: str = Field(description="需要控制开关机的设备名称，必须是知识库中 device 列表返回的精确 name 值")
+    command: Literal["开机", "关机"] = Field(description="电源控制动作：'开机' 表示启动设备，'关机' 表示关闭设备")
 
 
 class UpdateLocationInput(BaseModel):
@@ -112,12 +134,13 @@ def open_media(device: str, value: str, view: str | None = None) -> ExhibitionCo
         device_name=device,
         device_type=device_info.get("type", ""),
         view=view or "",
+        command="播放",
         resource=value
     )
 
 
 @tool(args_schema=ControlDoorInput)
-def control_door(door: str, value: Literal["open", "close"]) -> ExhibitionCommand:
+def control_door(door: str, command: Literal["open", "close"]) -> ExhibitionCommand:
     """控制展厅门的开关状态，当用户请求打开或关闭某扇门时调用"""
     from src.core import dependencies
     ds = dependencies.data_service
@@ -134,7 +157,7 @@ def control_door(door: str, value: Literal["open", "close"]) -> ExhibitionComman
         action=CommandAction.CONTROL_DOOR.value,
         device_name=door,
         device_type=door_info.get("type", ""),
-        params=value
+        command=command
     )
 
 
@@ -156,6 +179,7 @@ def seek_video(device: str, value: int) -> ExhibitionCommand:
         action=CommandAction.SEEK.value,
         device_name=device,
         device_type=device_info.get("type", ""),
+        command="视频跳转",
         params=value
     )
 
@@ -178,12 +202,13 @@ def set_volume(device: str, value: int) -> ExhibitionCommand:
         action=CommandAction.SET_VOLUME.value,
         device_name=device,
         device_type=device_info.get("type", ""),
+        command="音量",
         params=value
     )
 
 
 @tool(args_schema=AdjustVolumeInput)
-def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionCommand:
+def adjust_volume(device: str, param: Literal["up", "down"]) -> ExhibitionCommand:
     """相对调整设备音量，当用户请求调大、调小、增加或降低音量但未指定具体数值时调用"""
     from src.core import dependencies
     ds = dependencies.data_service
@@ -200,38 +225,94 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
         action=CommandAction.ADJUST_VOLUME.value,
         device_name=device,
         device_type=device_info.get("type", ""),
-        params=value
+        command="音量",
+        params=param
     )
 
 
 @tool(args_schema=ControlDeviceInput)
-def control_device(name: str, device_type: str, command: str) -> ExhibitionCommand:
-    """控制设备执行预定义的自定义命令，如开机、关机、切换模式等，适用于非播放类的设备操作"""
+def control_device(device: str, device_type: str, command: str) -> ExhibitionCommand:
+    """控制设备执行预定义的自定义命令，适用于具有自定义命令的设备"""
     from src.core import dependencies
     ds = dependencies.data_service
 
-    if not ds.device_exists(name):
+    if not ds.device_exists(device):
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            message=f"Device '{name}' not found."
+            message=f"Device '{device}' not found."
         )
 
-    device_info = ds.get_device_info(name) or {}
+    device_info = ds.get_device_info(device) or {}
 
     # 验证命令是否是该设备支持的命令
     supported_commands = device_info.get("command", [])
     if supported_commands and command not in supported_commands:
         return ExhibitionCommand(
             action=CommandAction.ERROR.value,
-            message=f"Command '{command}' is not supported by device '{name}'. Supported commands: {supported_commands}"
+            message=f"Command '{command}' is not supported by device '{device}'. Supported commands: {supported_commands}"
         )
 
     return ExhibitionCommand(
         action=CommandAction.CONTROL_DEVICE.value,
-        device_name=name,
+        device_name=device,
         device_type=device_info.get("type", "") or device_type,
         sub_type=device_info.get("subType", ""),
         command=command,
+    )
+
+
+@tool(args_schema=ControlVideoInput)
+def control_video(device: str, command: Literal["暂停", "继续"]) -> ExhibitionCommand:
+    """控制视频播放状态，当用户请求暂停或继续播放视频时调用"""
+    from src.core import dependencies
+    ds = dependencies.data_service
+
+    if not ds.device_exists(device):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            message=f"Device '{device}' not found."
+        )
+
+    device_info = ds.get_device_info(device) or {}
+
+    return ExhibitionCommand(
+        action=CommandAction.CONTROL_VIDEO.value,
+        device_name=device,
+        device_type=device_info.get("type", ""),
+        command=command
+    )
+
+
+@tool(args_schema=ControlPPTInput)
+def control_ppt(device: str, command: Literal["首页", "上一页", "下一页", "末页", "PPT跳转"], param: int | None = None) -> ExhibitionCommand:
+    """控制PPT演示文稿的翻页，当用户请求翻页、跳转到首页、末页或特定页时调用"""
+    from src.core import dependencies
+    ds = dependencies.data_service
+
+    if not ds.device_exists(device):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            message=f"Device '{device}' not found."
+        )
+
+    # 如果是跳转操作，必须提供页码
+    if command == "PPT跳转" and param is None:
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            message="PPT跳转操作需要指定目标页码（param）"
+        )
+
+    device_info = ds.get_device_info(device) or {}
+
+    # 对于 PPT跳转 操作，params 为页码；其他操作 params 为动作名称
+    params_value = param if command == "PPT跳转" else None
+
+    return ExhibitionCommand(
+        action=CommandAction.CONTROL_PPT.value,
+        device_name=device,
+        device_type=device_info.get("type", ""),
+        command=command,
+        params=params_value
     )
 
 
@@ -251,6 +332,28 @@ def update_location(value: str) -> ExhibitionCommand:
     )
 
 
+@tool(args_schema=ControlPowerInput)
+def control_power(device: str, command: Literal["开机", "关机"]) -> ExhibitionCommand:
+    """控制设备的电源状态，当用户请求开机或关机时调用"""
+    from src.core import dependencies
+    ds = dependencies.data_service
+
+    if not ds.device_exists(device):
+        return ExhibitionCommand(
+            action=CommandAction.ERROR.value,
+            message=f"Device '{device}' not found."
+        )
+
+    device_info = ds.get_device_info(device) or {}
+
+    return ExhibitionCommand(
+        action=CommandAction.POWER_CONTROL.value,
+        device_name=device,
+        device_type=device_info.get("type", ""),
+        command=command
+    )
+
+
 def get_tools():
     """获取LLM函数调用的工具列表（现代结构化输出方法）。"""
     return [
@@ -260,6 +363,9 @@ def get_tools():
         seek_video,
         set_volume,
         adjust_volume,
+        control_video,
+        control_ppt,
+        control_power,
         update_location
     ]
 

@@ -6,6 +6,7 @@ central control system via POST /aep/voice/command endpoint.
 
 import hashlib
 from typing import Optional
+import uuid
 
 import httpx
 from loguru import logger
@@ -103,9 +104,7 @@ class AEPClient:
         sign = self._calculate_sign(params)
         params["sign"] = sign
 
-        logger.info("[AEP] 发送语音命令: name={name}, type={type}, command={command}",
-                    name=name, type=type_, command=command)
-        logger.debug("[AEP] 完整请求参数: {params}", params=params)
+        logger.info("[AEP] 发送语音命令: {params}", params=params)
 
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:

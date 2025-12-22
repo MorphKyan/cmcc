@@ -273,6 +273,7 @@ class BaseLLMHandler(ABC):
         
         # 3. 进入重试/执行循环
         tool_outputs = []
+        executed_commands: list[ExhibitionCommand] = []  # 收集执行成功的命令结果
         
         for attempt in range(max_retries):
             if not ai_msg.tool_calls:
@@ -280,6 +281,7 @@ class BaseLLMHandler(ABC):
                 
             # 执行工具
             tool_outputs = []  # 重置当前轮的输出
+            executed_commands = []  # 重置当前轮的命令结果
             has_error = False
             
             for tool_call in ai_msg.tool_calls:
@@ -295,14 +297,16 @@ class BaseLLMHandler(ABC):
                     continue
                     
                 try:
-
-
                     # Execute tool
                     result: ExhibitionCommand = tool_function.invoke(tool_args)
                     
-                    if isinstance(result, ExhibitionCommand) and result.action == CommandAction.ERROR.value:
-                        tool_outputs.append(ToolMessage(content=f"Error: {result.message}", tool_call_id=tool_call_id))
-                        has_error = True
+                    if isinstance(result, ExhibitionCommand):
+                        if result.action == CommandAction.ERROR.value:
+                            tool_outputs.append(ToolMessage(content=f"Error: {result.message}", tool_call_id=tool_call_id))
+                            has_error = True
+                        else:
+                            tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id))
+                            executed_commands.append(result)
                     else:
                         tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id))
                         
@@ -312,8 +316,8 @@ class BaseLLMHandler(ABC):
                     has_error = True
             
             if not has_error:
-                # 所有工具执行成功，返回 AI消息、命令列表和工具消息列表
-                return ai_msg, self._format_response(ai_msg), tool_outputs
+                # 所有工具执行成功，返回 AI消息、实际执行的命令列表和工具消息列表
+                return ai_msg, executed_commands, tool_outputs
                 
             # 如果有错误，我们需要把 tool_outputs 反馈给模型，让其修正
             # 更新 chain_input 中的 chat_history 或者 messages            
@@ -337,7 +341,7 @@ class BaseLLMHandler(ABC):
                 return error_msg, self.create_error_response("llm_retry_error", str(e)), tool_outputs
 
         # 循环结束（达到最大重试次数或最后一次仍有错）        
-        return ai_msg, self._format_response(ai_msg), tool_outputs
+        return ai_msg, executed_commands, tool_outputs
 
     def _clean_incomplete_tool_calls(self, chat_history: list) -> list:
         """

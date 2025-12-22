@@ -307,8 +307,8 @@ async def _execute_aep_command(
         response = await aep_client.send_voice_command(
             name=cmd.device_name,
             type_=cmd.device_type,
-            command=cmd.command,
             sub_type=cmd.sub_type,
+            command=cmd.command,
             view=cmd.view,
             resource=cmd.resource
         )

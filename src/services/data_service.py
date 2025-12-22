@@ -136,18 +136,20 @@ class DataService:
                 return default
             return str(val).strip()
         
-        def parse_list_field(raw_value):
-            """解析列表字段：JSON字符串格式，其他情况返回空列表"""
-            if raw_value and not pd.isna(raw_value):
-                if isinstance(raw_value, list):
-                    return raw_value
-                elif isinstance(raw_value, str) and raw_value.strip():
-                    try:
-                        parsed = json.loads(raw_value)
-                        if isinstance(parsed, list):
-                            return parsed
-                    except (json.JSONDecodeError, TypeError):
-                        pass
+        def parse_list_field(raw_value, field_name=""):
+            """解析列表字段：仅支持JSON格式，非JSON格式会报错"""
+            if not raw_value or pd.isna(raw_value):
+                return []
+            if isinstance(raw_value, list):
+                return raw_value
+            if isinstance(raw_value, str) and raw_value.strip():
+                try:
+                    parsed = json.loads(raw_value)
+                    if isinstance(parsed, list):
+                        return parsed
+                    raise ValueError(f"字段 '{field_name}' 解析结果不是列表: {raw_value}")
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"字段 '{field_name}' 不是有效的JSON格式: {raw_value}") from e
             return []
         
         for _, row in df.iterrows():
@@ -158,9 +160,9 @@ class DataService:
                 "name": name,
                 "type": get_str_value(row, "type"),
                 "subType": get_str_value(row, "subType"),
-                "command": parse_list_field(row.get("command", "")),
+                "command": parse_list_field(row.get("command", ""), "command"),
                 "area": get_str_value(row, "area"),
-                "view": parse_list_field(row.get("view", "")),
+                "view": parse_list_field(row.get("view", ""), "view"),
                 "aliases": get_str_value(row, "aliases"),
                 "description": get_str_value(row, "description")
             }
@@ -255,9 +257,16 @@ class DataService:
         self.reload()
 
     async def _append_to_csv(self, file_path: str, items: List[BaseModel], columns: List[str]) -> None:
+        import json as json_module
         try:
             new_data = [item.model_dump() for item in items]
             new_df = pd.DataFrame(new_data)
+            
+            # 将列表字段序列化为JSON格式
+            for col in new_df.columns:
+                new_df[col] = new_df[col].apply(
+                    lambda x: json_module.dumps(x, ensure_ascii=False) if isinstance(x, list) else x
+                )
             
             # Ensure columns
             for col in columns:
