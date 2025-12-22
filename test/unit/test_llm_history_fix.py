@@ -11,7 +11,7 @@ class MockLLMHandler(BaseLLMHandler):
 @pytest.fixture
 def mock_handler():
     settings = MagicMock()
-    settings.max_validation_retries = 1
+    settings.max_validation_retries = 2
     handler = MockLLMHandler(settings)
     handler.chain = AsyncMock()
     handler.model_with_tools = MagicMock()

@@ -48,7 +48,7 @@ def test_get_current_config(client):
         ollama_base_url="http://mock-ollama:11434",
         modelscope_model="mock-ms-chat",
         modelscope_base_url="http://mock-ms:8000",
-        max_validation_retries=1,
+        max_validation_retries=2,
         retry_delay=0.5,
         request_timeout=5,
         connection_timeout=5,

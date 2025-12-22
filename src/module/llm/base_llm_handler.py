@@ -237,7 +237,7 @@ class BaseLLMHandler(ABC):
                 raise ValueError("LLM处理器初始化失败。")
 
         messages = []
-        max_retries = getattr(self.settings, 'max_validation_retries', 3)
+        max_retries = getattr(self.settings, 'max_validation_retries', 2)
         
         # 初始调用（带重试机制）
         ai_msg = None
