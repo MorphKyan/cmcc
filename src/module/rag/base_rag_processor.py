@@ -273,3 +273,24 @@ class BaseRAGProcessor(ABC):
         documents = convert_areas_to_documents([item.model_dump() for item in items])
         await asyncio.to_thread(self.vector_store.add_documents, documents)
         logger.info("已添加 {count} 个区域文档", count=len(documents))
+
+    async def delete_by_type(self, doc_type: str) -> None:
+        """按类型删除文档，不影响其他类型的数据
+        
+        Args:
+            doc_type: 文档类型，如 "door", "media", "device", "area"
+        """
+        if self.vector_store is None:
+            logger.warning("向量存储未初始化，无法删除文档")
+            return
+        
+        try:
+            collection = self.vector_store._collection
+            await asyncio.to_thread(
+                collection.delete,
+                where={"type": doc_type}
+            )
+            logger.info("已删除所有类型为 '{type}' 的文档", type=doc_type)
+        except Exception as e:
+            logger.exception("删除类型为 '{type}' 的文档失败: {error}", type=doc_type, error=str(e))
+            raise

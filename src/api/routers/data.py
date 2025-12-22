@@ -93,7 +93,7 @@ async def clear_devices() -> UploadResponse:
     try:
         await dependencies.data_service.clear_devices()
         if dependencies.rag_processor:
-             await dependencies.rag_processor.refresh_database()
+             await dependencies.rag_processor.delete_by_type("device")
         return UploadResponse(status="success", message="设备数据已清空")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"清空设备数据失败: {str(e)}")
@@ -108,7 +108,7 @@ async def clear_areas() -> UploadResponse:
     try:
         await dependencies.data_service.clear_areas()
         if dependencies.rag_processor:
-             await dependencies.rag_processor.refresh_database()
+             await dependencies.rag_processor.delete_by_type("area")
         return UploadResponse(status="success", message="区域数据已清空")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"清空区域数据失败: {str(e)}")
@@ -123,7 +123,7 @@ async def clear_media() -> UploadResponse:
     try:
         await dependencies.data_service.clear_media()
         if dependencies.rag_processor:
-             await dependencies.rag_processor.refresh_database()
+             await dependencies.rag_processor.delete_by_type("media")
         return UploadResponse(status="success", message="媒体数据已清空")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"清空媒体数据失败: {str(e)}")
@@ -162,7 +162,7 @@ async def clear_doors() -> UploadResponse:
     try:
         await dependencies.data_service.clear_doors()
         if dependencies.rag_processor:
-             await dependencies.rag_processor.refresh_database()
+             await dependencies.rag_processor.delete_by_type("door")
         return UploadResponse(status="success", message="门数据已清空")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"清空门数据失败: {str(e)}")

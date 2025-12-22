@@ -1,0 +1,1178 @@
+[
+    {
+        "area": "Cave空间",
+        "view": "三分左",
+        "name": "三分左",
+        "type": "player",
+        "command": [
+            "三分左"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "view": "三分中",
+        "name": "三分中",
+        "type": "player",
+        "command": [
+            "三分中"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "view": "三分右",
+        "name": "三分右",
+        "type": "player",
+        "command": [
+            "三分右"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "view": "三折全屏",
+        "name": "三折全屏",
+        "type": "player",
+        "command": [
+            "三折全屏"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "view": "左侧副屏",
+        "name": "左侧副屏",
+        "type": "player",
+        "command": [
+            "左侧副屏"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "view": "14米全屏",
+        "name": "14米全屏",
+        "type": "player",
+        "command": [
+            "14米全屏"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "view": "14米1",
+        "name": "14米1",
+        "type": "player",
+        "command": [
+            "14米1"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "view": "14米2",
+        "name": "14米2",
+        "type": "player",
+        "command": [
+            "14米2"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "view": "14米3",
+        "name": "14米3",
+        "type": "player",
+        "command": [
+            "14米3"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "view": "14米4",
+        "name": "14米4",
+        "type": "player",
+        "command": [
+            "14米4"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "view": "14米5",
+        "name": "14米5",
+        "type": "player",
+        "command": [
+            "14米5"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "view": "14米6",
+        "name": "14米6",
+        "type": "player",
+        "command": [
+            "14米6"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "view": "小米电视",
+        "name": "小米电视",
+        "type": "player",
+        "command": [
+            "小米电视"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "view": "投影仪",
+        "name": "投影仪",
+        "type": "player",
+        "command": [
+            "投影仪"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "view": "3D柱子全",
+        "name": "3D柱子全",
+        "type": "player",
+        "command": [
+            "3D柱子全"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "view": "3D柱子A面",
+        "name": "3D柱子A面",
+        "type": "player",
+        "command": [
+            "3D柱子A面"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "view": "3D柱子B面",
+        "name": "3D柱子B面",
+        "type": "player",
+        "command": [
+            "3D柱子B面"
+        ]
+    },
+    {
+        "area": "VIP室",
+        "view": "会客一体机左",
+        "name": "会客一体机左",
+        "type": "player",
+        "command": [
+            "会客一体机左"
+        ]
+    },
+    {
+        "area": "VIP室",
+        "view": "会客一体机右",
+        "name": "会客一体机右",
+        "type": "player",
+        "command": [
+            "会客一体机右"
+        ]
+    },
+    {
+        "area": "VIP室",
+        "view": "55一体机",
+        "name": "55一体机",
+        "type": "player",
+        "command": [
+            "55一体机"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "view": "飞利浦电视",
+        "name": "飞利浦电视",
+        "type": "player",
+        "command": [
+            "飞利浦电视"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "view": "欢迎柱",
+        "name": "欢迎柱",
+        "type": "player",
+        "command": [
+            "欢迎柱"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "view": "照片墙",
+        "name": "照片墙",
+        "type": "player",
+        "command": [
+            "照片墙"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "view": "三生万物",
+        "name": "三生万物",
+        "type": "player",
+        "command": [
+            "三生万物"
+        ]
+    },
+    {
+        "area": "六连竖屏",
+        "view": "六连屏-1",
+        "name": "六连屏-1",
+        "type": "player",
+        "command": [
+            "六连屏-1"
+        ]
+    },
+    {
+        "area": "六连竖屏",
+        "view": "六连屏-2",
+        "name": "六连屏-2",
+        "type": "player",
+        "command": [
+            "六连屏-2"
+        ]
+    },
+    {
+        "area": "六连竖屏",
+        "view": "六连屏-3",
+        "name": "六连屏-3",
+        "type": "player",
+        "command": [
+            "六连屏-3"
+        ]
+    },
+    {
+        "area": "六连竖屏",
+        "view": "六连屏-4",
+        "name": "六连屏-4",
+        "type": "player",
+        "command": [
+            "六连屏-4"
+        ]
+    },
+    {
+        "area": "六连竖屏",
+        "view": "六连屏-5",
+        "name": "六连屏-5",
+        "type": "player",
+        "command": [
+            "六连屏-5"
+        ]
+    },
+    {
+        "area": "六连竖屏",
+        "view": "六连屏-6",
+        "name": "六连屏-6",
+        "type": "player",
+        "command": [
+            "六连屏-6"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "view": "5G展示-1",
+        "name": "5G展示-1",
+        "type": "player",
+        "command": [
+            "5G展示-1"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "view": "5G展示-2",
+        "name": "5G展示-2",
+        "type": "player",
+        "command": [
+            "5G展示-2"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "view": "5G展示-3",
+        "name": "5G展示-3",
+        "type": "player",
+        "command": [
+            "5G展示-3"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "view": "5G展示-4",
+        "name": "5G展示-4",
+        "type": "player",
+        "command": [
+            "5G展示-4"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "view": "5G展示-5",
+        "name": "5G展示-5",
+        "type": "player",
+        "command": [
+            "5G展示-5"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "view": "扬帆大屏",
+        "name": "扬帆大屏",
+        "type": "player",
+        "command": [
+            "扬帆大屏"
+        ]
+    },
+    {
+        "area": "工业互联网",
+        "view": "全屏",
+        "name": "全屏",
+        "type": "player",
+        "command": [
+            "全屏"
+        ]
+    },
+    {
+        "area": "工业互联网",
+        "view": "画中画",
+        "name": "画中画",
+        "type": "player",
+        "command": [
+            "画中画"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "view": "全屏",
+        "name": "全屏",
+        "type": "player",
+        "command": [
+            "全屏"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "view": "3*7左下-1",
+        "name": "3*7左下-1",
+        "type": "player",
+        "command": [
+            "3*7左下-1"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "view": "3*7左上",
+        "name": "3*7左上",
+        "type": "player",
+        "command": [
+            "3*7左上"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "view": "3*7左下-2",
+        "name": "3*7左下-2",
+        "type": "player",
+        "command": [
+            "3*7左下-2"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "view": "3*7中",
+        "name": "3*7中",
+        "type": "player",
+        "command": [
+            "3*7中"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "view": "3*7右上",
+        "name": "3*7右上",
+        "type": "player",
+        "command": [
+            "3*7右上"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "view": "3*7右下-2",
+        "name": "3*7右下-2",
+        "type": "player",
+        "command": [
+            "3*7右下-2"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "view": "3*7右下-1",
+        "name": "3*7右下-1",
+        "type": "player",
+        "command": [
+            "3*7右下-1"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "view": "行业1",
+        "name": "行业1",
+        "type": "player",
+        "command": [
+            "行业1"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "view": "行业2（橱窗）",
+        "name": "行业2（橱窗）",
+        "type": "player",
+        "command": [
+            "行业2（橱窗）"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "view": "行业3",
+        "name": "行业3",
+        "type": "player",
+        "command": [
+            "行业3"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "view": "行业4",
+        "name": "行业4",
+        "type": "player",
+        "command": [
+            "行业4"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "view": "行业5",
+        "name": "行业5",
+        "type": "player",
+        "command": [
+            "行业5"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "view": "行业6",
+        "name": "行业6",
+        "type": "player",
+        "command": [
+            "行业6"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "三折屏预案",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "三折三分",
+            "三折全屏"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "name": "14米预案",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "全屏",
+            "六分"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "name": "柱子预案",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "全屏",
+            "分屏"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "name": "后厅（1.2路）灯光",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "1路全开",
+            "1路全关",
+            "2路开",
+            "2路关"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "前厅灯光",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "1路全开",
+            "1路全关",
+            "2路全开",
+            "2路全关",
+            "3路全开",
+            "3路全关",
+            "全部开启",
+            "全部关闭"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "5G展示-5标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "物联网"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "5G展示-4标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "大数据"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "5G展示-3标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "极目洞察平台"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "5G展示-2标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "天玑云安全平台"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "5G展示-1标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "5G消息"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "行业 1 标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "5G+智慧医疗"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "行业 3 标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "5G+智慧交通"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "行业 4 标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "5G+智慧教育"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "行业 5 标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "5G+智慧政务"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "行业 6 标题",
+        "subType": "host",
+        "type": "led",
+        "command": [
+            "5G+智慧公园",
+            "智慧场馆"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "name": "14米长屏屏幕",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "14米开",
+            "14米关"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "三折屏幕",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "三折开",
+            "三折开"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "name": "柱子屏幕",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开屏",
+            "关屏"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "城市剪影区软膜",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "城市剪影区软膜开",
+            "城市剪影区软膜关"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "name": "投影过道灯带",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "投影过道灯带开",
+            "投影过道灯带关"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "星空顶",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "星空顶开",
+            "星空顶关"
+        ]
+    },
+    {
+        "area": "VIP室",
+        "name": "一体机区筒灯",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "一体机区筒灯开",
+            "一体机区筒灯关"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "name": "中间区软膜灯带",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "中间区软膜1开",
+            "中间区软膜1关",
+            "中间区软膜2开",
+            "中间区软膜2关",
+            "中间区软膜3开",
+            "中间区软膜3关",
+            "中间区软膜4开",
+            "中间区软膜4关",
+            "中间区软膜5开",
+            "中间区软膜5关",
+            "中间区筒灯1开",
+            "中间区筒灯1关",
+            "14米长屏条灯开",
+            "14米长屏条灯关"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "话筒",
+        "subType": "light",
+        "type": "control",
+        "command": [
+            "话筒后耳挂前",
+            "话筒前 耳挂后",
+            "话筒全厅"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "name": "投影机",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "投影开",
+            "投影关"
+        ]
+    },
+    {
+        "area": "VIP室",
+        "name": "86寸一体机左",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "86寸一体机左",
+            "86寸一体机左"
+        ]
+    },
+    {
+        "area": "VIP室",
+        "name": "86寸一体机右",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "86寸一体机右",
+            "86寸一体机右"
+        ]
+    },
+    {
+        "area": "科普教育",
+        "name": "小米电视",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "小米电视",
+            "小米电视"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "name": "3x7拼接屏预案全屏",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "全屏"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "name": "3x7拼接屏幕",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "3x7拼接屏开",
+            "3x7拼接屏关"
+        ]
+    },
+    {
+        "area": "工业互联网",
+        "name": "工业LED屏幕",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开屏",
+            "关屏"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "name": "智慧城市屏幕",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开屏",
+            "关屏"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "name": "大led背白色灯带",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "大led背白色灯带开",
+            "大led背白色灯带关"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "name": "大led软膜",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "大led软膜2开",
+            "大led软膜2关",
+            "大led软膜1开",
+            "大led软膜1关"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "3x7蓝灯带",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "3x7蓝灯带开",
+            "3x7蓝灯带关"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "name": "走廊灯带",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "走廊灯带开",
+            "走廊灯带关"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "五连体机区灯带",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "五连体机区灯带开",
+            "五连体机区灯带关"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "3x7筒灯",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "3x7筒灯开",
+            "3x7筒灯关"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "name": "玻璃护栏筒灯",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "玻璃护栏筒灯开",
+            "玻璃护栏筒灯关"
+        ]
+    },
+    {
+        "area": "工业互联网",
+        "name": "中间软膜",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "中间软膜1开",
+            "中间软膜1关",
+            "中间软膜2开",
+            "中间软膜2关",
+            "中间软膜3开",
+            "中间软膜3关"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "五连体机区筒灯",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "五连体机区筒灯开",
+            "五连体机区筒灯关"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "name": "1x2拼接屏（面对后厅）",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开屏",
+            "关屏"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "name": "1x2拼接屏（面对走廊）",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开屏",
+            "关屏"
+        ]
+    },
+    {
+        "area": "工业互联网",
+        "name": "工业LED屏预案",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "全屏",
+            "画中画"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "86寸一体机左2",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "86寸一体机左3",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "86寸一体机左4",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "86寸一体机左5",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "5G+行业",
+        "name": "86寸一体机左1",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "86寸一体机右5",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "86寸一体机右4",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "name": "飞利浦",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "86寸一体机右1",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "86寸一体机右2",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "创新业务",
+        "name": "86寸一体机右3",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "开机",
+            "关机"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "name": "滑雪机专场预案",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "滑雪机专场"
+        ]
+    },
+    {
+        "area": "元宇宙",
+        "name": "七分屏预案",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "七分屏幕"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "音响",
+        "subType": "light",
+        "type": "control",
+        "command": [
+            "全部开",
+            "全部关"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "view": "智慧城市五分左上",
+        "name": "智慧城市五分左上",
+        "type": "player",
+        "command": [
+            "智慧城市五分左上"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "view": "智慧城市五分左下",
+        "name": "智慧城市五分左下",
+        "type": "player",
+        "command": [
+            "智慧城市五分左下"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "view": "智慧城市五分中",
+        "name": "智慧城市五分中",
+        "type": "player",
+        "command": [
+            "智慧城市五分中"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "view": "智慧城市五分右上",
+        "name": "智慧城市五分右上",
+        "type": "player",
+        "command": [
+            "智慧城市五分右上"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "view": "智慧城市五分右下",
+        "name": "智慧城市五分右下",
+        "type": "player",
+        "command": [
+            "智慧城市五分右下"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "前厅功放",
+        "subType": "light",
+        "type": "control",
+        "command": [
+            "1路全开",
+            "1路全关",
+            "2路全开",
+            "2路全关"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "name": "后厅功放",
+        "subType": "light",
+        "type": "control",
+        "command": [
+            "1路全开",
+            "1路全关",
+            "2路全开",
+            "2路全关"
+        ]
+    },
+    {
+        "area": "扬帆大屏",
+        "name": "杨帆大屏预案",
+        "subType": "host",
+        "type": "control",
+        "command": [
+            "全屏",
+            "五分屏",
+            "三分屏"
+        ]
+    },
+    {
+        "area": "14米长屏区",
+        "name": "筒灯",
+        "subType": "lcd",
+        "type": "control",
+        "command": [
+            "中间区筒灯2开",
+            "中间区筒灯2关"
+        ]
+    },
+    {
+        "area": "荣誉长廊",
+        "name": "时序器",
+        "subType": "light",
+        "type": "control",
+        "command": [
+            "COM9全开",
+            "COM9全关",
+            "COM10全开",
+            "COM10全关"
+        ]
+    },
+    {
+        "area": "Cave空间",
+        "view": "上半屏,下半屏",
+        "name": "测试",
+        "type": "player",
+        "command": [
+            "上半屏",
+            "下半屏"
+        ]
+    }
+]
