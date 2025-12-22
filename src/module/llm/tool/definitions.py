@@ -39,50 +39,50 @@ class ExhibitionCommand(BaseModel):
 
 class OpenMediaInput(BaseModel):
     """Input for open media command."""
-    device: str = Field(description="执行播放的设备名称")
-    view: Optional[str] = Field(default=None, description="视窗名称，用户指定视窗区域")
-    value: str = Field(description="媒体资源名称，必须是知识库 media 列表中 name 字段的精确值")
+    device: str = Field(description="执行播放的设备名称，必须是知识库中 device 列表返回的精确 name 值")
+    view: Optional[str] = Field(default=None, description="视窗名称，必须是知识库中该设备 view 列表中的某个值，用户未指定时留空")
+    value: str = Field(description="媒体资源名称，必须是知识库中 media 列表返回的精确 name 值")
 
 
 class ControlDoorInput(BaseModel):
     """Input for control door command."""
-    device: str = Field(description="目标门的名称")
+    device: str = Field(description="目标门的名称，必须是知识库中 door 列表返回的精确 name 值")
     value: Literal["open", "close"] = Field(description="控制动作：'open' 表示打开，'close' 表示关闭")
 
 
 class SeekVideoInput(BaseModel):
     """Input for seek video command."""
-    device: str = Field(description="需要跳转进度的设备名称")
-    value: int = Field(description="目标时间点（单位：秒）")
+    device: str = Field(description="需要跳转进度的设备名称，必须是知识库中 device 列表返回的精确 name 值")
+    value: int = Field(description="目标时间点（单位：秒），由用户指定")
 
 
 class SetVolumeInput(BaseModel):
     """Input for set volume command."""
-    device: str = Field(description="要设置音量的设备名称")
-    value: int = Field(ge=0, le=100, description="音量值（0-100）")
+    device: str = Field(description="要设置音量的设备名称，必须是知识库中 device 列表返回的精确 name 值")
+    value: int = Field(ge=0, le=100, description="音量值（0-100），由用户指定")
 
 
 class AdjustVolumeInput(BaseModel):
     """Input for adjust volume command."""
-    device: str = Field(description="要调整音量的设备名称")
+    device: str = Field(description="要调整音量的设备名称，必须是知识库中 device 列表返回的精确 name 值")
     value: Literal["up", "down"] = Field(description="音量调整方向：up（提高）或down（降低）")
 
 
 class ControlDeviceInput(BaseModel):
     """Input for control device command."""
-    name: str = Field(description="设备名称")
-    type: str = Field(description="设备类型")
-    command: str = Field(description="设备的自定义命令，必须是该设备的自定义命令之一")
+    name: str = Field(description="设备名称，必须是知识库中 device 列表返回的精确 name 值")
+    type: str = Field(description="设备类型，必须是知识库中该设备对应的 type 字段值")
+    command: str = Field(description="设备的自定义命令，必须是知识库中该设备 command 列表中的某个精确值")
 
 
 class UpdateLocationInput(BaseModel):
     """Input for update location command."""
-    value: str = Field(description="用户移动到的区域名称")
+    value: str = Field(description="用户移动到的区域名称，必须是知识库中 area 列表返回的精确 name 值")
 
 
 @tool(args_schema=OpenMediaInput)
 def open_media(device: str, value: str, view: str | None = None) -> ExhibitionCommand:
-    """打开指定的媒体资源"""
+    """在设备上播放指定的媒体资源，适用于用户请求播放视频、音频或展示其他内容时调用"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -118,7 +118,7 @@ def open_media(device: str, value: str, view: str | None = None) -> ExhibitionCo
 
 @tool(args_schema=ControlDoorInput)
 def control_door(door: str, value: Literal["open", "close"]) -> ExhibitionCommand:
-    """控制门的开关"""
+    """控制展厅门的开关状态，当用户请求打开或关闭某扇门时调用"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -140,7 +140,7 @@ def control_door(door: str, value: Literal["open", "close"]) -> ExhibitionComman
 
 @tool(args_schema=SeekVideoInput)
 def seek_video(device: str, value: int) -> ExhibitionCommand:
-    """跳转到视频的指定时间点"""
+    """跳转到视频的指定时间点，当用户请求快进、后退或跳到特定时间时调用"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -162,7 +162,7 @@ def seek_video(device: str, value: int) -> ExhibitionCommand:
 
 @tool(args_schema=SetVolumeInput)
 def set_volume(device: str, value: int) -> ExhibitionCommand:
-    """设置音量到指定的绝对值"""
+    """设置设备音量到指定的绝对值，当用户请求将音量设置为具体数值时调用"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -184,7 +184,7 @@ def set_volume(device: str, value: int) -> ExhibitionCommand:
 
 @tool(args_schema=AdjustVolumeInput)
 def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionCommand:
-    """相对提高或降低音量"""
+    """相对调整设备音量，当用户请求调大、调小、增加或降低音量但未指定具体数值时调用"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -206,7 +206,7 @@ def adjust_volume(device: str, value: Literal["up", "down"]) -> ExhibitionComman
 
 @tool(args_schema=ControlDeviceInput)
 def control_device(name: str, device_type: str, command: str) -> ExhibitionCommand:
-    """控制设备执行特定命令"""
+    """控制设备执行预定义的自定义命令，如开机、关机、切换模式等，适用于非播放类的设备操作"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -237,7 +237,7 @@ def control_device(name: str, device_type: str, command: str) -> ExhibitionComma
 
 @tool(args_schema=UpdateLocationInput)
 def update_location(value: str) -> ExhibitionCommand:
-    """更新用户当前的位置"""
+    """记录用户移动到新区域，当调用的设备包含区域信息时调用"""
     from src.core import dependencies
     if not dependencies.data_service.area_exists(value):
         return ExhibitionCommand(
