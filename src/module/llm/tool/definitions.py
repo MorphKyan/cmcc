@@ -17,7 +17,7 @@ class CommandAction(str, Enum):
     ADJUST_VOLUME = "adjust_volume"
     UPDATE_LOCATION = "update_location"
     CONTROL_DOOR = "control_door"
-    CONTROL_DEVICE = "control_device"
+    DEVICE_CUSTOM_COMMAND = "device_custom_command"
     CONTROL_VIDEO = "control_video"
     CONTROL_PPT = "control_ppt"
     POWER_CONTROL = "power_control"
@@ -73,8 +73,8 @@ class AdjustVolumeInput(BaseModel):
 
 class ControlDeviceInput(BaseModel):
     """Input for control device command."""
-    name: str = Field(description="设备名称，必须是知识库中 device 列表返回的精确 name 值")
-    type: str = Field(description="设备类型，必须是知识库中该设备对应的 type 字段值")
+    device: str = Field(description="设备名称，必须是知识库中 device 列表返回的精确 name 值")
+    device_type: str = Field(description="设备类型，必须是知识库中该设备对应的 type 字段值")
     command: str = Field(description="设备的自定义命令，必须是知识库中该设备 command 列表中的某个精确值")
 
 
@@ -231,8 +231,8 @@ def adjust_volume(device: str, param: Literal["up", "down"]) -> ExhibitionComman
 
 
 @tool(args_schema=ControlDeviceInput)
-def control_device(device: str, device_type: str, command: str) -> ExhibitionCommand:
-    """控制设备执行预定义的自定义命令，适用于具有自定义命令的设备"""
+def device_custom_command(device: str, device_type: str, command: str) -> ExhibitionCommand:
+    """控制设备执行定义在其 command 列表中的自定义命令。仅当设备有特定的自定义命令时使用。注意：设备的"打开/关闭"、"开机/关机"操作请使用 control_power 函数。"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -253,7 +253,7 @@ def control_device(device: str, device_type: str, command: str) -> ExhibitionCom
         )
 
     return ExhibitionCommand(
-        action=CommandAction.CONTROL_DEVICE.value,
+        action=CommandAction.DEVICE_CUSTOM_COMMAND.value,
         device_name=device,
         device_type=device_info.get("type", "") or device_type,
         sub_type=device_info.get("subType", ""),
@@ -334,7 +334,7 @@ def update_location(value: str) -> ExhibitionCommand:
 
 @tool(args_schema=ControlPowerInput)
 def control_power(device: str, command: Literal["开机", "关机"]) -> ExhibitionCommand:
-    """控制设备的电源状态，当用户请求开机或关机时调用"""
+    """控制设备的电源开关状态。当用户请求"打开设备"、"关闭设备"、"开机"、"关机"、"启动"、"关掉"等操作时调用此函数。注意：这与设备的自定义命令不同，此函数专门用于设备电源控制。"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -359,7 +359,7 @@ def get_tools():
     return [
         open_media,
         control_door,
-        control_device,
+        device_custom_command,
         seek_video,
         set_volume,
         adjust_volume,

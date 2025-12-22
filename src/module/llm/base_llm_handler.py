@@ -166,7 +166,8 @@ class BaseLLMHandler(ABC):
                 "AREAS_INFO": "",
                 "VIDEOS_INFO": "",
                 "USER_INPUT": "健康检查",
-                "USER_LOCATION": ""
+                "USER_LOCATION": "",
+                "ACTIVE_DEVICE": ""
             }
 
             import asyncio
@@ -299,7 +300,7 @@ class BaseLLMHandler(ABC):
                 tool_function = self._tool_map.get(tool_name)
                 if not tool_function:
                     error_msg = f"Error: Unknown tool '{tool_name}'"
-                    tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id))
+                    tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id, status="error"))
                     has_error = True
                     continue
                     
@@ -309,17 +310,17 @@ class BaseLLMHandler(ABC):
                     
                     if isinstance(result, ExhibitionCommand):
                         if result.action == CommandAction.ERROR.value:
-                            tool_outputs.append(ToolMessage(content=f"Error: {result.message}", tool_call_id=tool_call_id))
+                            tool_outputs.append(ToolMessage(content=f"Error: {result.message}", tool_call_id=tool_call_id, status="error"))
                             has_error = True
                         else:
-                            tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id))
+                            tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id, status="success"))
                             executed_commands.append(result)
                     else:
-                        tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id))
+                        tool_outputs.append(ToolMessage(content=f"Success: {result}", tool_call_id=tool_call_id, status="success"))
                         
                 except Exception as e:
                     error_msg = f"Error executing {tool_name}: {str(e)}."
-                    tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id))
+                    tool_outputs.append(ToolMessage(content=error_msg, tool_call_id=tool_call_id, status="error"))
                     has_error = True
             
             if not has_error:
@@ -397,6 +398,46 @@ class BaseLLMHandler(ABC):
         
         return cleaned
 
+    def _extract_active_device_from_history(self, chat_history: list) -> str | None:
+        """
+        从聊天历史中提取最近一次成功操作的设备名称。
+        
+        通过检查 AIMessage 的 tool_calls 和对应 ToolMessage 的 status 字段，
+        找到最近一次成功执行的工具调用中的设备参数。
+        
+        Args:
+            chat_history: 聊天历史消息列表
+            
+        Returns:
+            str | None: 最近成功操作的设备名称，如果没有则返回 None
+        """
+        if not chat_history:
+            return None
+        
+        # 构建 tool_call_id -> ToolMessage 的映射
+        tool_responses: dict[str, ToolMessage] = {}
+        for msg in chat_history:
+            if isinstance(msg, ToolMessage):
+                tool_responses[msg.tool_call_id] = msg
+        
+        # 倒序遍历消息，找到最近一次成功的工具调用
+        for msg in reversed(chat_history):
+            if isinstance(msg, AIMessage) and hasattr(msg, 'tool_calls') and msg.tool_calls:
+                # 倒序遍历该消息中的 tool_calls
+                for tool_call in reversed(msg.tool_calls):
+                    tool_call_id = tool_call.get("id")
+                    tool_response = tool_responses.get(tool_call_id)
+                    
+                    # 检查是否有成功的响应
+                    if tool_response and getattr(tool_response, 'status', None) == 'success':
+                        # 从 tool_call 的 args 中提取 device 参数
+                        device = tool_call.get("args", {}).get("device")
+                        if device:
+                            logger.info(f"从聊天历史中提取到活跃设备: {device}")
+                            return device
+        
+        return None
+
     def _prepare_chain_input(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> dict[str, Any]:
         """
         准备Prompt的输入变量，并裁剪聊天历史。
@@ -412,6 +453,10 @@ class BaseLLMHandler(ABC):
 
         # 应用自定义 trimmer 裁剪聊天历史
         trimmed_history = self._trim_chat_history(chat_history)
+        
+        # 从聊天历史中提取活跃设备
+        active_device = self._extract_active_device_from_history(chat_history)
+        active_device_info = active_device if active_device else ""
 
         return {
             "DEVICES_INFO": devices_info,
@@ -420,6 +465,7 @@ class BaseLLMHandler(ABC):
             "VIDEOS_INFO": videos_info,
             "USER_INPUT": user_input,
             "USER_LOCATION": user_location,
+            "ACTIVE_DEVICE": active_device_info,
             "chat_history": trimmed_history
         }
 

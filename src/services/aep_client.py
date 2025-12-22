@@ -70,18 +70,11 @@ class AEPClient:
             sub_type: str = "",
             command: str = "",
             view: str = "",
-            resource: str = ""
+            resource: str = "",
+            param: str | int | None = ""
     ) -> AEPVoiceCommandResponse:
         """Send voice command to AEP central control system.
-        
-        Args:
-            name: 设备名称
-            type_: 设备类型 (player/led/control)
-            sub_type: 设备子类型
-            command: 命令名称
-            view: 视窗名称
-            resource: 资源名称
-            
+
         Returns:
             AEPVoiceCommandResponse with success status and device_name
         """
@@ -94,7 +87,7 @@ class AEPClient:
             "type": type_,
             "subType": sub_type,
             "command": command,
-            "param": "",
+            "param": param if param is not None else "",
             "view": view,
             "resource": resource
         }

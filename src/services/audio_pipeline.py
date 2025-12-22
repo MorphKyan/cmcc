@@ -203,7 +203,7 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
             local_commands = [cmd for cmd in commands if cmd.action == CommandAction.UPDATE_LOCATION.value]
             for cmd in local_commands:
                 logger.info("[本地命令] {cmd}", cmd=cmd.model_dump())
-                
+
                 result = await _execute_local_command(cmd, context)
                 execution_results.append(result)
                 # 发送本地命令执行结果到前端
@@ -220,7 +220,7 @@ async def run_command_executor(context: Context, websocket: WebSocket) -> None:
             remote_commands = [cmd for cmd in commands if cmd.action != CommandAction.UPDATE_LOCATION.value]
             for cmd in remote_commands:
                 logger.info("[AEP命令] {cmd}", cmd=cmd.model_dump())
-                
+
                 aep_result = await _execute_aep_command(cmd, context, websocket, user_id)
                 execution_results.append(aep_result)
                 logger.info("[AEP命令结果] {result}", result=aep_result)
@@ -276,7 +276,7 @@ def _get_command_description(cmd: ExhibitionCommand) -> str:
         CommandAction.SEEK.value: lambda c: f"将「{c.device_name}」跳转到{c.params}秒",
         CommandAction.SET_VOLUME.value: lambda c: f"将「{c.device_name}」音量设置为{c.params}",
         CommandAction.ADJUST_VOLUME.value: lambda c: f"{'提高' if c.params == 'up' else '降低'}「{c.device_name}」音量",
-        CommandAction.CONTROL_DEVICE.value: lambda c: f"控制设备「{c.device_name}」执行「{c.command}」",
+        CommandAction.DEVICE_CUSTOM_COMMAND.value: lambda c: f"控制设备「{c.device_name}」执行「{c.command}」",
     }
 
     if cmd.action in action_descriptions:
@@ -285,12 +285,12 @@ def _get_command_description(cmd: ExhibitionCommand) -> str:
 
 
 async def _execute_aep_command(
-    cmd: ExhibitionCommand,
-    context: Context,
-    websocket: WebSocket,
-    user_id: str
+        cmd: ExhibitionCommand,
+        context: Context,
+        websocket: WebSocket,
+        user_id: str
 ) -> dict:
-    """通过AEP HTTP API执行control_device命令
+    """通过AEP HTTP API执行命令
     
     Args:
         cmd: 要执行的命令
@@ -308,9 +308,10 @@ async def _execute_aep_command(
             name=cmd.device_name,
             type_=cmd.device_type,
             sub_type=cmd.sub_type,
-            command=cmd.command,
             view=cmd.view,
-            resource=cmd.resource
+            command=cmd.command,
+            param=cmd.params,
+            resource=cmd.resource,
         )
 
         if response.success:
@@ -354,11 +355,11 @@ async def _execute_aep_command(
 
 
 async def _send_command_error(
-    websocket: WebSocket,
-    user_id: str,
-    cmd: ExhibitionCommand,
-    message: str,
-    code: int
+        websocket: WebSocket,
+        user_id: str,
+        cmd: ExhibitionCommand,
+        message: str,
+        code: int
 ) -> None:
     """发送命令错误到前端"""
     error_payload = json.dumps({
