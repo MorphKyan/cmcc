@@ -1,12 +1,11 @@
 """
 LLM函数调用工具定义 - Modern Structured Output Approach.
 """
-import json
 from enum import Enum
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
 
 class CommandAction(str, Enum):
@@ -334,7 +333,7 @@ def update_location(value: str) -> ExhibitionCommand:
 
 @tool(args_schema=ControlPowerInput)
 def control_power(device: str, command: Literal["开机", "关机"]) -> ExhibitionCommand:
-    """控制设备的电源开关状态。当用户请求"打开设备"、"关闭设备"、"开机"、"关机"、"启动"、"关掉"等操作时调用此函数。注意：这与设备的自定义命令不同，此函数专门用于设备电源控制。"""
+    """控制设备的电源开关状态。当用户请求"打开电源"、"关闭电源"、"打开设备"、"关闭设备"、"开机"、"关机"、"启动"、"关掉"、"关(设备名)电源"、"(设备名)开机/关机"等操作时调用此函数。注意：设备的自定义命令不包括电源操作，所有涉及"电源"、"开机"、"关机"的请求都应使用此函数。"""
     from src.core import dependencies
     ds = dependencies.data_service
 

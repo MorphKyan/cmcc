@@ -110,7 +110,10 @@ class AEPClient:
             result = AEPVoiceCommandResponse(**data)
 
             if result.success:
-                logger.info("[AEP] 命令发送成功: device_name={device_name}", device_name=result.device_name)
+                if result.result and not result.device_name:
+                    result.device_name = result.result
+                
+                logger.info("[AEP] 命令发送成功: device_name={device_name}", device_name=result.result)
             else:
                 logger.warning("[AEP] 命令发送失败: code={code}, message={message}", code=result.code, message=result.message)
 
