@@ -41,6 +41,32 @@
               <section class="section glass-card">
                 <AudioRecorder />
               </section>
+
+              <!-- 文本指令输入 -->
+              <section class="section glass-card">
+                <h2 class="section-title">
+                  <span class="section-icon">⌨️</span>
+                  文本指令
+                </h2>
+                <div class="query-container">
+                  <div class="query-input-wrapper">
+                    <input 
+                      v-model="textCommandInput" 
+                      @keyup.enter="handleTextCommand"
+                      type="text" 
+                      class="form-input query-input" 
+                      placeholder="输入控制指令，例如：打开前厅的灯..."
+                    >
+                    <button class="btn btn-primary" @click="handleTextCommand" :disabled="isTextCommandRunning">
+                      {{ isTextCommandRunning ? '执行中...' : '发送指令' }}
+                    </button>
+                  </div>
+                  <div v-if="textCommandResult" class="query-result">
+                    <h3>执行结果</h3>
+                    <pre class="result-code">{{ textCommandResult }}</pre>
+                  </div>
+                </div>
+              </section>
               
               <!-- 系统状态卡片 -->
               <section class="section glass-card">
@@ -203,7 +229,8 @@ import {
   refreshRag,
   reinitializeRag,
   vadReinitialize,
-  vadStatus
+  vadStatus,
+  sendTextCommand
 } from './api'
 
 export default {
@@ -240,7 +267,10 @@ export default {
       queryInput: '',
       queryResult: null,
       isQuerying: false,
-      isReinitializing: false
+      isReinitializing: false,
+      textCommandInput: '',
+      textCommandResult: null,
+      isTextCommandRunning: false
     }
   },
   computed: {
@@ -354,6 +384,23 @@ export default {
         this.queryResult = '错误: ' + error.message
       } finally {
         this.isQuerying = false
+      }
+    },
+
+    async handleTextCommand() {
+      if (!this.textCommandInput) {
+        alert('请输入指令内容')
+        return
+      }
+
+      this.isTextCommandRunning = true
+      try {
+        const response = await sendTextCommand(this.textCommandInput)
+        this.textCommandResult = JSON.stringify(response.data, null, 2)
+      } catch (error) {
+        this.textCommandResult = '错误: ' + error.message
+      } finally {
+        this.isTextCommandRunning = false
       }
     },
 

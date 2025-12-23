@@ -15,6 +15,7 @@ from src.api.routers import rag
 from src.api.routers import vad
 from src.api.routers import monitoring
 from src.api.routers import tool
+from src.api.routers import pipeline
 from src.api.schemas import HealthResponse
 from src.config.logging_config import setup_logging
 from src.core.lifespan import lifespan
@@ -44,6 +45,7 @@ app.include_router(data.router)
 app.include_router(vad.router)
 app.include_router(monitoring.router)
 app.include_router(tool.router)
+app.include_router(pipeline.router)
 
 
 @app.get("/", tags=["Health"], response_model=HealthResponse)

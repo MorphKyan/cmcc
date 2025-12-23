@@ -116,5 +116,10 @@ export const deleteDynamicTool = (name) => {
   return api.delete(`/tools/${name}`)
 }
 
+// Text Pipeline API
+export const sendTextCommand = (text) => {
+  return api.post('/pipeline/text', { text })
+}
+
 // 默认导出axios实例，便于其他模块直接使用
 export default api
