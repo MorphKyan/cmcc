@@ -175,7 +175,7 @@ class DynamicToolManager:
     def _get_persist_path(self) -> Path:
         """获取持久化文件路径"""
         settings = get_settings()
-        return Path(getattr(settings.data, 'dynamic_tools_path', 'data/dynamic_tools.json'))
+        return Path(settings.data.dynamic_tools_path)
     
     def _load_tools(self) -> None:
         """从 JSON 文件加载工具"""

@@ -13,7 +13,7 @@ from langchain_core.runnables import RunnableSerializable
 from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 from loguru import logger
 
-from src.config.config import LLMSettings
+from src.config.config import LLMSettings, DEFAULT_MAX_VALIDATION_RETRIES
 from src.core import dependencies
 from src.module.llm.tool.definitions import get_tools, ExhibitionCommand, CommandAction
 from src.module.llm.tool.dynamic_tool_manager import DynamicToolManager
@@ -178,16 +178,6 @@ class BaseLLMHandler(ABC):
             logger.warning(f"LLM健康检查失败: {e}")
             return False
 
-    def get_network_retry_config(self) -> dict:
-        """
-        获取网络重试配置。
-        """
-        return {
-            'max_retries': getattr(self.settings, 'max_network_retries', 3),
-            'base_delay': getattr(self.settings, 'base_retry_delay', 1.0),
-            'max_delay': getattr(self.settings, 'max_retry_delay', 10.0)
-        }
-
     async def get_response(self, user_input: str, rag_docs: dict[str, list[Document]], user_location: str, chat_history: list) -> list[ExhibitionCommand]:
         """
         结合RAG上下文，异步获取大模型的响应。
@@ -238,7 +228,7 @@ class BaseLLMHandler(ABC):
                 raise ValueError("LLM处理器初始化失败。")
 
         messages = []
-        max_retries = getattr(self.settings, 'max_validation_retries', 2)
+        max_retries = getattr(self.settings, 'max_validation_retries', DEFAULT_MAX_VALIDATION_RETRIES)
         
         # 初始调用（带重试机制）
         ai_msg = None

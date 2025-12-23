@@ -364,6 +364,13 @@ class RAGSettings(BaseSettings):
     dashscope_api_key: SecretStr = SecretStr("sk-5d29b7ca2f074ffea3b7de63c9348ee5")  # 请手动填写百炼平台的 API Key
 
 
+# LLM 配置默认值常量
+DEFAULT_MAX_VALIDATION_RETRIES = 2
+DEFAULT_RETRY_DELAY = 0.1
+DEFAULT_REQUEST_TIMEOUT = 10
+DEFAULT_CONNECTION_TIMEOUT = 10
+
+
 class LLMSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LLM_")
     system_prompt_template: str = SYSTEM_PROMPT_TEMPLATE
@@ -385,11 +392,11 @@ class LLMSettings(BaseSettings):
     dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     dashscope_api_key: SecretStr = SecretStr("sk-5d29b7ca2f074ffea3b7de63c9348ee5")
     # Validation and retry settings
-    max_validation_retries: int = 2
-    retry_delay: float = 0.1
+    max_validation_retries: int = DEFAULT_MAX_VALIDATION_RETRIES
+    retry_delay: float = DEFAULT_RETRY_DELAY
     # Network timeout settings
-    request_timeout: int = 10  # Request timeout in seconds
-    connection_timeout: int = 10  # Connection timeout in seconds
+    request_timeout: int = DEFAULT_REQUEST_TIMEOUT  # Request timeout in seconds
+    connection_timeout: int = DEFAULT_CONNECTION_TIMEOUT  # Connection timeout in seconds
 
 
 class AEPSettings(BaseSettings):
