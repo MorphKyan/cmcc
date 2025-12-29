@@ -3,11 +3,11 @@
 针对不同实体类型优化文档内容，增强语义匹配能力。
 """
 import json
-from typing import List, Dict, Any
+from typing import Any
 from langchain_core.documents import Document
 
 
-def convert_doors_to_documents(doors_data: List[Dict[str, Any]]) -> List[Document]:
+def convert_doors_to_documents(doors_data: list[dict[str, Any]]) -> list[Document]:
     """转换门数据为文档"""
     documents = []
     for door in doors_data:
@@ -47,7 +47,7 @@ def convert_doors_to_documents(doors_data: List[Dict[str, Any]]) -> List[Documen
     return documents
 
 
-def convert_devices_to_documents(devices_data: List[Dict[str, Any]]) -> List[Document]:
+def convert_devices_to_documents(devices_data: list[dict[str, Any]]) -> list[Document]:
     """转换设备数据为文档"""
     documents = []
     for device in devices_data:
@@ -115,7 +115,7 @@ def convert_devices_to_documents(devices_data: List[Dict[str, Any]]) -> List[Doc
         documents.append(Document(page_content=content, metadata=metadata))
     return documents
 
-def convert_media_to_documents(media_data: List[Dict[str, Any]]) -> List[Document]:
+def convert_media_to_documents(media_data: list[dict[str, Any]]) -> list[Document]:
     """转换媒体数据为文档"""
     documents = []
     for media in media_data:
@@ -155,7 +155,7 @@ def convert_media_to_documents(media_data: List[Dict[str, Any]]) -> List[Documen
     return documents
 
 
-def convert_areas_to_documents(areas_data: List[Dict[str, Any]]) -> List[Document]:
+def convert_areas_to_documents(areas_data: list[dict[str, Any]]) -> list[Document]:
     """转换区域数据为文档"""
     documents = []
     for area in areas_data:

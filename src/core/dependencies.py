@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from src.api.context import Context
 from src.services.data_service import DataService
@@ -12,11 +12,11 @@ if TYPE_CHECKING:
     from src.module.vad.base_vad_processor import BaseVADProcessor
 
 # 这里只声明变量，初始化将在lifespan事件中
-vad_core: Optional[BaseVADProcessor] = None
-asr_processor: Optional[Any] = None
-rag_processor: Optional[BaseRAGProcessor] = None
-llm_processor: Optional[BaseLLMHandler] = None
-data_service: Optional[DataService] = None
+vad_core: BaseVADProcessor | None = None
+asr_processor: Any | None = None
+rag_processor: BaseRAGProcessor | None = None
+llm_processor: BaseLLMHandler | None = None
+data_service: DataService | None = None
 
 # 性能指标管理器
 metrics_manager: PerformanceMetricsManager = PerformanceMetricsManager()

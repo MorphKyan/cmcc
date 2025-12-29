@@ -5,7 +5,6 @@ central control system via POST /aep/voice/command endpoint.
 """
 
 import hashlib
-from typing import Optional
 import uuid
 
 import httpx
@@ -33,9 +32,9 @@ class AEPVoiceCommandResponse(BaseModel):
     success: bool
     message: str
     code: int
-    result: Optional[str] = None
+    result: str | None = None
     timestamp: int
-    device_name: Optional[str] = None
+    device_name: str | None = None
 
 
 class AEPClient:
@@ -149,7 +148,7 @@ class AEPClient:
 
 
 # Singleton instance
-_aep_client: Optional[AEPClient] = None
+_aep_client: AEPClient | None = None
 
 
 def get_aep_client() -> AEPClient:

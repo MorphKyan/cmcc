@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-from typing import Any, List, Dict
+from typing import Any
 
 from src.services.text_pipeline import TextPipelineService
 
@@ -16,8 +16,8 @@ class TextPipelineRequest(BaseModel):
 class TextPipelineResponse(BaseModel):
     success: bool
     ai_response: str
-    commands: List[Dict[str, Any]]
-    results: List[Dict[str, Any]]
+    commands: list[dict[str, Any]]
+    results: list[dict[str, Any]]
     message: str | None = None
 
 @router.post("/text", response_model=TextPipelineResponse)

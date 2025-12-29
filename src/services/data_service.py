@@ -2,7 +2,7 @@ import os
 import shutil
 import threading
 import pandas as pd
-from typing import Any, List, Dict, Optional
+from typing import Any
 from loguru import logger
 from pydantic import BaseModel
 from langchain_core.documents import Document
@@ -30,10 +30,10 @@ class DataService:
             return
 
         self._data_lock = threading.Lock()
-        self._media_cache: Dict[str, Dict[str, Any]] = {}
-        self._doors_cache: Dict[str, Dict[str, Any]] = {}
-        self._devices_cache: Dict[str, Dict[str, Any]] = {}
-        self._areas_cache: Dict[str, Dict[str, Any]] = {}
+        self._media_cache: dict[str, dict[str, Any]] = {}
+        self._doors_cache: dict[str, dict[str, Any]] = {}
+        self._devices_cache: dict[str, dict[str, Any]] = {}
+        self._areas_cache: dict[str, dict[str, Any]] = {}
         self._initialized = True
         
         self.reload()
@@ -82,7 +82,7 @@ class DataService:
             logger.error(f"Failed to read CSV file '{file_path}': {e}")
             return pd.DataFrame()
 
-    def _process_media_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+    def _process_media_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         media_dict = {}
         if df.empty: return media_dict
         for _, row in df.iterrows():
@@ -96,7 +96,7 @@ class DataService:
             }
         return media_dict
 
-    def _process_doors_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+    def _process_doors_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         doors_dict = {}
         if df.empty: return doors_dict
         for _, row in df.iterrows():
@@ -111,7 +111,7 @@ class DataService:
             }
         return doors_dict
 
-    def _process_areas_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+    def _process_areas_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         areas_dict = {}
         if df.empty: return areas_dict
         for _, row in df.iterrows():
@@ -124,7 +124,7 @@ class DataService:
             }
         return areas_dict
 
-    def _process_devices_data(self, df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
+    def _process_devices_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         import json
         devices_dict = {}
         if df.empty: return devices_dict
@@ -178,19 +178,19 @@ class DataService:
         with self._data_lock:
             return name in self._doors_cache
 
-    def get_media_info(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_media_info(self, name: str) -> dict[str, Any] | None:
         with self._data_lock:
             return self._media_cache.get(name)
 
-    def get_door_info(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_door_info(self, name: str) -> dict[str, Any] | None:
         with self._data_lock:
             return self._doors_cache.get(name)
 
-    def get_all_media(self) -> List[str]:
+    def get_all_media(self) -> list[str]:
         with self._data_lock:
             return list(self._media_cache.keys())
 
-    def get_all_doors(self) -> List[str]:
+    def get_all_doors(self) -> list[str]:
         with self._data_lock:
             return list(self._doors_cache.keys())
 
@@ -198,11 +198,11 @@ class DataService:
         with self._data_lock:
             return name in self._areas_cache
 
-    def get_area_info(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_area_info(self, name: str) -> dict[str, Any] | None:
         with self._data_lock:
             return self._areas_cache.get(name)
 
-    def get_all_areas(self) -> List[str]:
+    def get_all_areas(self) -> list[str]:
         with self._data_lock:
             return list(self._areas_cache.keys())
 
@@ -210,53 +210,53 @@ class DataService:
         with self._data_lock:
             return name in self._devices_cache
 
-    def get_device_info(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_device_info(self, name: str) -> dict[str, Any] | None:
         with self._data_lock:
             return self._devices_cache.get(name)
 
-    def get_all_devices(self) -> List[str]:
+    def get_all_devices(self) -> list[str]:
         with self._data_lock:
             return list(self._devices_cache.keys())
 
-    def get_all_doors_data(self) -> List[Dict[str, Any]]:
+    def get_all_doors_data(self) -> list[dict[str, Any]]:
         with self._data_lock:
             return list(self._doors_cache.values())
 
-    def get_all_media_data(self) -> List[Dict[str, Any]]:
+    def get_all_media_data(self) -> list[dict[str, Any]]:
         with self._data_lock:
             return list(self._media_cache.values())
 
-    def get_all_devices_data(self) -> List[Dict[str, Any]]:
+    def get_all_devices_data(self) -> list[dict[str, Any]]:
         with self._data_lock:
             return list(self._devices_cache.values())
 
-    def get_all_areas_data(self) -> List[Dict[str, Any]]:
+    def get_all_areas_data(self) -> list[dict[str, Any]]:
         with self._data_lock:
             return list(self._areas_cache.values())
 
     # --- Write Methods ---
 
-    async def add_devices(self, items: List[DeviceItem]) -> None:
+    async def add_devices(self, items: list[DeviceItem]) -> None:
         settings = get_settings()
         await self._append_to_csv(settings.data.devices_data_path, items, ['name', 'type', 'subType', 'command', 'area', 'view', 'aliases', 'description'])
         self.reload()
 
-    async def add_areas(self, items: List[AreaItem]) -> None:
+    async def add_areas(self, items: list[AreaItem]) -> None:
         settings = get_settings()
         await self._append_to_csv(settings.data.areas_data_path, items, ['name', 'aliases', 'description'])
         self.reload()
 
-    async def add_media(self, items: List[MediaItem]) -> None:
+    async def add_media(self, items: list[MediaItem]) -> None:
         settings = get_settings()
         await self._append_to_csv(settings.data.media_data_path, items, ['name', 'type', 'aliases', 'description'])
         self.reload()
 
-    async def add_doors(self, items: List[DoorItem]) -> None:
+    async def add_doors(self, items: list[DoorItem]) -> None:
         settings = get_settings()
         await self._append_to_csv(settings.data.doors_data_path, items, ['name', 'type', 'area1', 'area2', 'location'])
         self.reload()
 
-    async def _append_to_csv(self, file_path: str, items: List[BaseModel], columns: List[str]) -> None:
+    async def _append_to_csv(self, file_path: str, items: list[BaseModel], columns: list[str]) -> None:
         import json as json_module
         try:
             new_data = [item.model_dump() for item in items]
@@ -320,7 +320,7 @@ class DataService:
         await self._clear_csv_file(settings.data.doors_data_path, ['name', 'type', 'area1', 'area2', 'location'])
         self.reload()
 
-    async def _clear_csv_file(self, file_path: str, columns: List[str]) -> None:
+    async def _clear_csv_file(self, file_path: str, columns: list[str]) -> None:
         """Clear a CSV file by writing only headers."""
         backup_path = file_path + '.backup'
         try:

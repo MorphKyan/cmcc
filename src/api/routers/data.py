@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Any
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
@@ -14,7 +14,7 @@ router = APIRouter(
 
 
 @router.post("/devices/batch", response_model=UploadResponse)
-async def upload_devices_batch(items: List[DeviceItem]) -> UploadResponse:
+async def upload_devices_batch(items: list[DeviceItem]) -> UploadResponse:
     """批量上传设备数据"""
     logger.info(f"收到批量上传设备请求，数量: {len(items)}, 数据: {items}")
     if dependencies.data_service is None:
@@ -31,7 +31,7 @@ async def upload_devices_batch(items: List[DeviceItem]) -> UploadResponse:
 
 
 @router.post("/areas/batch", response_model=UploadResponse)
-async def upload_areas_batch(items: List[AreaItem]) -> UploadResponse:
+async def upload_areas_batch(items: list[AreaItem]) -> UploadResponse:
     """批量上传区域数据"""
     logger.info(f"收到批量上传区域请求，数量: {len(items)}, 数据: {items}")
     if dependencies.data_service is None:
@@ -48,7 +48,7 @@ async def upload_areas_batch(items: List[AreaItem]) -> UploadResponse:
 
 
 @router.post("/media/batch", response_model=UploadResponse)
-async def upload_media_batch(items: List[MediaItem]) -> UploadResponse:
+async def upload_media_batch(items: list[MediaItem]) -> UploadResponse:
     """批量上传媒体数据"""
     logger.info(f"收到批量上传媒体请求，数量: {len(items)}, 数据: {items}")
     if dependencies.data_service is None:
@@ -64,8 +64,8 @@ async def upload_media_batch(items: List[MediaItem]) -> UploadResponse:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"批量上传媒体数据失败: {str(e)}")
 
 
-@router.get("/devices", response_model=List[Dict[str, Any]])
-async def get_devices() -> List[Dict[str, Any]]:
+@router.get("/devices", response_model=list[dict[str, Any]])
+async def get_devices() -> list[dict[str, Any]]:
     """获取所有设备数据"""
     logger.info("收到获取所有设备数据请求")
     if dependencies.data_service is None:
@@ -76,8 +76,8 @@ async def get_devices() -> List[Dict[str, Any]]:
     return result
 
 
-@router.get("/areas", response_model=List[Dict[str, Any]])
-async def get_areas() -> List[Dict[str, Any]]:
+@router.get("/areas", response_model=list[dict[str, Any]])
+async def get_areas() -> list[dict[str, Any]]:
     """获取所有区域数据"""
     logger.info("收到获取所有区域数据请求")
     if dependencies.data_service is None:
@@ -88,8 +88,8 @@ async def get_areas() -> List[Dict[str, Any]]:
     return result
 
 
-@router.get("/media", response_model=List[Dict[str, Any]])
-async def get_media() -> List[Dict[str, Any]]:
+@router.get("/media", response_model=list[dict[str, Any]])
+async def get_media() -> list[dict[str, Any]]:
     """获取所有媒体数据"""
     logger.info("收到获取所有媒体数据请求")
     if dependencies.data_service is None:
@@ -152,7 +152,7 @@ async def clear_media() -> UploadResponse:
 
 
 @router.post("/doors/batch", response_model=UploadResponse)
-async def upload_doors_batch(items: List[DoorItem]) -> UploadResponse:
+async def upload_doors_batch(items: list[DoorItem]) -> UploadResponse:
     """批量上传门数据"""
     logger.info(f"收到批量上传门数据请求，数量: {len(items)}, 数据: {items}")
     if dependencies.data_service is None:
@@ -168,8 +168,8 @@ async def upload_doors_batch(items: List[DoorItem]) -> UploadResponse:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"批量上传门数据失败: {str(e)}")
 
 
-@router.get("/doors", response_model=List[Dict[str, Any]])
-async def get_doors() -> List[Dict[str, Any]]:
+@router.get("/doors", response_model=list[dict[str, Any]])
+async def get_doors() -> list[dict[str, Any]]:
     """获取所有门数据"""
     logger.info("收到获取所有门数据请求")
     if dependencies.data_service is None:

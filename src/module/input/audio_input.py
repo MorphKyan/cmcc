@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from collections.abc import Mapping
 import queue
-from typing import Optional, Mapping
 
 import pyaudio
 
@@ -30,7 +30,7 @@ class AudioInputer:
         )
 
     def _audio_callback(self, in_data: bytes | None, frame_count: int, time_info: Mapping[str, float], status: int) \
-            -> tuple[Optional[bytes], int] | None:
+            -> tuple[bytes | None, int] | None:
         """音频流回调函数，将数据放入队列。"""
         self.audio_queue.put(in_data)
         return None, pyaudio.paContinue
@@ -56,7 +56,7 @@ class AudioInputer:
                 pass
         self.audio.terminate()
 
-    def get_audio_data(self, timeout: Optional[float] = None) -> bytes:
+    def get_audio_data(self, timeout: float | None = None) -> bytes:
         """
         从音频队列中获取数据
         

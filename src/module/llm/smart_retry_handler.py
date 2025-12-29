@@ -5,7 +5,7 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any
 
 from loguru import logger
 
@@ -20,7 +20,7 @@ class RetryResult:
     response: str
     attempt_count: int
     total_time: float
-    error_messages: List[str] = field(default_factory=list)
+    error_messages: list[str] = field(default_factory=list)
 
 
 class SmartRetryHandler:
@@ -33,7 +33,7 @@ class SmartRetryHandler:
                     max_retries=self.max_retries,
                     retry_delay=self.retry_delay)
 
-    def _extract_validation_errors(self, response: str) -> List[str]:
+    def _extract_validation_errors(self, response: str) -> list[str]:
         """提取验证错误信息"""
         try:
             commands = json.loads(response)
@@ -54,7 +54,7 @@ class SmartRetryHandler:
         errors = self._extract_validation_errors(response)
         return len(errors) > 0
 
-    def _create_retry_prompt(self, original_input: str, validation_errors: List[str]) -> str:
+    def _create_retry_prompt(self, original_input: str, validation_errors: list[str]) -> str:
         """创建重试提示"""
         error_feedback = "\n".join([f"- {error}" for error in validation_errors])
 
@@ -74,7 +74,7 @@ class SmartRetryHandler:
             self,
             original_input: str,
             llm_function,
-            rag_docs: List
+            rag_docs: list
     ) -> RetryResult:
         """执行指令重试，最多重试3次"""
         start_time = time.time()

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import os
-from typing import Any, Optional, TypeAlias
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -13,8 +13,8 @@ from src.config.config import VADSettings
 from src.module.vad.vad_core import VADCore
 
 # 类型别名
-AudioSegment: TypeAlias = tuple[int, int, npt.NDArray[np.float32]]
-VADCache: TypeAlias = dict[str, Any]
+type AudioSegment = tuple[int, int, npt.NDArray[np.float32]]
+type VADCache = dict[str, Any]
 
 
 class VADProcessor:
@@ -28,8 +28,8 @@ class VADProcessor:
         self.history_buffer_max_samples = settings.history_buffer_duration_sec * self.sample_rate
         self.history_buffer: npt.NDArray[np.float32] = np.array([], dtype=np.float32)
         self.history_buffer_head_index = 0  # buffer头的偏移量
-        self.last_start_time: Optional[int] = None  # 上一segment的开始时间戳（累积）
-        self.last_end_time: Optional[int] = None  # 上一segment的结束时间戳（累积）
+        self.last_start_time: int | None = None  # 上一segment的开始时间戳（累积）
+        self.last_end_time: int | None = None  # 上一segment的结束时间戳（累积）
         self.total_samples_processed = 0  # A running counter of all samples seen so far
         self.chunk_queue: asyncio.Queue[npt.NDArray] = asyncio.Queue(maxsize=settings.chunk_queue_maxsize)
 
@@ -61,7 +61,7 @@ class VADProcessor:
         self.total_samples_processed += len(chunk)
         return segments
 
-    def _complete_pending_segment(self, end_ms: int) -> Optional[AudioSegment]:
+    def _complete_pending_segment(self, end_ms: int) -> AudioSegment | None:
         """
         完成之前未结束的语音段。
         
@@ -84,7 +84,7 @@ class VADProcessor:
             return result
         return None
 
-    def _finalize_segment(self, start_ms: int, end_ms: int) -> Optional[AudioSegment]:
+    def _finalize_segment(self, start_ms: int, end_ms: int) -> AudioSegment | None:
         """
         完成一个语音段并返回结果。
         
@@ -140,7 +140,7 @@ class VADProcessor:
 
         return completed_segments
 
-    def _extract_audio(self, start_ms: int, end_ms: int) -> Optional[npt.NDArray[np.float32]]:
+    def _extract_audio(self, start_ms: int, end_ms: int) -> npt.NDArray[np.float32] | None:
         global_start_sample = int(start_ms * self.sample_rate / 1000)
         global_end_sample = int(end_ms * self.sample_rate / 1000)
 

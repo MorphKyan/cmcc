@@ -2,7 +2,7 @@
 LLM函数调用工具定义 - Modern Structured Output Approach.
 """
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
@@ -29,20 +29,20 @@ class ExhibitionCommand(BaseModel):
     包含所有 AEP API 所需的字段，工具函数内部负责从 DataService 补全信息。
     """
     action: str = Field(description="需要执行的具体命令动作，必须是预定义的合法动作之一")
-    message: Optional[str] = Field(default=None, description="错误提示")
-    device_name: Optional[str] = Field(default=None, description="命令的目标设备名称")
+    message: str | None = Field(default=None, description="错误提示")
+    device_name: str | None = Field(default=None, description="命令的目标设备名称")
     device_type: str = Field(default="", description="设备类型 (player/led/control)")
     sub_type: str = Field(default="", description="设备子类型")
     view: str = Field(default="", description="视窗名称")
     command: str = Field(default="", description="设备的自定义命令名称")
-    params: Optional[str | int] = Field(default=None, description="命令的具体参数值（字符串或整数）")
+    params: str | int | None = Field(default=None, description="命令的具体参数值（字符串或整数）")
     resource: str = Field(default="", description="资源名称")
 
 
 class OpenMediaInput(BaseModel):
     """Input for open media command."""
     device: str = Field(description="执行播放的设备名称，必须是知识库中 device 列表返回的精确 name 值")
-    view: Optional[str] = Field(default=None, description="视窗名称，必须是知识库中该设备 view 列表中的某个值，用户未指定时留空")
+    view: str | None = Field(default=None, description="视窗名称，必须是知识库中该设备 view 列表中的某个值，用户未指定时留空")
     value: str = Field(description="媒体资源名称，必须是知识库中 media 列表返回的精确 name 值")
 
 
@@ -87,7 +87,7 @@ class ControlPPTInput(BaseModel):
     """Input for PPT control command."""
     device: str = Field(description="需要控制PPT的设备名称，必须是知识库中 device 列表返回的精确 name 值")
     command: Literal["首页", "上一页", "下一页", "末页", "PPT跳转"] = Field(description="PPT控制动作，'PPT跳转'指跳转到指定页")
-    param: Optional[int] = Field(default=None, description="跳转的目标页码，仅当 value='PPT跳转' 时需要指定")
+    param: int | None = Field(default=None, description="跳转的目标页码，仅当 value='PPT跳转' 时需要指定")
 
 
 class ControlPowerInput(BaseModel):

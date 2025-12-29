@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from collections import deque
 from enum import Enum
-from typing import Optional, Union
 import threading
 
 
@@ -55,7 +54,7 @@ class MetricDataPoint:
     """单个性能指标数据点"""
     timestamp: datetime
     duration: float  # 耗时（秒）
-    context_id: Optional[str] = None
+    context_id: str | None = None
 
 
 class PerformanceMetricsManager:
@@ -76,7 +75,7 @@ class PerformanceMetricsManager:
             for metric in MetricType
         }
     
-    def record(self, metric_type: Union[MetricType, str], duration: float, context_id: Optional[str] = None) -> None:
+    def record(self, metric_type: MetricType | str, duration: float, context_id: str | None = None) -> None:
         """
         记录一个性能指标数据点
         
