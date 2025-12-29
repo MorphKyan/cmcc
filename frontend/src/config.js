@@ -7,11 +7,14 @@
 
 const getBackendUrl = () => {
   // Check if we have a VITE_BACKEND_URL environment variable
-  if (import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
+  let url = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+
+  // Remove trailing slash if present
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
   }
 
-  return window.location.origin;
+  return url;
 };
 
 // Get WebSocket URL based on current protocol and backend configuration

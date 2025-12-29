@@ -66,6 +66,7 @@
 <script>
 import Recorder from 'recorder-core';
 import 'recorder-core/src/engine/pcm';
+import { config } from '../config';
 
 const STORAGE_KEY = 'ai-assistant-user-id';
 const DEFAULT_RECONNECT_DELAY = 1000;
@@ -144,15 +145,23 @@ export default {
       return '点击开始录音';
     },
     wsUrl() {
-      const baseUrl = this.backendUrl || this.getDefaultBackendUrl();
-      try {
-        const url = new URL(baseUrl);
-        // Always use wss:// protocol for WebSocket connection
-        return `wss://${url.host}/audio/ws/${this.userId}`;
-      } catch {
-        // Fallback: use wss:// protocol with the baseUrl as host
-        return `wss://${baseUrl}/audio/ws/${this.userId}`;
+      // Use the config utility to generate consistent WebSocket URL
+      // If prop backendUrl is provided, it will be used by the config utility 
+      // (Wait, config.getWebSocketUrl relies on config.getBackendUrl which reads env var)
+      // We should probably pass the prop value if present, but config.js doesn't take arguments for url.
+      
+      // If props.backendUrl is set, we use it directly with logic similar to config.js
+      if (this.backendUrl) {
+        try {
+           const url = new URL(this.backendUrl);
+           return `wss://${url.host}/audio/ws/${this.userId}`;
+        } catch {
+           return `wss://${this.backendUrl.replace(/^http(s)?:\/\//, '')}/audio/ws/${this.userId}`;
+        }
       }
+      
+      // Otherwise use the unified config
+      return config.getWebSocketUrl(this.userId);
     }
   },
   mounted() {
@@ -185,16 +194,7 @@ export default {
     },
     
     getDefaultBackendUrl() {
-      // Check for explicit backend URL configuration first
-      if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_URL) {
-        return import.meta.env.VITE_BACKEND_URL;
-      }
-      // In production, use the current page origin (nginx proxies requests)
-      if (typeof import.meta !== 'undefined' && import.meta.env?.PROD) {
-        return window.location.origin;
-      }
-      // In development, use the external API server
-      return 'https://api.cmcc.morphk.icu:2052';
+      return config.getBackendUrl();
     },
 
     // ========== Drag Functionality ==========

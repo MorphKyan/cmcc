@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { config } from '../config'
 
 // 创建axios实例
 const api = axios.create({
-  baseURL: '/api', // 使用相对路径，通过 Vite 代理转发到后端
+  baseURL: config.getBackendUrl(), // 统一使用配置文件中的后端地址
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
