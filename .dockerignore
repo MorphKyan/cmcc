@@ -64,3 +64,7 @@ environment.yml
 
 # Frontend (if building separately)
 frontend/node_modules/
+
+# Large Data & Certs
+chroma_db/
+certs/
