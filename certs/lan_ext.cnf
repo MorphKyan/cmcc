@@ -1,4 +1,4 @@
 basicConstraints=CA:FALSE
 keyUsage=digitalSignature,keyEncipherment
 extendedKeyUsage=serverAuth
-subjectAltName=DNS:local.morphk.icu,DNS:localhost,IP:192.168.31.100,IP:127.0.0.1
+subjectAltName=DNS:local.morphk.icu,DNS:localhost,IP:192.168.31.100,IP:127.0.0.1,IP:36.140.147.89
