@@ -139,7 +139,31 @@ services:
 > **注意**：如果 `config/config.toml` 中 `rag.provider` 或 `llm.provider` 设置为 `"ollama"`，
 > 必须启用 `ENABLE_OLLAMA`，否则应用启动时会报错。
 
-### 4. 构建并启动服务
+### 4. 配置服务端口（可选）
+
+默认情况下，前端使用端口 80/443，后端使用端口 8000。如需修改，请创建 `.env` 文件：
+
+```bash
+# 复制示例配置
+cp .env.example .env
+
+# 编辑配置
+vim .env
+```
+
+`.env` 文件内容示例：
+```env
+# 前端 HTTP 端口
+FRONTEND_PORT=8380
+
+# 前端 HTTPS 端口
+FRONTEND_SSL_PORT=8443
+
+# 后端 API 端口
+BACKEND_PORT=23306
+```
+
+### 5. 构建并启动服务
 
 ```bash
 # 默认构建（不含 Ollama 和麦克风输入）
@@ -155,7 +179,7 @@ docker compose up -d
 - 创建并启动容器
 - 后端启动后，前端才会启动（通过健康检查确保）
 
-### 5. 验证部署
+### 6. 验证部署
 
 检查容器运行状态：
 ```bash
@@ -169,7 +193,7 @@ cmcc-backend    Up (healthy)             0.0.0.0:8000->8000/tcp
 cmcc-frontend   Up                       0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
 ```
 
-### 6. 访问应用
+### 7. 访问应用
 
 - **前端页面**: `https://<服务器IP>`（HTTP 自动跳转 HTTPS）
 - **后端 API**: `https://<服务器IP>/api`（通过 Nginx 代理）
@@ -252,11 +276,12 @@ sudo usermod -aG docker $USER
 
 ### 端口冲突
 
-如果 80/443/8000 端口被占用，修改 `docker-compose.yml` 中的端口映射：
-```yaml
-ports:
-  - "8080:80"     # 将 80 改为 8080
-  - "8443:443"    # 将 443 改为 8443
+如果默认端口被占用，请新建或修改 `.env` 文件（参考 [配置服务端口](#4-配置服务端口可选)）：
+
+```env
+FRONTEND_PORT=8080
+FRONTEND_SSL_PORT=8443
+BACKEND_PORT=8080
 ```
 
 ### 容器无法启动

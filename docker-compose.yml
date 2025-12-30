@@ -12,7 +12,7 @@ services:
     container_name: cmcc-backend
     restart: always
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./data:/app/data
       - ./config:/app/config
@@ -24,7 +24,7 @@ services:
       - ENABLE_MIC_INPUT=false
       - ENABLE_OLLAMA=false
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,8 +38,8 @@ services:
     container_name: cmcc-frontend
     restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "${FRONTEND_PORT:-80}:80"
+      - "${FRONTEND_SSL_PORT:-443}:443"
     volumes:
       - ./certs/lan_server.crt:/etc/nginx/certs/server.crt:ro
       - ./certs/lan_server.key:/etc/nginx/certs/server.key:ro
