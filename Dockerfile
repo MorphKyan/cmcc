@@ -15,10 +15,10 @@ RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 安装系统依赖（av 需要 ffmpeg）
 # 使用 cache mount 加速 apt 安装
-RUN rm -f /etc/apt/apt.conf.d/docker-clean \
-  && --mount=type=cache,target=/var/cache/apt,sharing=locked \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
-  apt-get update && apt-get install -y --no-install-recommends \
+  rm -f /etc/apt/apt.conf.d/docker-clean \
+  && apt-get update && apt-get install -y --no-install-recommends \
   curl \
   ffmpeg \
   git
@@ -32,19 +32,19 @@ RUN --mount=type=cache,target=/root/.cache/pip \
   pip install --no-cache-dir -r /tmp/requirements/base.txt
 
 # 条件安装可选依赖 - 本地麦克风输入
-RUN if [ "$ENABLE_MIC_INPUT" = "true" ]; then \
-  rm -f /etc/apt/apt.conf.d/docker-clean \
-  && --mount=type=cache,target=/var/cache/apt,sharing=locked \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
-  apt-get update && apt-get install -y --no-install-recommends \
-  portaudio19-dev && \
   --mount=type=cache,target=/root/.cache/pip \
+  if [ "$ENABLE_MIC_INPUT" = "true" ]; then \
+  rm -f /etc/apt/apt.conf.d/docker-clean \
+  && apt-get update && apt-get install -y --no-install-recommends \
+  portaudio19-dev && \
   pip install --no-cache-dir -r /tmp/requirements/mic.txt; \
   fi
 
 # 条件安装可选依赖 - Ollama 支持
-RUN if [ "$ENABLE_OLLAMA" = "true" ]; then \
-  --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/pip \
+  if [ "$ENABLE_OLLAMA" = "true" ]; then \
   pip install --no-cache-dir -r /tmp/requirements/ollama.txt; \
   fi
 

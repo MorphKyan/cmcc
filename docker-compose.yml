@@ -35,6 +35,8 @@ services:
     build:
       context: ./frontend
       dockerfile: ../Dockerfile.frontend
+      args:
+        VITE_BACKEND_URL: "${VITE_BACKEND_URL:-/api}"
     container_name: cmcc-frontend
     restart: always
     ports:
