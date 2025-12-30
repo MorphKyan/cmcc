@@ -3,9 +3,9 @@
     <div class="manager-header">
       <h2 class="manager-title">
         <span class="manager-icon">🎬</span>
-        资源管理 (视频)
+        资源管理 (媒体)
       </h2>
-      <p class="manager-desc">管理和批量上传视频资源信息</p>
+      <p class="manager-desc">管理和批量上传媒体资源信息</p>
     </div>
     
     <!-- Existing Videos List -->
@@ -37,9 +37,9 @@
           <thead>
             <tr>
               <th>名称</th>
+              <th>类型</th>
               <th>别名</th>
               <th>描述</th>
-              <th>文件名</th>
             </tr>
           </thead>
           <tbody>
@@ -47,11 +47,11 @@
               <td>
                 <span class="item-name">{{ video.name }}</span>
               </td>
-              <td>{{ video.aliases }}</td>
-              <td>{{ video.description }}</td>
               <td>
-                <span class="item-filename">{{ video.filename }}</span>
+                <span v-if="video.type && video.type !== 'nan'" :class="['item-type', 'type-' + video.type]">{{ video.type }}</span>
               </td>
+              <td>{{ (video.aliases && video.aliases !== 'nan') ? video.aliases : '' }}</td>
+              <td>{{ (video.description && video.description !== 'nan') ? video.description : '' }}</td>
             </tr>
           </tbody>
         </table>
@@ -70,7 +70,7 @@
       
       <div class="hint-box">
         <span class="hint-icon">💡</span>
-        <code class="hint-code">[{"name": "视频名", "aliases": "别名", "description": "描述", "filename": "file.mp4"}]</code>
+        <code class="hint-code">[{"name": "资源名", "type": "video/ppt/app/url", "aliases": "别名", "description": "描述"}]</code>
       </div>
       
       <textarea 
@@ -280,15 +280,45 @@ export default {
   color: var(--text-primary);
 }
 
-.item-filename {
+.item-type {
   display: inline-block;
   padding: var(--space-xs) var(--space-sm);
-  background: var(--primary-glow);
-  color: var(--primary);
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 500;
-  font-family: var(--font-mono);
+  text-transform: uppercase;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+}
+
+.type-video {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+}
+
+.type-ppt {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+}
+
+.type-app {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.type-url {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.type-image {
+  background: rgba(236, 72, 153, 0.15);
+  color: #ec4899;
+}
+
+.type-flash {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
 }
 
 /* Empty State */
