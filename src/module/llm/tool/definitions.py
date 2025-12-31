@@ -231,7 +231,7 @@ def adjust_volume(device: str, param: Literal["up", "down"]) -> ExhibitionComman
 
 @tool(args_schema=ControlDeviceInput)
 def device_custom_command(device: str, device_type: str, command: str) -> ExhibitionCommand:
-    """控制设备执行定义在其 command 列表中的自定义命令。仅当设备有特定的自定义命令时使用。注意：设备的"打开/关闭"、"开机/关机"操作请使用 control_power 函数。"""
+    """执行设备的特定自定义命令。仅当用户的指令与设备 command 列表中的某一项具有明确的语义匹配时使用。注意：不要强行将通用的"开/关"指令匹配到不相关的自定义命令。"""
     from src.core import dependencies
     ds = dependencies.data_service
 
@@ -333,7 +333,7 @@ def update_location(value: str) -> ExhibitionCommand:
 
 @tool(args_schema=ControlPowerInput)
 def control_power(device: str, command: Literal["开机", "关机"]) -> ExhibitionCommand:
-    """控制设备的电源开关状态。当用户请求"打开电源"、"关闭电源"、"打开设备"、"关闭设备"、"开机"、"关机"、"启动"、"关掉"、"关(设备名)电源"、"(设备名)开机/关机"等操作时调用此函数。注意：设备的自定义命令不包括电源操作，所有涉及"电源"、"开机"、"关机"的请求都应使用此函数。"""
+    """控制设备的电源开关状态。适用于用户发出通用的"打开"、"关闭"、"开机"、"关机"指令。如果用户的指令没有明确指向设备特定的自定义模式（如"情景模式"、"1路全开"），应优先使用此工具。"""
     from src.core import dependencies
     ds = dependencies.data_service
 
