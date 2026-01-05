@@ -34,23 +34,31 @@ async def run_decode_vad_appender(context: Context) -> None:
         try:
             data_bytes = await context.audio_input_queue.get()
 
-            # 开始计时
-            start_time = asyncio.get_running_loop().time()
+            # 开始计时 - 音频解码
+            decode_start_time = asyncio.get_running_loop().time()
 
             # 将bytes转换为int16数组，然后归一化到-1.0到1.0的float32范围
             int16_array = np.frombuffer(data_bytes, dtype=np.int16)
             float32_array = int16_array.astype(np.float32) / 32767.0
 
+            # 记录音频解码耗时
+            decode_end_time = asyncio.get_running_loop().time()
+            decode_duration = decode_end_time - decode_start_time
+            dependencies.metrics_manager.record(MetricType.AUDIO_DECODE, decode_duration, context.context_id)
+
+            # VAD输入开始计时
+            vad_input_start_time = asyncio.get_running_loop().time()
+
             # 直接推送到VAD处理器，跳过中间队列
             context.VADProcessor.append_audio(float32_array)
 
-            # 计算耗时
-            end_time = asyncio.get_running_loop().time()
-            duration = end_time - start_time
-            # 记录性能指标
-            dependencies.metrics_manager.record(MetricType.VAD_INPUT, duration, context.context_id)
-            if duration > 0.01:  # 仅记录超过10ms的日志
-                logger.trace("[性能指标] VAD输入耗时: {duration:.4f}s", duration=duration)
+            # 计算VAD输入耗时
+            vad_input_end_time = asyncio.get_running_loop().time()
+            vad_input_duration = vad_input_end_time - vad_input_start_time
+            # 记录VAD输入性能指标
+            dependencies.metrics_manager.record(MetricType.VAD_INPUT, vad_input_duration, context.context_id)
+            if vad_input_duration > 0.01:  # 仅记录超过10ms的日志
+                logger.trace("[性能指标] VAD输入耗时: {duration:.4f}s", duration=vad_input_duration)
 
         except Exception as e:
             logger.exception("解码与VAD输入处理错误")
@@ -119,8 +127,8 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
         try:
             recognized_text = await context.asr_output_queue.get()
 
-            # 开始计时
-            start_time = asyncio.get_running_loop().time()
+            # 开始RAG检索计时
+            rag_start_time = asyncio.get_running_loop().time()
 
             # 从配置中获取分类检索的 top_k 值
             rag_settings = dependencies.rag_processor.settings
@@ -135,12 +143,21 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
                 recognized_text, metadata_types=[MetadataType.DEVICE], top_k=rag_settings.device_top_k
             )
 
+            # 记录RAG检索耗时
+            rag_end_time = asyncio.get_running_loop().time()
+            rag_duration = rag_end_time - rag_start_time
+            dependencies.metrics_manager.record(MetricType.RAG_RETRIEVE, rag_duration, context.context_id)
+            logger.info("[性能指标] RAG检索耗时: {duration:.3f}s", duration=rag_duration)
+
             # 构建分类后的RAG文档字典
             retrieved_docs_by_type = {
                 "door": door_docs,
                 "video": video_docs,
                 "device": device_docs
             }
+
+            # LLM生成开始计时
+            llm_start_time = asyncio.get_running_loop().time()
 
             # 获取聊天历史
             chat_history_messages = context.chat_history
@@ -153,12 +170,12 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
                 chat_history=chat_history_messages
             )
 
-            # 计算总耗时
-            end_time = asyncio.get_running_loop().time()
-            duration = end_time - start_time
-            # 记录性能指标
-            dependencies.metrics_manager.record(MetricType.LLM_GENERATE, duration, context.context_id)
-            logger.info("[性能指标] LLM/RAG处理耗时: {duration:.3f}s", duration=duration)
+            # 计算LLM生成耗时
+            llm_end_time = asyncio.get_running_loop().time()
+            llm_duration = llm_end_time - llm_start_time
+            # 记录LLM生成性能指标
+            dependencies.metrics_manager.record(MetricType.LLM_GENERATE, llm_duration, context.context_id)
+            logger.info("[性能指标] LLM生成耗时: {duration:.3f}s", duration=llm_duration)
 
             logger.info("[大模型响应] 返回 {count} 个命令", count=len(commands))
 
