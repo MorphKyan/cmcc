@@ -13,39 +13,16 @@ from loguru import logger
 from src.config.config import FunASRSettings
 
 
-class ASRStatus(Enum):
-    """ASR处理器状态枚举。"""
-    UNINITIALIZED = "UNINITIALIZED"
-    INITIALIZING = "INITIALIZING"
-    READY = "READY"
-    ERROR = "ERROR"
+from src.module.asr.base_asr_processor import ASRStatus, BaseASRProcessor
 
-
-class ASRProcessor:
+class ASRProcessor(BaseASRProcessor):
     """实时语音识别处理器。"""
 
-    def __init__(self, settings: FunASRSettings, device: str = "auto") -> None:
+    def __init__(self, settings: FunASRSettings, device: str) -> None:
         """初始化ASR处理器。"""
+        super().__init__(device=device)
         self.settings = settings
-        self._setup_device(device)
         
-        # 状态管理
-        self.status = ASRStatus.UNINITIALIZED
-        self.error_message = None
-        self.model = None
-        
-        # 初始化锁，确保线程安全
-        self._init_lock = asyncio.Lock()
-        logger.info(f"{self.__class__.__name__}已创建，状态: {self.status.value}。")
-
-    def _setup_device(self, device: str) -> None:
-        """设置推理设备。"""
-        if device == "auto":
-            self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        else:
-            self.device = device
-        logger.info("ASR处理器使用 {device} 进行推理...", device=self.device)
-
     async def initialize(self) -> None:
         """异步初始化FunASR语音识别模型，支持重新初始化。"""
         async with self._init_lock:
@@ -76,20 +53,28 @@ class ASRProcessor:
 
     def process_audio_data(self, audio_data: npt.NDArray[np.float32]) -> str | None:
         """处理音频数据并返回识别结果。"""
-        if self.status != ASRStatus.READY:
+        if not self.is_ready():
             logger.error("ASR处理器未就绪，无法处理音频数据。")
             return None
         
-        if audio_data.dtype == np.int16:
-            audio_data = audio_data.astype(np.float32) / 32768.0
+        audio_data = self._convert_audio_dtype(audio_data)
 
-        res = self.model.generate(
-            input=audio_data, cache={}, language=self.settings.language, use_itn=self.settings.use_itn,
-            batch_size_s=self.settings.batch_size_s, merge_vad=self.settings.merge_vad,
-            merge_length_s=self.settings.merge_length_s,
-            ban_emo_unk=True,  # 禁止输出感情标签
-            disable_pbar=True  # 禁用进度条
-        )
+        generate_kwargs = {
+            "input": audio_data,
+            "cache": {},
+            "language": self.settings.language,
+            "use_itn": self.settings.use_itn,
+            "batch_size_s": self.settings.batch_size_s,
+            "merge_vad": self.settings.merge_vad,
+            "merge_length_s": self.settings.merge_length_s,
+            "ban_emo_unk": True,
+            "disable_pbar": True
+        }
+
+        if hasattr(self.settings, "hotwords") and self.settings.hotwords:
+            generate_kwargs["hotwords"] = self.settings.hotwords
+
+        res = self.model.generate(**generate_kwargs)
 
         if res and res[0].get("text"):
             recognized_text = rich_transcription_postprocess(res[0]["text"])
@@ -98,21 +83,28 @@ class ASRProcessor:
 
     def process_audio(self, audio_data: list[npt.NDArray[np.float32]]) -> list[str]:
         """批量处理音频数据。"""
-        if self.status != ASRStatus.READY:
+        if not self.is_ready():
             logger.error("ASR处理器未就绪，无法处理音频数据。")
             return []
         
-        for data in audio_data:
-            if data.dtype == np.int16:
-                data = data.astype(np.float32) / 32768.0
+        audio_data = [self._convert_audio_dtype(data) for data in audio_data]
 
-        model_results = self.model.generate(
-            input=audio_data, cache={}, language=self.settings.language, use_itn=self.settings.use_itn,
-            batch_size_s=self.settings.batch_size_s, merge_vad=self.settings.merge_vad,
-            merge_length_s=self.settings.merge_length_s,
-            ban_emo_unk=True,
-            disable_pbar=True  # 禁用进度条
-        )
+        generate_kwargs = {
+            "input": audio_data,
+            "cache": {},
+            "language": self.settings.language,
+            "use_itn": self.settings.use_itn,
+            "batch_size_s": self.settings.batch_size_s,
+            "merge_vad": self.settings.merge_vad,
+            "merge_length_s": self.settings.merge_length_s,
+            "ban_emo_unk": True,
+            "disable_pbar": True
+        }
+
+        if hasattr(self.settings, "hotwords") and self.settings.hotwords:
+            generate_kwargs["hotwords"] = self.settings.hotwords
+
+        model_results = self.model.generate(**generate_kwargs)
 
         results = []
         if model_results:
@@ -121,3 +113,31 @@ class ASRProcessor:
                 results.append(recognized_text)
 
         return results
+
+    def process_audio_file(self, file_path: str) -> str | None:
+        """处理音频文件并返回识别结果。"""
+        if not self.is_ready():
+            logger.error("ASR处理器未就绪，无法处理音频数据。")
+            return None
+            
+        generate_kwargs = {
+            "input": [file_path],
+            "cache": {},
+            "language": self.settings.language,
+            "use_itn": self.settings.use_itn,
+            "batch_size_s": self.settings.batch_size_s,
+            "merge_vad": self.settings.merge_vad,
+            "merge_length_s": self.settings.merge_length_s,
+            "ban_emo_unk": True,
+            "disable_pbar": True
+        }
+
+        if hasattr(self.settings, "hotwords") and self.settings.hotwords:
+            generate_kwargs["hotwords"] = self.settings.hotwords
+
+        res = self.model.generate(**generate_kwargs)
+
+        if res and res[0].get("text"):
+            recognized_text = rich_transcription_postprocess(res[0]["text"])
+            return recognized_text
+        return None

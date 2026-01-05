@@ -322,8 +322,9 @@ class FunASRSettings(BaseSettings):
     language: str = "auto"
     use_itn: bool = True
     batch_size_s: float = 60.0  # 动态batch，batch中的音频总时长上限(秒)
-    merge_vad: bool = True
+    merge_vad: bool = False
     merge_length_s: float = 15.0
+    hotwords: list[str] = []
 
 
 class DataSettings(BaseSettings):
