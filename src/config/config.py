@@ -324,8 +324,15 @@ class FunASRSettings(BaseSettings):
     batch_size_s: float = 60.0  # 动态batch，batch中的音频总时长上限(秒)
     merge_vad: bool = False
     merge_length_s: float = 15.0
-    hotwords: list[str] = []
 
+    # Nano ASR specific settings (compatible fields)
+    batch_size: int = 1  # Nano uses int batch_size
+    vad_model: str = "fsmn-vad"
+    vad_max_single_segment_time: int = 30000
+    
+    use_vad: bool = False # For Nano ASR
+    itn: bool = True # For Nano ASR
+    hotwords: list[str] = []
 
 class DataSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="DATA_")

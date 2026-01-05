@@ -21,23 +21,23 @@ use_itn = true
 batch_size_s = 60.0
 merge_vad = false
 merge_length_s = 15.0
-hotwords = [
-    "打开", "关闭", "播放", "暂停", "继续", "停止",
-    "跳转", "快进", "后退", "音量", "大声", "小声",
-    "提高", "降低", "静音", "门", "视频", "PPT",
-    "首页", "上一页", "下一页", "末页", "第几页",
-    "听不清", "太吵了", "看一下", "带我去",
-    "展厅", "区域", "设备"
-]
 
 # Nano ASR 推荐配置 (Fun-ASR-Nano-2512)
-# model = "FunAudioLLM/Fun-ASR-Nano-2512"
-# language = "中文" # 支持：中文、英文、日文
-# batch_size = 1
+#model = "FunAudioLLM/Fun-ASR-Nano-2512"
+#language = "中文" # 支持：中文、英文、日文
+#batch_size = 1
+#itn = true
 # use_vad = false
 # vad_model = "fsmn-vad"
 # vad_max_single_segment_time = 30000
-
+#hotwords = [
+#    "打开", "关闭", "播放", "暂停", "继续", "停止",
+#    "跳转", "快进", "后退", "音量", "大声", "小声",
+#    "提高", "降低", "静音", "门", "视频", "PPT",
+#    "首页", "上一页", "下一页", "末页", "第几页",
+#    "听不清", "太吵了", "看一下", "带我去",
+#    "展厅", "区域", "设备"
+#]
 
 # 数据文件路径配置
 [data]
