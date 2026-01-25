@@ -29,7 +29,9 @@ COPY requirements/ /tmp/requirements/
 # 安装核心依赖
 # 使用 cache mount 加速 pip 安装
 RUN --mount=type=cache,target=/root/.cache/pip \
-  pip install --no-cache-dir -r /tmp/requirements/base.txt
+  pip install --no-cache-dir \
+  --extra-index-url https://download.pytorch.org/whl/cpu \
+  -r /tmp/requirements/base.txt
 
 # 条件安装可选依赖 - 本地麦克风输入
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \

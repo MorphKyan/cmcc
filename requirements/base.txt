@@ -2,8 +2,8 @@
 loguru
 numpy
 funasr
-torch --index-url https://download.pytorch.org/whl/cpu
-torchaudio --index-url https://download.pytorch.org/whl/cpu
+torch
+torchaudio
 pandas
 pydantic-settings
 chromadb
