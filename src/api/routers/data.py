@@ -13,17 +13,29 @@ router = APIRouter(
 )
 
 
+from pydantic import ValidationError
+
 @router.post("/devices/batch", response_model=UploadResponse)
-async def upload_devices_batch(items: list[DeviceItem]) -> UploadResponse:
+async def upload_devices_batch(items: list[dict]) -> UploadResponse:
     """批量上传设备数据"""
     logger.info(f"收到批量上传设备请求，数量: {len(items)}, 数据: {items}")
+    
+    validated_items = []
+    for i, item in enumerate(items):
+        try:
+            validated_items.append(DeviceItem(**item))
+        except ValidationError as e:
+            error_msg = f"第 {i+1} 条数据校验不通过: {e.errors()}, 源数据: {item}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error_msg)
+
     if dependencies.data_service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
     
     try:
-        await dependencies.data_service.add_devices(items)
+        await dependencies.data_service.add_devices(validated_items)
         if dependencies.rag_processor:
-             await dependencies.rag_processor.batch_add_devices(items)
+             await dependencies.rag_processor.batch_add_devices(validated_items)
         logger.info("设备数据批量上传成功")
         return UploadResponse(status="success", message="设备数据批量上传成功")
     except Exception as e:
@@ -31,16 +43,26 @@ async def upload_devices_batch(items: list[DeviceItem]) -> UploadResponse:
 
 
 @router.post("/areas/batch", response_model=UploadResponse)
-async def upload_areas_batch(items: list[AreaItem]) -> UploadResponse:
+async def upload_areas_batch(items: list[dict]) -> UploadResponse:
     """批量上传区域数据"""
     logger.info(f"收到批量上传区域请求，数量: {len(items)}, 数据: {items}")
+    
+    validated_items = []
+    for i, item in enumerate(items):
+        try:
+            validated_items.append(AreaItem(**item))
+        except ValidationError as e:
+            error_msg = f"第 {i+1} 条数据校验不通过: {e.errors()}, 源数据: {item}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error_msg)
+
     if dependencies.data_service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
 
     try:
-        await dependencies.data_service.add_areas(items)
+        await dependencies.data_service.add_areas(validated_items)
         if dependencies.rag_processor:
-             await dependencies.rag_processor.batch_add_areas(items)
+             await dependencies.rag_processor.batch_add_areas(validated_items)
         logger.info("区域数据批量上传成功")
         return UploadResponse(status="success", message="区域数据批量上传成功")
     except Exception as e:
@@ -48,16 +70,26 @@ async def upload_areas_batch(items: list[AreaItem]) -> UploadResponse:
 
 
 @router.post("/media/batch", response_model=UploadResponse)
-async def upload_media_batch(items: list[MediaItem]) -> UploadResponse:
+async def upload_media_batch(items: list[dict]) -> UploadResponse:
     """批量上传媒体数据"""
     logger.info(f"收到批量上传媒体请求，数量: {len(items)}, 数据: {items}")
+    
+    validated_items = []
+    for i, item in enumerate(items):
+        try:
+            validated_items.append(MediaItem(**item))
+        except ValidationError as e:
+            error_msg = f"第 {i+1} 条数据校验不通过: {e.errors()}, 源数据: {item}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error_msg)
+
     if dependencies.data_service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
 
     try:
-        await dependencies.data_service.add_media(items)
+        await dependencies.data_service.add_media(validated_items)
         if dependencies.rag_processor:
-             await dependencies.rag_processor.batch_add_media(items)
+             await dependencies.rag_processor.batch_add_media(validated_items)
         logger.info("媒体数据批量上传成功")
         return UploadResponse(status="success", message="媒体数据批量上传成功")
     except Exception as e:
@@ -152,16 +184,26 @@ async def clear_media() -> UploadResponse:
 
 
 @router.post("/doors/batch", response_model=UploadResponse)
-async def upload_doors_batch(items: list[DoorItem]) -> UploadResponse:
+async def upload_doors_batch(items: list[dict]) -> UploadResponse:
     """批量上传门数据"""
     logger.info(f"收到批量上传门数据请求，数量: {len(items)}, 数据: {items}")
+    
+    validated_items = []
+    for i, item in enumerate(items):
+        try:
+            validated_items.append(DoorItem(**item))
+        except ValidationError as e:
+            error_msg = f"第 {i+1} 条数据校验不通过: {e.errors()}, 源数据: {item}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error_msg)
+
     if dependencies.data_service is None:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="DataService未初始化")
 
     try:
-        await dependencies.data_service.add_doors(items)
+        await dependencies.data_service.add_doors(validated_items)
         if dependencies.rag_processor:
-             await dependencies.rag_processor.batch_add_doors(items)
+             await dependencies.rag_processor.batch_add_doors(validated_items)
         logger.info("门数据批量上传成功")
         return UploadResponse(status="success", message="门数据批量上传成功")
     except Exception as e:
