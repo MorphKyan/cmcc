@@ -133,9 +133,10 @@ async def run_llm_rag_processor(context: Context, websocket: WebSocket) -> None:
             # 从配置中获取分类检索的 top_k 值
             rag_settings = dependencies.rag_processor.settings
             # 分别检索每种类型的文档
-            door_docs = await dependencies.rag_processor.retrieve_context(
-                recognized_text, metadata_types=[MetadataType.DOOR], top_k=rag_settings.door_top_k
-            )
+            door_docs = []
+            # door_docs = await dependencies.rag_processor.retrieve_context(
+            #     recognized_text, metadata_types=[MetadataType.DOOR], top_k=rag_settings.door_top_k
+            # )
             video_docs = await dependencies.rag_processor.retrieve_context(
                 recognized_text, metadata_types=[MetadataType.MEDIA], top_k=rag_settings.media_top_k
             )
