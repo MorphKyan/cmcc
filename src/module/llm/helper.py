@@ -64,7 +64,6 @@ class DocumentFormatter:
                 "name": meta.get("name", ""),
                 "type": meta.get("device_type", ""),
                 "area": meta.get("area", ""),
-                "description": meta.get("description", "")
             }
             
             if meta.get("sub_type"):
@@ -73,6 +72,10 @@ class DocumentFormatter:
                 device_info["command"] = meta.get("command")
             if meta.get("view"):
                 device_info["view"] = meta.get("view")
+            if meta.get("aliases"):
+                device_info["aliases"] = meta.get("aliases")
+            if meta.get("description"):
+                device_info["description"] = meta.get("description")
                 
             result.append(device_info)
         return json.dumps(result, ensure_ascii=False, indent=2)
