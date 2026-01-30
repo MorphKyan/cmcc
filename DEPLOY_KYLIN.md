@@ -35,19 +35,12 @@ sudo systemctl start docker
 国内网络环境下，建议配置镜像加速以提升拉取速度：
 
 ```bash
-# 创建或编辑 Docker daemon 配置文件
 sudo mkdir -p /etc/docker
 sudo tee /etc/docker/daemon.json <<-'EOF'
 {
-  "registry-mirrors": [
-    "https://docker.m.daocloud.io",
-    "https://dockerhub.icu",
-    "https://docker.1panel.live"
-  ]
+  "registry-mirrors": ["https://zq47k11p.mirror.aliyuncs.com"]
 }
 EOF
-
-# 重新加载配置并重启 Docker
 sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
