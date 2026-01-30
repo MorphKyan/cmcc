@@ -58,6 +58,7 @@
 
 <script>
 import { Chart, registerables } from 'chart.js'
+import { markRaw } from 'vue'
 import { config } from '../config'
 
 Chart.register(...registerables)
@@ -139,7 +140,7 @@ export default {
     initChart() {
       const ctx = this.$refs.chartCanvas.getContext('2d')
       
-      this.chart = new Chart(ctx, {
+      this.chart = markRaw(new Chart(ctx, {
         type: 'line',
         data: {
           labels: [],
