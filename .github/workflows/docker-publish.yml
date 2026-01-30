@@ -6,11 +6,12 @@ on:
   workflow_dispatch: # 允许手动点按钮触发
 
 env:
-  # 修改为你的实际镜像地址
-  REGISTRY: registry.cn-hangzhou.aliyuncs.com
-  # 格式: 命名空间/镜像名，不包含 registry 前缀
-  IMAGE_NAME_BACKEND: your-namespace/cmcc-backend
-  IMAGE_NAME_FRONTEND: your-namespace/cmcc-frontend
+  # 阿里云北京节点个人版实例地址
+  REGISTRY: crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com
+  # 格式: 命名空间/镜像名
+  IMAGE_NAME_BACKEND: morph-builds/cmcc-backend
+  # ⚠️ 请确保你在阿里云控制台也创建了名为 cmcc-frontend 的仓库
+  IMAGE_NAME_FRONTEND: morph-builds/cmcc-frontend
 
 jobs:
   build-and-push:
