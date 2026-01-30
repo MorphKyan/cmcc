@@ -3,8 +3,7 @@ FROM node:22-alpine as build-stage
 
 WORKDIR /app
 
-# 配置 npm 使用淘宝镜像（加速国内构建）
-RUN npm config set registry https://registry.npmmirror.com
+
 
 # 注入后端地址
 ARG VITE_BACKEND_URL

@@ -7,11 +7,7 @@ ARG ENABLE_OLLAMA=false
 
 WORKDIR /app
 
-# 配置 apt 使用阿里云镜像（加速国内构建）
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
 
-# 配置 pip 使用清华镜像
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 安装系统依赖（av 需要 ffmpeg）
 # 使用 cache mount 加速 apt 安装
