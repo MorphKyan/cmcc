@@ -56,9 +56,9 @@ class TextPipelineService:
         rag_settings = dependencies.rag_processor.settings
         
         # Execute retrievals in parallel
-        door_docs_task = dependencies.rag_processor.retrieve_context(
-            text, metadata_types=[MetadataType.DOOR], top_k=rag_settings.door_top_k
-        )
+        # door_docs_task = dependencies.rag_processor.retrieve_context(
+        #     text, metadata_types=[MetadataType.DOOR], top_k=rag_settings.door_top_k
+        # )
         media_docs_task = dependencies.rag_processor.retrieve_context(
             text, metadata_types=[MetadataType.MEDIA], top_k=rag_settings.media_top_k
         )
@@ -66,9 +66,10 @@ class TextPipelineService:
             text, metadata_types=[MetadataType.DEVICE], top_k=rag_settings.device_top_k
         )
         
-        door_docs, video_docs, device_docs = await asyncio.gather(
-            door_docs_task, media_docs_task, device_docs_task
+        video_docs, device_docs = await asyncio.gather(
+            media_docs_task, device_docs_task
         )
+        door_docs = []
         
         retrieved_docs_by_type = {
             "door": door_docs,

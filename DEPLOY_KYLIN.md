@@ -156,10 +156,27 @@ FRONTEND_SSL_PORT=8443
 BACKEND_PORT=23306
 ```
 
-### 5. 构建并启动服务
+### 5. 启动服务
+
+**方式一：拉取云端构建好的镜像（推荐）**
+
+适用于生产环境或网络受限环境，需先登录阿里云镜像仓库（只需一次）：
 
 ```bash
-# 默认构建（不含 Ollama 和麦克风输入）
+# 登录阿里云镜像仓库（输入你的阿里云账号和 registry 密码）
+docker login crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com
+
+# 拉取最新镜像并启动
+docker compose pull
+docker compose up -d
+```
+
+**方式二：本地构建**
+
+适用于开发环境或需要修改代码时：
+
+```bash
+# 默认构建
 docker compose up -d --build
 
 # 或手动指定构建参数

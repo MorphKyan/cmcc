@@ -2,6 +2,7 @@ name: cmcc
 
 services:
   backend:
+    image: crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com/morph-builds/cmcc-backend:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -34,6 +35,7 @@ services:
       - cmcc-network
 
   frontend:
+    image: crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com/morph-builds/cmcc-frontend:latest
     build:
       context: ./frontend
       dockerfile: ../Dockerfile.frontend
