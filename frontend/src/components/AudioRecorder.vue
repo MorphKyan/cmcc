@@ -18,16 +18,28 @@
           <p class="record-hint">{{ isRecording ? '点击停止录音' : '点击开始录音' }}</p>
         </div>
 
+
         <!-- Monitor Control -->
-        <div class="monitor-control">
+        <div class="control-group">
           <button 
-            class="monitor-btn" 
+            class="control-btn" 
             :class="{ active: isMonitoring }"
             @click="toggleMonitoring"
             title="网页内播放 (注意：会产生回声)"
           >
-            <span class="monitor-icon">{{ isMonitoring ? '🔊' : '🔇' }}</span>
-            <span class="monitor-label">{{ isMonitoring ? '监听开启' : '监听关闭' }}</span>
+            <span class="control-icon">{{ isMonitoring ? '🔊' : '🔇' }}</span>
+            <span class="control-label">{{ isMonitoring ? '监听开启' : '监听关闭' }}</span>
+          </button>
+          
+          <button 
+            class="control-btn" 
+            :class="{ active: enableNoiseSuppression }"
+            @click="toggleNoiseSuppression"
+            :disabled="isRecording"
+            title="降噪开关 (录音时无法更改)"
+          >
+            <span class="control-icon">{{ enableNoiseSuppression ? '🔇' : '📢' }}</span>
+            <span class="control-label">{{ enableNoiseSuppression ? '降噪开启' : '降噪关闭' }}</span>
           </button>
         </div>
 
@@ -59,8 +71,8 @@
               <span class="config-value">{{ actualAudioConfig.sampleSize }} bit</span>
             </div>
             <div class="config-item">
-              <span class="config-label">上下文采样率</span>
-              <span class="config-value">{{ audioContextSampleRate }} Hz</span>
+              <span class="config-label">降噪</span>
+              <span class="config-value">{{ actualAudioConfig.noiseSuppression ? '开启' : '关闭' }}</span>
             </div>
           </div>
         </div>
@@ -132,7 +144,10 @@ export default {
       
       // Monitoring
       isMonitoring: false,
-      monitorGainNode: null
+      monitorGainNode: null,
+      
+      // Audio Processing
+      enableNoiseSuppression: true
     };
   },
   computed: {
@@ -147,15 +162,20 @@ export default {
   methods: {
     async startRecording() {
       if (this.isRecording) return;
+      
+      // Clear previous outputs
+      this.websocketOutput = '';
+      
       const audioConstraints = {
         audio: {
           sampleRate: 16000,
           channelCount: 1,
           autoGainControl: true,
           echoCancellation: false,
-          noiseSuppression: true
+          noiseSuppression: this.enableNoiseSuppression
         }
       };
+      
       try {
         this.audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
         this.status = '已获取麦克风权限';
@@ -167,7 +187,8 @@ export default {
         this.actualAudioConfig = {
           sampleRate: settings.sampleRate,
           channelCount: settings.channelCount,
-          sampleSize: settings.sampleSize || 16
+          sampleSize: settings.sampleSize || 16,
+          noiseSuppression: settings.noiseSuppression
         };
 
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
@@ -227,6 +248,14 @@ export default {
             if (data.type === 'asr_result') {
                 this.asrResult = data.text;
                 // Optional: scroll to bottom if needed, but it's likely short 
+            } else if (data.type === 'execution_summary') {
+                 // Append execution summary to websocket output
+                 const summaryText = `[执行摘要] ${data.summary}\n`;
+                 // We might want to handle this better, but for now append to output
+                 this.websocketOutput = (this.websocketOutput || '') + summaryText;
+            } else if (data.type === 'command_result') {
+                 // Don't show every command result unless debugging, maybe log it
+                 console.log("Command Result:", data);
             } else {
                 this.websocketOutput = JSON.stringify(data, null, 2);
             }
@@ -280,7 +309,7 @@ export default {
       this.audioWorkletNode = null;
       this.socket = null;
       this.isRecording = false;
-      this.asrResult = ''; // Clear result on stop/cleanup if desired, or keep it. user preference not specified, assume keep or clear? keeping might be better for reading history. but restart usually means new session. let's clear for now as it makes state cleaner.
+      // this.asrResult = ''; // Keep result visible
       if (this.status !== 'WebSocket 连接已关闭') {
           this.status = '已停止';
       }
@@ -291,6 +320,11 @@ export default {
       if (this.monitorGainNode) {
         this.monitorGainNode.gain.value = this.isMonitoring ? 1 : 0;
       }
+    },
+    
+    toggleNoiseSuppression() {
+      if (this.isRecording) return;
+      this.enableNoiseSuppression = !this.enableNoiseSuppression;
     }
   },
   beforeUnmount() {
@@ -334,11 +368,13 @@ export default {
   margin-bottom: var(--space-md);
 }
 
-.monitor-control {
+.control-group {
+  display: flex;
+  gap: var(--space-md);
   margin-bottom: var(--space-xl);
 }
 
-.monitor-btn {
+.control-btn {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
@@ -352,18 +388,23 @@ export default {
   font-size: 0.875rem;
 }
 
-.monitor-btn:hover {
+.control-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
 }
 
-.monitor-btn.active {
+.control-btn.active {
   background: rgba(16, 185, 129, 0.1); /* Success color + opacity */
   border-color: var(--success);
   color: var(--success);
 }
 
-.monitor-icon {
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.control-icon {
   font-size: 1.1rem;
 }
 
