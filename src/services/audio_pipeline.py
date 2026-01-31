@@ -3,7 +3,7 @@ import json
 
 import numpy as np
 import numpy.typing as npt
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 from loguru import logger
 from langchain_core.messages import HumanMessage
 
@@ -22,6 +22,12 @@ async def receive_loop(websocket: WebSocket, context: Context) -> None:
             logger.trace("WebSocket receive bytes size {size}", size=len(data_bytes))
             await context.audio_input_queue.put(data_bytes)
             logger.trace("WebSocket put audio_input_queue size {size}", size=len(data_bytes))
+        except WebSocketDisconnect as e:
+            if e.code in [1000, 1005]:
+                logger.info(f"WebSocket连接正常关闭 (code={e.code})")
+            else:
+                logger.warning(f"WebSocket连接断开 (code={e.code})")
+            break
         except Exception as e:
             logger.error("WebSocket接收错误，{e}", e=e)
             break
