@@ -1,70 +1,87 @@
 <template>
   <div class="audio-recorder">
-    <div class="recorder-header">
-      <h2 class="recorder-title">
-        <span class="recorder-icon">🎤</span>
-        网页麦克风输入
-      </h2>
-    </div>
-    
     <div v-if="isSupported" class="recorder-content">
-      <!-- Recording Controls -->
-      <div class="recorder-controls">
-        <button 
-          class="record-btn" 
-          :class="{ recording: isRecording }"
-          @click="isRecording ? stopRecording() : startRecording()"
-        >
-          <div class="record-btn-inner">
-            <span class="record-icon">{{ isRecording ? '⏹️' : '🎙️' }}</span>
-          </div>
-          <div v-if="isRecording" class="pulse-ring"></div>
-          <div v-if="isRecording" class="pulse-ring delay"></div>
-        </button>
-        <p class="record-hint">{{ isRecording ? '点击停止录音' : '点击开始录音' }}</p>
-      </div>
+      <div class="recorder-left-panel">
+        <!-- Recording Controls -->
+        <div class="recorder-controls">
+          <button 
+            class="record-btn" 
+            :class="{ recording: isRecording }"
+            @click="isRecording ? stopRecording() : startRecording()"
+          >
+            <div class="record-btn-inner">
+              <span class="record-icon">{{ isRecording ? '⏹️' : '🎙️' }}</span>
+            </div>
+            <div v-if="isRecording" class="pulse-ring"></div>
+            <div v-if="isRecording" class="pulse-ring delay"></div>
+          </button>
+          <p class="record-hint">{{ isRecording ? '点击停止录音' : '点击开始录音' }}</p>
+        </div>
 
-      <!-- Status Display -->
-      <div class="status-display">
-        <div class="status-indicator" :class="statusClass">
-          <span class="status-dot"></span>
-          <span class="status-text">{{ status }}</span>
+        <!-- Monitor Control -->
+        <div class="monitor-control">
+          <button 
+            class="monitor-btn" 
+            :class="{ active: isMonitoring }"
+            @click="toggleMonitoring"
+            title="网页内播放 (注意：会产生回声)"
+          >
+            <span class="monitor-icon">{{ isMonitoring ? '🔊' : '🔇' }}</span>
+            <span class="monitor-label">{{ isMonitoring ? '监听开启' : '监听关闭' }}</span>
+          </button>
+        </div>
+
+        <!-- Status Display -->
+        <div class="status-display">
+          <div class="status-indicator" :class="statusClass">
+            <span class="status-dot"></span>
+            <span class="status-text">{{ status }}</span>
+          </div>
+        </div>
+
+        <!-- Audio Configuration -->
+        <div v-if="actualAudioConfig" class="audio-config card">
+          <h3 class="config-title">
+            <span>📊</span>
+            音频配置
+          </h3>
+          <div class="config-grid">
+            <div class="config-item">
+              <span class="config-label">采样率</span>
+              <span class="config-value">{{ actualAudioConfig.sampleRate }} Hz</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">声道数</span>
+              <span class="config-value">{{ actualAudioConfig.channelCount }}</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">采样位数</span>
+              <span class="config-value">{{ actualAudioConfig.sampleSize }} bit</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">上下文采样率</span>
+              <span class="config-value">{{ audioContextSampleRate }} Hz</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Audio Configuration -->
-      <div v-if="actualAudioConfig" class="audio-config card">
-        <h3 class="config-title">
-          <span>📊</span>
-          音频配置
-        </h3>
-        <div class="config-grid">
-          <div class="config-item">
-            <span class="config-label">采样率</span>
-            <span class="config-value">{{ actualAudioConfig.sampleRate }} Hz</span>
-          </div>
-          <div class="config-item">
-            <span class="config-label">声道数</span>
-            <span class="config-value">{{ actualAudioConfig.channelCount }}</span>
-          </div>
-          <div class="config-item">
-            <span class="config-label">采样位数</span>
-            <span class="config-value">{{ actualAudioConfig.sampleSize }} bit</span>
-          </div>
-          <div class="config-item">
-            <span class="config-label">上下文采样率</span>
-            <span class="config-value">{{ audioContextSampleRate }} Hz</span>
-          </div>
+      <div class="recorder-right-panel">
+        <!-- WebSocket Output -->
+        <div v-if="websocketOutput" class="websocket-output card">
+          <h3 class="output-title">
+            <span>💬</span>
+            处理结果
+          </h3>
+          <pre class="output-content">{{ websocketOutput }}</pre>
         </div>
-      </div>
-
-      <!-- WebSocket Output -->
-      <div v-if="websocketOutput" class="websocket-output card">
-        <h3 class="output-title">
-          <span>💬</span>
-          处理结果
-        </h3>
-        <pre class="output-content">{{ websocketOutput }}</pre>
+        <div v-else class="websocket-output card placeholder">
+           <h3 class="output-title">
+            <span>💬</span>
+            处理结果
+          </h3>
+          <div class="empty-state">暂无识别结果...</div>
+        </div>
       </div>
     </div>
 
@@ -94,7 +111,12 @@ export default {
       audioContextSampleRate: null,
       clientId: `web-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       websocketOutput: '',
-      audioWorkletNode: null
+      websocketOutput: '',
+      audioWorkletNode: null,
+      
+      // Monitoring
+      isMonitoring: false,
+      monitorGainNode: null
     };
   },
   computed: {
@@ -162,7 +184,14 @@ export default {
           this.isRecording = true;
 
           source.connect(this.audioWorkletNode);
-          this.audioWorkletNode.connect(this.audioContext.destination);
+          
+          // Audio Monitoring Path
+          // source -> audioWorkletNode -> monitorGainNode -> destination
+          this.monitorGainNode = this.audioContext.createGain();
+          this.monitorGainNode.gain.value = this.isMonitoring ? 1 : 0;
+          
+          this.audioWorkletNode.connect(this.monitorGainNode);
+          this.monitorGainNode.connect(this.audioContext.destination);
 
           this.audioWorkletNode.port.onmessage = (event) => {
             if (!this.isRecording || this.socket.readyState !== WebSocket.OPEN) {
@@ -217,6 +246,11 @@ export default {
         this.audioStream = null;
       }
 
+      if (this.monitorGainNode) {
+        this.monitorGainNode.disconnect();
+        this.monitorGainNode = null;
+      }
+
       if (this.audioContext) {
         this.audioContext.close();
         this.audioContext = null;
@@ -227,6 +261,13 @@ export default {
       this.isRecording = false;
       if (this.status !== 'WebSocket 连接已关闭') {
           this.status = '已停止';
+      }
+    },
+
+    toggleMonitoring() {
+      this.isMonitoring = !this.isMonitoring;
+      if (this.monitorGainNode) {
+        this.monitorGainNode.gain.value = this.isMonitoring ? 1 : 0;
       }
     }
   },
@@ -241,21 +282,25 @@ export default {
   text-align: center;
 }
 
-.recorder-header {
-  margin-bottom: var(--space-lg);
-}
-
-.recorder-title {
+.recorder-content {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  font-size: 1.25rem;
-  margin: 0;
+  gap: var(--space-xl);
+  align-items: flex-start;
+  text-align: left;
 }
 
-.recorder-icon {
-  font-size: 1.5rem;
+.recorder-left-panel {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.recorder-right-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Recording Controls */
@@ -263,7 +308,41 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.monitor-control {
   margin-bottom: var(--space-xl);
+}
+
+.monitor-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: 0.875rem;
+}
+
+.monitor-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.monitor-btn.active {
+  background: rgba(16, 185, 129, 0.1); /* Success color + opacity */
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.monitor-icon {
+  font-size: 1.1rem;
 }
 
 .record-btn {
@@ -397,6 +476,7 @@ export default {
 .audio-config {
   margin-bottom: var(--space-lg);
   text-align: left;
+  width: 100%;
 }
 
 .config-title {
@@ -435,6 +515,25 @@ export default {
 /* WebSocket Output */
 .websocket-output {
   text-align: left;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.websocket-output.placeholder {
+  opacity: 0.6;
+  min-height: 300px;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-style: italic;
+  background: rgba(0,0,0,0.1);
+  border-radius: var(--radius-md);
 }
 
 .output-title {
@@ -453,10 +552,12 @@ export default {
   padding: var(--space-md);
   border-radius: var(--radius-md);
   margin: 0;
-  max-height: 200px;
+  flex: 1;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  min-height: 300px;
+  max-height: 600px;
 }
 
 /* Unsupported State */
@@ -484,6 +585,15 @@ export default {
 @media (max-width: 768px) {
   .config-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .recorder-content {
+    flex-direction: column;
+  }
+  
+  .recorder-left-panel, .recorder-right-panel {
+    width: 100%;
+    flex: none;
   }
 }
 </style>

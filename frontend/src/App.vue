@@ -39,6 +39,10 @@
             <div v-show="activeTab === 'home'" class="page-view" key="home">
               <!-- 音频录制组件 -->
               <section class="section glass-card">
+                <h2 class="section-title">
+                  <span class="section-icon">🎤</span>
+                  语音指令
+                </h2>
                 <AudioRecorder />
               </section>
 
