@@ -52,7 +52,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str) -> None:
             asyncio.create_task(receive_loop(websocket, context)),
             asyncio.create_task(run_decode_vad_appender(context)),
             asyncio.create_task(run_vad_processor(context)),
-            asyncio.create_task(run_asr_processor(context)),
+            asyncio.create_task(run_asr_processor(context, websocket)),
             asyncio.create_task(run_llm_rag_processor(context, websocket)),
             asyncio.create_task(run_command_executor(context, websocket))
         ]

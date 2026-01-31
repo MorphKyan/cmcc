@@ -95,7 +95,7 @@ async def run_vad_processor(context: Context) -> None:
             logger.exception("VAD处理错误")
 
 
-async def run_asr_processor(context: Context) -> None:
+async def run_asr_processor(context: Context, websocket: WebSocket) -> None:
     """ASR处理逻辑代码"""
     logger.info("ASR处理器已启动")
     while True:
@@ -114,6 +114,17 @@ async def run_asr_processor(context: Context) -> None:
 
             if recognized_text and recognized_text.strip():
                 logger.info("[识别结果] {recognized_text}", recognized_text=recognized_text)
+                # 立即发送ASR结果到前端
+                try:
+                    asr_payload = json.dumps({
+                        "type": "asr_result",
+                        "text": recognized_text,
+                        "user_id": context.context_id
+                    }, ensure_ascii=False)
+                    await websocket.send_text(asr_payload)
+                except Exception as e:
+                    logger.warning(f"发送ASR结果失败: {e}")
+                
                 await context.asr_output_queue.put(recognized_text)
 
         except Exception as e:

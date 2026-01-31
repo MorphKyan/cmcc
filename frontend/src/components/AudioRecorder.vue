@@ -67,6 +67,22 @@
       </div>
 
       <div class="recorder-right-panel">
+        <!-- ASR Result Output -->
+        <div v-if="asrResult" class="asr-output card">
+          <h3 class="output-title">
+            <span>📝</span>
+            识别内容
+          </h3>
+          <pre class="output-content">{{ asrResult }}</pre>
+        </div>
+        <div v-else class="asr-output card placeholder">
+           <h3 class="output-title">
+            <span>📝</span>
+            识别内容
+          </h3>
+          <div class="empty-state">等待语音识别...</div>
+        </div>
+
         <!-- WebSocket Output -->
         <div v-if="websocketOutput" class="websocket-output card">
           <h3 class="output-title">
@@ -111,7 +127,7 @@ export default {
       audioContextSampleRate: null,
       clientId: `web-client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       websocketOutput: '',
-      websocketOutput: '',
+      asrResult: '',
       audioWorkletNode: null,
       
       // Monitoring
@@ -208,7 +224,12 @@ export default {
         this.socket.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            this.websocketOutput = JSON.stringify(data, null, 2);
+            if (data.type === 'asr_result') {
+                this.asrResult = data.text;
+                // Optional: scroll to bottom if needed, but it's likely short 
+            } else {
+                this.websocketOutput = JSON.stringify(data, null, 2);
+            }
           } catch (e) {
             this.websocketOutput = event.data;
           }
@@ -259,6 +280,7 @@ export default {
       this.audioWorkletNode = null;
       this.socket = null;
       this.isRecording = false;
+      this.asrResult = ''; // Clear result on stop/cleanup if desired, or keep it. user preference not specified, assume keep or clear? keeping might be better for reading history. but restart usually means new session. let's clear for now as it makes state cleaner.
       if (this.status !== 'WebSocket 连接已关闭') {
           this.status = '已停止';
       }
@@ -579,6 +601,30 @@ export default {
 .unsupported .hint {
   font-size: 0.875rem;
   color: var(--text-muted);
+}
+
+.unsupported .hint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* ASR Output styles similar to WebSocket Output */
+.asr-output {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-md);
+  flex-shrink: 0; /* Don't shrink ASR result */
+  max-height: 200px; /* Limit height */
+}
+
+.asr-output.placeholder {
+  opacity: 0.6;
+  min-height: 150px;
+}
+
+.asr-output .output-content {
+    min-height: 100px; /* Smaller min-height for text */
 }
 
 /* Responsive */
