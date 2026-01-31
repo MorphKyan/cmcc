@@ -56,7 +56,9 @@ async def root() -> HealthResponse:
 def run_api(host: str = '0.0.0.0', port: int = 8000) -> None:
     """运行API服务（HTTP模式，由nginx处理HTTPS终结）"""
     import uvicorn
-    uvicorn.run(app, host=host, port=port, reload=False)
+    # 使用 log_config=None 让 uvicorn 不去重新配置日志，
+    # 而是使用我们已经通过 setup_logging 配置好的 handlers (InterceptHandler)
+    uvicorn.run(app, host=host, port=port, reload=False, log_config=None)
 
 
 if __name__ == '__main__':
