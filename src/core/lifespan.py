@@ -28,6 +28,12 @@ async def lifespan(app: FastAPI):
 
     try:
         dependencies.data_service = DataService()
+        
+        # Load all hotwords (static + dynamic) for ASR
+        all_hot_words = dependencies.data_service.get_all_hotwords()
+        asr_config.hotwords = all_hot_words
+        logger.info(f"Loaded {len(all_hot_words)} hot words for ASR initialization")
+
         dependencies.vad_core = VADCore(vad_config)
         dependencies.asr_processor = ASRProcessor(asr_config, device="cpu")
 

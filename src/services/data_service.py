@@ -234,6 +234,37 @@ class DataService:
         with self._data_lock:
             return list(self._areas_cache.values())
 
+    def get_all_hotwords(self) -> list[str]:
+        """Get all hotwords from unique values in data caches."""
+        hotwords = set()
+        with self._data_lock:
+            # Media: name, aliases
+            for item in self._media_cache.values():
+                if item.get("name"): hotwords.add(item["name"])
+                if item.get("aliases"): hotwords.add(item["aliases"])
+            
+            # Devices: name, aliases
+            for item in self._devices_cache.values():
+                if item.get("name"): hotwords.add(item["name"])
+                if item.get("aliases"): hotwords.add(item["aliases"])
+
+            # Areas: name, aliases
+            for item in self._areas_cache.values():
+                if item.get("name"): hotwords.add(item["name"])
+                if item.get("aliases"): hotwords.add(item["aliases"])
+
+            # Doors: name
+            for item in self._doors_cache.values():
+                if item.get("name"): hotwords.add(item["name"])
+
+        # Merging static hotwords from config
+        settings = get_settings()
+        if settings.asr.hotwords:
+            hotwords.update(settings.asr.hotwords)
+
+        # Filter out empty strings and return list
+        return [w for w in hotwords if w and w.strip()]
+
     # --- Write Methods ---
 
     async def add_devices(self, items: list[DeviceItem]) -> None:

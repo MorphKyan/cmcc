@@ -122,5 +122,10 @@ export const sendTextCommand = (text) => {
   return api.post('/pipeline/text', { text })
 }
 
+// ASR API
+export const restartAsr = () => {
+  return api.post('/asr/restart')
+}
+
 // 默认导出axios实例，便于其他模块直接使用
 export default api

@@ -107,6 +107,9 @@
                     {{ isReinitializing ? '初始化中...' : '初始化 RAG' }}
                   </button>
                   <button class="btn btn-secondary" @click="checkLLMHealth">检查 LLM</button>
+                  <button class="btn btn-secondary" @click="restartAsrHandler" :disabled="isAsrRestarting">
+                    {{ isAsrRestarting ? '重启中...' : '重启 ASR' }}
+                  </button>
                 </div>
               </section>
               
@@ -234,7 +237,8 @@ import {
   reinitializeRag,
   vadReinitialize,
   vadStatus,
-  sendTextCommand
+  sendTextCommand,
+  restartAsr
 } from './api'
 
 export default {
@@ -274,7 +278,8 @@ export default {
       isReinitializing: false,
       textCommandInput: '',
       textCommandResult: null,
-      isTextCommandRunning: false
+      isTextCommandRunning: false,
+      isAsrRestarting: false
     }
   },
   computed: {
@@ -405,6 +410,25 @@ export default {
         this.textCommandResult = '错误: ' + error.message
       } finally {
         this.isTextCommandRunning = false
+      }
+    },
+
+    async restartAsrHandler() {
+      if (!confirm('确定要重启 ASR 服务吗？这可能会中断当前的语音识别连接。')) return
+      
+      this.isAsrRestarting = true
+      try {
+        const response = await restartAsr()
+        if (response.data.success) {
+          alert(response.data.message)
+        } else {
+          alert('ASR 重启失败: ' + response.data.message)
+        }
+      } catch (error) {
+        const msg = error.response?.data?.message || error.message
+        alert('ASR 重启请求失败: ' + msg)
+      } finally {
+        this.isAsrRestarting = false
       }
     },
 

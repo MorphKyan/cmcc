@@ -42,7 +42,14 @@ class VADCore(BaseVADProcessor):
                 # 初始化VAD模型
                 logger.info("正在加载VAD模型...")
                 from funasr import AutoModel
-                self.model = AutoModel(model=self.settings.model, model_revision="v2.0.4", disable_pbar=True, disable_update=True)
+                self.model = AutoModel(
+                    model=self.settings.model,
+                    model_revision="v2.0.4",
+                    disable_pbar=True,
+                    disable_update=True,
+                    speech_noise_thres=self.settings.speech_noise_thres,
+                    decibel_thres=self.settings.decibel_thres,
+                )
                 logger.info("VAD模型加载完成。")
 
                 self.status = VADStatus.READY

@@ -314,6 +314,8 @@ class VADSettings(BaseSettings):
     history_buffer_duration_sec: int = 30  # 历史缓冲区最大时长(秒)
     chunk_queue_maxsize: int = 10000  # 音频块队列最大容量
     safety_margin_sec: int = 5  # 提取音频后保留的安全边界(秒)
+    speech_noise_thres: float = 0.6  # 语音/噪声阈值，越高越难触发VAD(排除噪声)
+    decibel_thres: float = -100.0  # 绝对语音/静音分贝阈值，低于此值强制判定为静音
 
 
 class FunASRSettings(BaseSettings):
