@@ -240,6 +240,8 @@ import {
   sendTextCommand,
   restartAsr
 } from './api'
+import { config as appConfig } from './config'
+import { AIAssistant } from './embed/ai-assistant-embed.js'
 
 export default {
   name: 'App',
@@ -465,10 +467,31 @@ export default {
 
   mounted() {
     this.startAutoUpdate()
+    
+    // Initialize AI Assistant Embed
+    try {
+      // Get User ID from localStorage or generate one (reuse logic if possible or let embed handle it)
+      // The embed script generates its own client ID if not provided in url, 
+      // but let's try to align with app config if needed. 
+      // Actually, the embed script handles its own clientId logic internally if the URL doesn't have one.
+      // We will use the app's config to get the base backend URL.
+      
+      const backendUrl = appConfig.getBackendUrl();
+      const wsUrl = backendUrl.replace(/^http/, 'ws') + '/audio/ws';
+
+      AIAssistant.init({
+        backendUrl: wsUrl,
+        position: { bottom: '20px', right: '20px' },
+        theme: 'dark'
+      });
+    } catch (e) {
+      console.error('Failed to init AI Assistant:', e);
+    }
   },
 
   beforeUnmount() {
     this.stopAutoUpdate()
+    AIAssistant.destroy()
   }
 }
 </script>
