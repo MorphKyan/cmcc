@@ -477,7 +477,17 @@ export default {
       // We will use the app's config to get the base backend URL.
       
       const backendUrl = appConfig.getBackendUrl();
-      const wsUrl = backendUrl.replace(/^http/, 'ws') + '/audio/ws';
+      // Construct WebSocket URL using standard URL parsing to process host/protocol correctly
+      let wsUrl;
+      try {
+        const urlObj = new URL(backendUrl);
+        const protocol = urlObj.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${urlObj.host}/audio/ws`;
+      } catch (e) {
+        // Fallback for relative paths or invalid URLs
+        console.warn('Invalid backend URL for WS, falling back to simple replacement:', e);
+        wsUrl = backendUrl.replace(/^http/, 'ws') + '/audio/ws';
+      }
 
       AIAssistant.init({
         backendUrl: wsUrl,
