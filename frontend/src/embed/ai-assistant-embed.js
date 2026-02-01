@@ -141,6 +141,33 @@ class AIAssistantWidget {
                 background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
                 cursor: wait;
             }
+            .ai-assistant-widget.offline .ai-btn {
+                background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+                filter: grayscale(100%);
+                box-shadow: none;
+            }
+            /* Add specific style for connected state if needed, but default is already good. 
+               We can add a small green dot or indicator.
+             */
+            .ai-btn::after {
+                content: '';
+                position: absolute;
+                bottom: 2px;
+                right: 2px;
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: #e74c3c; /* Red for disconnected/offline */
+                border: 2px solid white;
+                z-index: 12;
+                transition: background 0.3s;
+            }
+            .ai-assistant-widget.connected .ai-btn::after {
+                background: #2ecc71; /* Green for connected */
+            }
+            .ai-assistant-widget.connecting .ai-btn::after {
+                background: #f1c40f; /* Yellow for connecting */
+            }
             .ai-icon svg { width: 28px; height: 28px; }
             .pulse-ring {
                 position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -364,7 +391,7 @@ class AIAssistantWidget {
   connect() {
     if (this.socket) return;
 
-    this.updateStatus('连接中...', true);
+    this.updateStatus('连接中...', 'connecting');
 
     let url = this.config.backendUrl;
     // Basic URL normalization
@@ -399,7 +426,7 @@ class AIAssistantWidget {
         console.log('[AIAssistant] Connected');
         this.isConnected = true;
         this.isReconnecting = false;
-        this.updateStatus('');
+        this.updateStatus('', 'connected');
 
         // Send metadata
         this.socket.send(JSON.stringify({
@@ -440,11 +467,12 @@ class AIAssistantWidget {
     if (this.isReconnecting) return;
     this.isReconnecting = true;
     this.isConnected = false;
-    this.updateStatus('断开连接，5秒后重试...');
+    this.updateStatus('断开连接，5秒后重试...', 'offline');
 
     console.log('[AIAssistant] Reconnecting in 5s...');
     this.reconnectTimer = setTimeout(() => {
       this.socket = null; // Ensure clean slate
+      this.isReconnecting = false; // Allow next reconnect attempt to trigger state change
       this.connect();
     }, 5000);
   }
@@ -562,7 +590,16 @@ class AIAssistantWidget {
   stopRecording() {
     this.isRecording = false;
     this.updateIcons();
-    this.updateStatus(''); // Clear 'Recording...' status
+    // Only reset to connected if we are actually connected
+    if (this.isConnected) {
+      this.updateStatus('', 'connected');
+    } else if (this.isReconnecting) {
+      // If reconnecting, don't change status text/state here, let scheduleReconnect handle it
+      // or if we just stopped recording due to error, we might be offline.
+    } else {
+      // Fallback
+      this.updateStatus('', 'offline');
+    }
 
     // Instead of closing immediately, enter trailing silence mode
     if (this.audioContext && this.workletNode) {
@@ -622,10 +659,19 @@ class AIAssistantWidget {
   // ============================================
   // Helpers
   // ============================================
-  updateStatus(text, connecting = false) {
+  updateStatus(text, state = '') {
     this.statusEl.textContent = text;
     this.statusEl.style.display = text ? 'block' : 'none';
-    this.container.classList.toggle('connecting', connecting);
+
+    // Reset classes
+    this.container.classList.remove('connecting', 'offline', 'connected');
+
+    if (state) {
+      this.container.classList.add(state);
+    } else if (!text) {
+      // If no text, assume connected/idle state used in normal operation
+      this.container.classList.add('connected');
+    }
   }
 
   updateIcons() {
