@@ -477,16 +477,19 @@ export default {
       // We will use the app's config to get the base backend URL.
       
       const backendUrl = appConfig.getBackendUrl();
-      // Construct WebSocket URL using standard URL parsing to process host/protocol correctly
       let wsUrl;
       try {
+        // Try to parse as absolute URL
         const urlObj = new URL(backendUrl);
         const protocol = urlObj.protocol === 'https:' ? 'wss:' : 'ws:';
+        // Force the path to be /audio/ws, ignoring any path in backendUrl (like /api)
         wsUrl = `${protocol}//${urlObj.host}/audio/ws`;
       } catch (e) {
-        // Fallback for relative paths or invalid URLs
-        console.warn('Invalid backend URL for WS, falling back to simple replacement:', e);
-        wsUrl = backendUrl.replace(/^http/, 'ws') + '/audio/ws';
+        // Fallback for relative paths: assume it's relative to current origin's host
+        // If backendUrl is something like '/api', we ignore it and use window.location.host
+        console.warn('Backend URL is not absolute or invalid for WS, using window location:', backendUrl);
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}/audio/ws`;
       }
 
       AIAssistant.init({
