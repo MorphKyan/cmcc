@@ -395,18 +395,12 @@ class AIAssistantWidget {
 
     let url = this.config.backendUrl;
 
-    // Defensive: Remove /api prefix if present to prevent /api/audio/ws
-    if (url && url.includes('/api/audio')) {
-      console.warn('[AIAssistant] Fixed incorrectly formed URL (removed /api):', url);
-      url = url.replace('/api/audio', '/audio');
-    }
-
     // Basic URL normalization
     if (!url.startsWith('ws')) {
       const loc = window.location;
       const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
       // If empty, try to derive or use default (assuming proxy)
-      if (!url) url = `${protocol}//${loc.host}/audio/ws`;
+      if (!url) url = `${protocol}//${loc.host}/api/audio/ws`;
       else if (url.startsWith('/')) url = `${protocol}//${loc.host}${url}`;
       else url = `${protocol}//${url}`;
     }

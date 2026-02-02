@@ -3,7 +3,7 @@
 import os
 import sys
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
@@ -38,16 +38,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(audio.router)
-app.include_router(rag.router)
-app.include_router(llm.router)
-app.include_router(config.router)
-app.include_router(data.router)
-app.include_router(vad.router)
-app.include_router(monitoring.router)
-app.include_router(tool.router)
-app.include_router(pipeline.router)
-app.include_router(asr.router)
+# Create a global API router with prefix /api
+api_router = APIRouter(prefix="/api")
+
+api_router.include_router(audio.router)
+api_router.include_router(rag.router)
+api_router.include_router(llm.router)
+api_router.include_router(config.router)
+api_router.include_router(data.router)
+api_router.include_router(vad.router)
+api_router.include_router(monitoring.router)
+api_router.include_router(tool.router)
+api_router.include_router(pipeline.router)
+api_router.include_router(asr.router)
+
+# Include the global API router into the app
+app.include_router(api_router)
 
 
 @app.get("/", tags=["Health"], response_model=HealthResponse)

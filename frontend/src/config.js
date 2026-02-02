@@ -25,12 +25,12 @@ const getWebSocketUrl = (clientId) => {
   try {
     const url = new URL(backendUrl);
     const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${url.host}/audio/ws/${clientId}`;
+    return `${protocol}//${url.host}/api/audio/ws/${clientId}`;
   } catch (error) {
     console.warn('Invalid backend URL, using window.location:', backendUrl, error);
     // Fallback: use current page's protocol
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/audio/ws/${clientId}`;
+    return `${protocol}//${window.location.host}/api/audio/ws/${clientId}`;
   }
 };
 

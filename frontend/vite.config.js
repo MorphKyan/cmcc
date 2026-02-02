@@ -83,27 +83,6 @@ export default defineConfig(({ command, mode }) => {
           target: backendUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, '')
-        },
-        '/vad': {
-          target: backendUrl,
-          changeOrigin: true,
-          secure: false
-        },
-        '/rag': {
-          target: backendUrl,
-          changeOrigin: true,
-          secure: false
-        },
-        '/llm': {
-          target: backendUrl,
-          changeOrigin: true,
-          secure: false
-        },
-        '/config': {
-          target: backendUrl,
-          changeOrigin: true,
-          secure: false
         }
       }
     }
