@@ -394,6 +394,13 @@ class AIAssistantWidget {
     this.updateStatus('连接中...', 'connecting');
 
     let url = this.config.backendUrl;
+
+    // Defensive: Remove /api prefix if present to prevent /api/audio/ws
+    if (url && url.includes('/api/audio')) {
+      console.warn('[AIAssistant] Fixed incorrectly formed URL (removed /api):', url);
+      url = url.replace('/api/audio', '/audio');
+    }
+
     // Basic URL normalization
     if (!url.startsWith('ws')) {
       const loc = window.location;

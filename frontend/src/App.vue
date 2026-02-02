@@ -479,15 +479,22 @@ export default {
       const backendUrl = appConfig.getBackendUrl();
       let wsUrl;
       try {
-        // Try to parse as absolute URL
-        const urlObj = new URL(backendUrl);
-        const protocol = urlObj.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Force the path to be /audio/ws, ignoring any path in backendUrl (like /api)
-        wsUrl = `${protocol}//${urlObj.host}/audio/ws`;
+        // Construct WS URL aggressively ensuring no /api prefix
+        let host = window.location.host;
+        let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+        // If backendUrl is absolute, use its host
+        if (backendUrl && backendUrl.startsWith('http')) {
+          const urlObj = new URL(backendUrl);
+          host = urlObj.host;
+          protocol = urlObj.protocol === 'https:' ? 'wss:' : 'ws:';
+        }
+
+        // Always force /audio/ws path
+        wsUrl = `${protocol}//${host}/audio/ws`;
+        console.log('[App] Constructed WS URL:', wsUrl);
       } catch (e) {
-        // Fallback for relative paths: assume it's relative to current origin's host
-        // If backendUrl is something like '/api', we ignore it and use window.location.host
-        console.warn('Backend URL is not absolute or invalid for WS, using window location:', backendUrl);
+        console.warn('Error constructing WS URL:', e);
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         wsUrl = `${protocol}//${window.location.host}/audio/ws`;
       }
