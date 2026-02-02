@@ -20,7 +20,7 @@ decibel_thres = -100.0
 # FunASR 语音识别配置
 [asr]
 model = "iic/SenseVoiceSmall"
-language = "auto"
+language = "zh"
 use_itn = true
 batch_size_s = 60.0
 merge_vad = false
