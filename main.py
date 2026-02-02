@@ -56,9 +56,21 @@ api_router.include_router(asr.router)
 app.include_router(api_router)
 
 
-@app.get("/", tags=["Health"], response_model=HealthResponse)
+@api_router.get("/", tags=["Health"], response_model=HealthResponse)
 async def root() -> HealthResponse:
-    return HealthResponse(status="healthy", service="Main API Service")
+    """API Root Health Check"""
+    return HealthResponse(status="healthy", service="API Service")
+
+
+# Include the global API router into the app
+app.include_router(api_router)
+
+
+@app.get("/")
+async def app_root():
+    """Redirect root to API docs or health"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/docs")
 
 
 def run_api(host: str = '0.0.0.0', port: int = 8000) -> None:
