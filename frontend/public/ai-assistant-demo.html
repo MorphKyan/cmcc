@@ -44,7 +44,7 @@
   </div>
 
   <div class="card">
-    <button onclick="AIAssistant.init({ backendUrl: 'ws://localhost:8000/audio/ws' })">重新初始化</button>
+    <button onclick="AIAssistant.init({ backendUrl: 'ws://localhost:8000/api/audio/ws' })">重新初始化</button>
     <button onclick="AIAssistant.destroy()">销毁</button>
   </div>
 
@@ -55,7 +55,7 @@
     // Auto init
     AIAssistant.init({
       // Adjust port if needed
-      backendUrl: 'ws://localhost:8000/audio/ws',
+      backendUrl: 'ws://localhost:8000/api/audio/ws',
       position: { bottom: '30px', right: '30px' },
       theme: 'dark'
     });

@@ -490,13 +490,13 @@ export default {
           protocol = urlObj.protocol === 'https:' ? 'wss:' : 'ws:';
         }
 
-        // Always force /audio/ws path
-        wsUrl = `${protocol}//${host}/audio/ws`;
+        // Always force /api/audio/ws path
+        wsUrl = `${protocol}//${host}/api/audio/ws`;
         console.log('[App] Constructed WS URL:', wsUrl);
       } catch (e) {
         console.warn('Error constructing WS URL:', e);
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${protocol}//${window.location.host}/audio/ws`;
+        wsUrl = `${protocol}//${window.location.host}/api/audio/ws`;
       }
 
       AIAssistant.init({
