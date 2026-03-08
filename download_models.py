@@ -50,17 +50,43 @@ def main():
     # SenseVoiceSmall Models
     sense_voice_dir = os.path.join(model_dir, "sense-voice-small")
     os.makedirs(sense_voice_dir, exist_ok=True)
-    sense_voice_files = {
-        "model.onnx": "https://huggingface.co/FunAudioLLM/SenseVoiceSmall/resolve/main/model.onnx",
-        "model.int8.onnx": "https://huggingface.co/FunAudioLLM/SenseVoiceSmall/resolve/main/model.int8.onnx",
-        "tokens.txt": "https://huggingface.co/FunAudioLLM/SenseVoiceSmall/resolve/main/tokens.txt"
-    }
-    for filename, url in sense_voice_files.items():
-        filepath = os.path.join(sense_voice_dir, filename)
-        if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
-            download_file(url, filepath)
-        else:
-            print(f"{filename} already exists.")
+    
+    archive_url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17.tar.bz2"
+    archive_path = os.path.join(model_dir, "sense-voice.tar.bz2")
+    
+    # Define expected files after extraction
+    expected_files = ["model.onnx", "model.int8.onnx", "tokens.txt"]
+    all_exist = all(os.path.exists(os.path.join(sense_voice_dir, f)) and os.path.getsize(os.path.join(sense_voice_dir, f)) > 0 for f in expected_files)
+    
+    if not all_exist:
+        try:
+            print(f"Downloading SenseVoice from {archive_url}")
+            context = ssl._create_unverified_context()
+            req = urllib.request.Request(archive_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, context=context) as response, open(archive_path, 'wb') as out_file:
+                # Read chunks to avoid memory issues
+                import shutil
+                shutil.copyfileobj(response, out_file)
+            print("Download complete. Extracting...")
+            
+            import tarfile
+            with tarfile.open(archive_path, "r:bz2") as tar:
+                # Extract specifically the required files and place them in sense-voice-dir directly
+                for member in tar.getmembers():
+                    for expected in expected_files:
+                        if member.name.endswith(expected):
+                            member.name = expected # Flatten the extraction
+                            tar.extract(member, path=sense_voice_dir)
+            print("Extraction complete.")
+            
+            # Clean up archive
+            if os.path.exists(archive_path):
+                os.remove(archive_path)
+                
+        except Exception as e:
+            print(f"Failed to download or extract SenseVoice models: {e}")
+    else:
+        print("SenseVoice models already exist.")
 
 if __name__ == "__main__":
     main()

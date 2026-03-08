@@ -37,7 +37,7 @@ class ASRProcessor(BaseASRProcessor):
                 logger.info("正在加载 sherpa-onnx SenseVoice 模型...")
                 sv_dir = self.settings.model_dir
                 
-                model_file = os.path.join(sv_dir, "model.onnx")
+                model_file = os.path.join(sv_dir, "model.int8.onnx")
                 tokens_file = os.path.join(sv_dir, "tokens.txt")
                 
                 self.recognizer = sherpa_onnx.OfflineRecognizer.from_sense_voice(
