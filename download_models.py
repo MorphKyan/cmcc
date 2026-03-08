@@ -1,6 +1,32 @@
 import os
+import sys
 import urllib.request
 import ssl
+
+def verify_models(model_dir, sense_voice_dir):
+    """Verify all required model files exist and have reasonable sizes."""
+    required_files = {
+        os.path.join(model_dir, "silero_vad.onnx"): 1_000_000,        # ~1MB minimum
+        os.path.join(model_dir, "wespeaker_resnet34.onnx"): 1_000_000, # ~1MB minimum
+        os.path.join(sense_voice_dir, "model.int8.onnx"): 1_000_000,   # ~1MB minimum
+        os.path.join(sense_voice_dir, "tokens.txt"): 100,              # >100 bytes
+    }
+    all_ok = True
+    print("\n=== Model verification ===")
+    for path, min_size in required_files.items():
+        if os.path.exists(path):
+            size = os.path.getsize(path)
+            status = "OK" if size >= min_size else f"TOO SMALL (expected >={min_size})"
+            print(f"  {'OK' if size >= min_size else 'FAIL'} {path} ({size} bytes) {'' if size >= min_size else status}")
+            if size < min_size:
+                all_ok = False
+        else:
+            print(f"  MISSING {path}")
+            all_ok = False
+    if not all_ok:
+        print("\nERROR: One or more model files are missing or too small. Aborting build.")
+        sys.exit(1)
+    print("All model files verified OK.\n")
 
 def download_file(url, filepath):
     print(f"Downloading from {url} to {filepath}")
@@ -30,7 +56,8 @@ def download_file(url, filepath):
         print(f"Direct download failed: {e}")
 
 def main():
-    model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "models")
+    # Save models one level up from data/ so they aren't hidden by volume mounts
+    model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
     os.makedirs(model_dir, exist_ok=True)
     
     # WeSpeaker Model
@@ -90,6 +117,9 @@ def main():
             print(f"Failed to download or extract SenseVoice models: {e}")
     else:
         print("SenseVoice models already exist.")
+
+    # Verify all model files are present and non-empty
+    verify_models(model_dir, sense_voice_dir)
 
 if __name__ == "__main__":
     main()

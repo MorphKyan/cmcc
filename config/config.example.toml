@@ -19,11 +19,11 @@ decibel_thres = -100.0
 
 # ASR 语音与声纹识别配置 (基于 Sherpa-ONNX & ONNXRuntime)
 [asr]
-model_dir = "./data/models/sense-voice-small"
+model_dir = "./models/sense-voice-small"
 sample_rate = 16000
 language = "auto"
 use_itn = true
-spk_model_path = "./data/models/wespeaker_resnet34.onnx"
+spk_model_path = "./models/wespeaker_resnet34.onnx"
 spk_sim_threshold = 0.55
 fallback_speaker_label = "环境音/非目标"
 batch_size = 1

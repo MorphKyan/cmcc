@@ -309,7 +309,7 @@ class VADSettings(BaseSettings):
     chunk_size: int = 200
     sample_rate: int = 16000
     model: str = "silero-vad"
-    model_dir: str = os.path.join(data_dir, "models", "silero_vad.onnx")
+    model_dir: str = os.path.join(project_dir, "models", "silero_vad.onnx")
     max_single_segment_time: int = 20000  # 最大切割音频时长(ms)
     save_audio_segments: bool = True  # 是否保存切割出来的音频片段
     history_buffer_duration_sec: int = 30  # 历史缓冲区最大时长(秒)
@@ -323,13 +323,13 @@ class ASRSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="ASR_", extra="ignore")
 
     # ASR Settings (SenseVoice Small ONNX)
-    model_dir: str = os.path.join(data_dir, "models", "sense-voice-small")
+    model_dir: str = os.path.join(project_dir, "models", "sense-voice-small")
     sample_rate: int = 16000
     language: str = "auto"
     use_itn: bool = True
     
     # SPK Settings (WeSpeaker ResNet34 ONNX)
-    spk_model_path: str = os.path.join(data_dir, "models", "wespeaker_resnet34.onnx")
+    spk_model_path: str = os.path.join(project_dir, "models", "wespeaker_resnet34.onnx")
     spk_sim_threshold: float = 0.55  # 识别目标说话人的相似度阈值
     fallback_speaker_label: str = "环境音/非目标" # 如果未识别出目标说话人时的标签
 
