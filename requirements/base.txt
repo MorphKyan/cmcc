@@ -17,4 +17,4 @@ python-multipart==0.0.18
 av==16.0.1
 httpx==0.27.2
 modelscope==1.28.1
-scipy
+scipy==1.14.1
