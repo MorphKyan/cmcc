@@ -476,28 +476,9 @@ export default {
       // Actually, the embed script handles its own clientId logic internally if the URL doesn't have one.
       // We will use the app's config to get the base backend URL.
       
-      const backendUrl = appConfig.getBackendUrl();
-      let wsUrl;
-      try {
-        // Construct WS URL aggressively ensuring no /api prefix
-        let host = window.location.host;
-        let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-
-        // If backendUrl is absolute, use its host
-        if (backendUrl && backendUrl.startsWith('http')) {
-          const urlObj = new URL(backendUrl);
-          host = urlObj.host;
-          protocol = urlObj.protocol === 'https:' ? 'wss:' : 'ws:';
-        }
-
-        // Always force /api/audio/ws path
-        wsUrl = `${protocol}//${host}/api/audio/ws`;
-        console.log('[App] Constructed WS URL:', wsUrl);
-      } catch (e) {
-        console.warn('Error constructing WS URL:', e);
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${protocol}//${window.location.host}/api/audio/ws`;
-      }
+      // Get WebSocket URL using the unified config logic
+      const wsUrl = appConfig.getBaseWebSocketUrl();
+      console.log('[App] Constructed WS URL:', wsUrl);
 
       AIAssistant.init({
         backendUrl: wsUrl,

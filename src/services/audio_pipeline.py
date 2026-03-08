@@ -102,15 +102,46 @@ async def run_asr_processor(context: Context, websocket: WebSocket) -> None:
         try:
             # 从VAD队列中获取分割好的语音片段
             segment: npt[np.float32] = await context.audio_segment_queue.get()
-            # 使用ASR处理器处理音频数据
             start_time = asyncio.get_running_loop().time()
+            
+            # --- 兜底逻辑：声纹验证 ---
+            # 1. 提取当前音频段的声纹
+            current_embedding = await asyncio.to_thread(dependencies.asr_processor.extract_speaker_embedding, segment)
+            
+            if current_embedding is not None:
+                # 2. 如果之前没有记录过目标说话人，那么默认第一个说话的就是目标说话人
+                if context.target_speaker_embedding is None:
+                    context.target_speaker_embedding = current_embedding
+                    logger.info("[声纹验证] 注册首个说话人为目标说话人。")
+                    is_target_speaker = True
+                else:
+                    # 3. 比较声纹相似度
+                    similarity = dependencies.asr_processor.compute_similarity(current_embedding, context.target_speaker_embedding)
+                    THRESHOLD = 0.50  # 余弦相似度阈值
+                    if similarity >= THRESHOLD:
+                        is_target_speaker = True
+                        logger.info(f"[声纹验证] 相似度分数: {similarity:.4f} >= 阈值 {THRESHOLD}，[通过] 确认为目标说话人。")
+                    else:
+                        is_target_speaker = False
+                        logger.warning(f"[声纹验证拦截] 相似度分数: {similarity:.4f} < 阈值 {THRESHOLD}，[拦截] 非目标说话人，音频段已弃用。")
+            else:
+                # 如果提取失败，为了保证流程不中断，默认当作目标说话人处理或者丢弃，这里选择继续处理
+                is_target_speaker = True
+                logger.warning("[声纹验证] 无法提取声纹，跳过验证步骤。")
+            
+            # 如果不是目标说话人，直接丢弃该段音频。
+            if not is_target_speaker:
+                continue
+
+            # --- ASR 识别流程 ---
+            # 使用ASR处理器处理音频数据
             recognized_text = await asyncio.to_thread(dependencies.asr_processor.process_audio_data, segment)
 
             end_time = asyncio.get_running_loop().time()
             duration = end_time - start_time
             # 记录性能指标
             dependencies.metrics_manager.record(MetricType.ASR_RECOGNIZE, duration, context.context_id)
-            logger.info("[性能指标] ASR识别耗时: {duration:.3f}s", duration=duration)
+            logger.info("[性能指标] 声纹验证+ASR识别总耗时: {duration:.3f}s", duration=duration)
 
             if recognized_text and recognized_text.strip():
                 logger.info("[识别结果] {recognized_text}", recognized_text=recognized_text)

@@ -9,7 +9,6 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-import torch
 from loguru import logger
 
 
@@ -52,7 +51,7 @@ class BaseASRProcessor(ABC):
             device: 推理设备配置。
         """
         if device == "auto":
-            self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+            self.device = "cpu"
         else:
             self.device = device
         logger.info("ASR处理器使用 {device} 进行推理...", device=self.device)
@@ -113,14 +112,4 @@ class BaseASRProcessor(ABC):
             return audio_data.astype(np.float32) / 32768.0
         return audio_data
 
-    @abstractmethod
-    def process_audio_file(self, file_path: str) -> str | None:
-        """处理音频文件并返回识别结果。
-        
-        Args:
-            file_path: 音频文件路径。
-            
-        Returns:
-            识别的文本结果，如果失败则返回None。
-        """
-        pass
+

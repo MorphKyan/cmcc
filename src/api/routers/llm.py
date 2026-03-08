@@ -37,6 +37,8 @@ async def llm_health() -> LLMHealthResponse:
                 detail="LLM服务不健康"
             )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("检查LLM健康状态时发生错误")
         raise HTTPException(

@@ -22,9 +22,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # 复制依赖文件
 COPY requirements/ /tmp/requirements/
 
-# 优先安装 CPU 版本 PyTorch，避免后续依赖拉取 CUDA 版本
-RUN --mount=type=cache,target=/root/.cache/pip \
-  pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 # 安装核心依赖
 # 使用 cache mount 加速 pip 安装
@@ -55,10 +52,14 @@ RUN rm -rf /tmp/requirements
 ENV ENABLE_MIC_INPUT=$ENABLE_MIC_INPUT
 ENV ENABLE_OLLAMA=$ENABLE_OLLAMA
 
+# 下载模型 (将模型下载脚本复制并执行，缓存模型)
+COPY download_models.py .
+RUN python download_models.py
+
 # 复制应用代码
 COPY src/ ./src/
 COPY config/ ./config/
-COPY data/ ./data/
+# COPY data/ ./data/  <-- 不再复制 data 目录，以免打包开发环境可能的旧文件或造成冗余
 COPY main.py .
 
 # 暴露端口

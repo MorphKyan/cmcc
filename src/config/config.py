@@ -308,33 +308,35 @@ class VADSettings(BaseSettings):
 
     chunk_size: int = 200
     sample_rate: int = 16000
-    model: str = "fsmn-vad"
+    model: str = "silero-vad"
+    model_dir: str = os.path.join(data_dir, "models", "silero_vad.onnx")
     max_single_segment_time: int = 20000  # 最大切割音频时长(ms)
     save_audio_segments: bool = True  # 是否保存切割出来的音频片段
     history_buffer_duration_sec: int = 30  # 历史缓冲区最大时长(秒)
     chunk_queue_maxsize: int = 10000  # 音频块队列最大容量
     safety_margin_sec: int = 5  # 提取音频后保留的安全边界(秒)
-    speech_noise_thres: float = 0.6  # 语音/噪声阈值，越高越难触发VAD(排除噪声)
+    speech_noise_thres: float = 0.5  # 语音/噪声阈值，Silero VAD 推荐 0.5
     decibel_thres: float = -100.0  # 绝对语音/静音分贝阈值，低于此值强制判定为静音
 
 
-class FunASRSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="FUNASR_")
+class ASRSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="ASR_", extra="ignore")
 
-    model: str = "iic/SenseVoiceSmall"
+    # ASR Settings (SenseVoice Small ONNX)
+    model_dir: str = os.path.join(data_dir, "models", "sense-voice-small")
+    sample_rate: int = 16000
     language: str = "auto"
     use_itn: bool = True
-    batch_size_s: float = 60.0  # 动态batch，batch中的音频总时长上限(秒)
-    merge_vad: bool = False
-    merge_length_s: float = 15.0
-
-    # Nano ASR specific settings (compatible fields)
-    batch_size: int = 1  # Nano uses int batch_size
-    vad_model: str = "fsmn-vad"
-    vad_max_single_segment_time: int = 30000
     
-    use_vad: bool = False # For Nano ASR
-    itn: bool = True # For Nano ASR
+    # SPK Settings (WeSpeaker ResNet34 ONNX)
+    spk_model_path: str = os.path.join(data_dir, "models", "wespeaker_resnet34.onnx")
+    spk_sim_threshold: float = 0.55  # 识别目标说话人的相似度阈值
+    fallback_speaker_label: str = "环境音/非目标" # 如果未识别出目标说话人时的标签
+
+    # For compatibility if used elsewhere
+    batch_size: int = 1 
+    use_vad: bool = False
+    itn: bool = True
     hotwords: list[str] = []
 
 class DataSettings(BaseSettings):
@@ -429,7 +431,7 @@ class AppSettings(BaseSettings):
 
     data: DataSettings = DataSettings()
     vad: VADSettings = VADSettings()
-    asr: FunASRSettings = FunASRSettings()
+    asr: ASRSettings = ASRSettings()
     rag: RAGSettings = RAGSettings()
     llm: LLMSettings = LLMSettings()
     aep: AEPSettings = AEPSettings()

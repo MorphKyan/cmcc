@@ -176,10 +176,10 @@ class BaseRAGProcessor(ABC):
                     idx=idx, doc_type=doc_type, name=doc_name,
                     similarity=similarity_pct, distance=score
                 )
-                logger.debug("      内容: {content}", content=content_preview)
-                logger.debug("      元数据: {metadata}", metadata=metadata)
             
             logger.info("=" * 60)
+        else:
+            logger.warning(f"[RAG 检索为空] 对于查询 '{query}' (类型: {metadata_types})，知识库中未匹配到任何相关文档片段。")
         
         # 只返回文档，不返回得分
         docs = [doc for doc, _ in docs_with_scores]

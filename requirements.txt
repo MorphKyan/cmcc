@@ -1,22 +1,8 @@
-# 核心依赖
-loguru
-numpy
-funasr
-torch
-torchaudio
-pandas
-pydantic-settings
-chromadb
-langchain
-langchain-openai
-langchain-chroma
-fastapi
-uvicorn[standard]
-python-multipart
-av
-httpx
-modelscope
+-r requirements/base.txt
 
-# 可选依赖（根据需求安装）
-# 本地麦克风输入: pip install pyaudio
-# Ollama 支持: pip install langchain-ollama
+# 可选依赖（根据需求安装或取消注释）
+# 本地麦克风输入 (需配置 ENABLE_MIC_INPUT=true):
+# -r requirements/mic.txt
+#
+# Ollama 支持 (需配置 ENABLE_OLLAMA=true):
+# -r requirements/ollama.txt

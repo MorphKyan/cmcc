@@ -37,12 +37,15 @@ async def get_current_config() -> ConfigResponse:
 
         # ASR 配置
         config_data["asr"] = {
-            "model": settings.asr.model,
+            "model_dir": settings.asr.model_dir,
+            "sample_rate": settings.asr.sample_rate,
             "language": settings.asr.language,
             "use_itn": settings.asr.use_itn,
-            "batch_size_s": settings.asr.batch_size_s,
-            "merge_vad": settings.asr.merge_vad,
-            "merge_length_s": settings.asr.merge_length_s
+            "spk_model_path": settings.asr.spk_model_path,
+            "spk_sim_threshold": settings.asr.spk_sim_threshold,
+            "fallback_speaker_label": settings.asr.fallback_speaker_label,
+            "batch_size": settings.asr.batch_size,
+            "hotwords": settings.asr.hotwords
         }
 
         # RAG 配置

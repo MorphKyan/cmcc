@@ -102,41 +102,19 @@ class VADProcessor:
             return (start_ms, end_ms, audio)
         return None
 
-    def process_result(self, segments: list[tuple[int, int]]) -> list[AudioSegment]:
+    def process_result(self, segments: list[tuple[int, int, npt.NDArray[np.float32]]]) -> list[AudioSegment]:
+        """
+        处理 VADCore._process_chunk 返回的结果。
+        使用 Sherpa-ONNX 后，VADCore 直接返回包含完整音频数据的段：[(start_ms, end_ms, samples)]。
+        我们不再需要复杂的缓冲区切片逻辑来拼凑音频段。
+        """
         completed_segments: list[AudioSegment] = []
         
-        for start_ms, end_ms in segments:
-            # 情况一：新的语音段开始
-            if start_ms != -1 and end_ms == -1:
-                # 如果之前有一个未结束的段，先将其结束
-                pending = self._complete_pending_segment(start_ms)
-                if pending:
-                    completed_segments.append(pending)
-                    self.last_end_time = start_ms
-                self.last_start_time = start_ms
-
-            # 情况二：语音段结束
-            elif start_ms == -1 and end_ms != -1:
-                if self.last_start_time is not None:
-                    segment = self._finalize_segment(self.last_start_time, end_ms)
-                    if segment:
-                        completed_segments.append(segment)
-                    self.last_start_time = None
-                    self.last_end_time = end_ms
-
-            # 情况三：短语音段（在单个块内开始和结束）
-            elif start_ms != -1 and end_ms != -1:
-                # 如果之前有一个未结束的段，先将其结束
-                pending = self._complete_pending_segment(start_ms)
-                if pending:
-                    completed_segments.append(pending)
-                    self.last_end_time = start_ms
-                self.last_start_time = None
-
-                segment = self._finalize_segment(start_ms, end_ms)
-                if segment:
-                    completed_segments.append(segment)
-                self.last_end_time = end_ms
+        for start_ms, end_ms, samples in segments:
+            # Sherpa-ONNX 已经返回了切割好的音频片段，直接使用
+            if self.settings.save_audio_segments:
+                self._save_audio_segment(samples, start_ms, end_ms)
+            completed_segments.append((start_ms, end_ms, samples))
 
         return completed_segments
 

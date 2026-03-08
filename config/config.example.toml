@@ -17,14 +17,16 @@ speech_noise_thres = 0.8
 # 绝对静音分贝阈值，低于此值强制判定为静音（默认-100.0，相当于不生效）
 decibel_thres = -100.0
 
-# FunASR 语音识别配置
+# ASR 语音与声纹识别配置 (基于 Sherpa-ONNX & ONNXRuntime)
 [asr]
-model = "iic/SenseVoiceSmall"
-language = "zh"
+model_dir = "./data/models/sense-voice-small"
+sample_rate = 16000
+language = "auto"
 use_itn = true
-batch_size_s = 60.0
-merge_vad = false
-merge_length_s = 15.0
+spk_model_path = "./data/models/wespeaker_resnet34.onnx"
+spk_sim_threshold = 0.55
+fallback_speaker_label = "环境音/非目标"
+batch_size = 1
 hotwords = [
     "打开", "关闭", "播放", "暂停", "继续", "停止",
     "跳转", "快进", "后退", "音量", "大声", "小声",
@@ -32,15 +34,6 @@ hotwords = [
     "首页", "上一页", "下一页", "末页", "第几页",
     "看一下", "带我去", "展厅", "区域", "设备"
 ]
-
-# Nano ASR 推荐配置 (Fun-ASR-Nano-2512)
-#model = "FunAudioLLM/Fun-ASR-Nano-2512"
-#language = "中文" # 支持：中文、英文、日文
-#batch_size = 1
-#itn = true
-# use_vad = false
-# vad_model = "fsmn-vad"
-# vad_max_single_segment_time = 30000
 
 # 数据文件路径配置
 [data]

@@ -3,6 +3,7 @@
 
 from typing import Any
 
+import numpy as np
 import numpy.typing as npt
 from loguru import logger
 
@@ -41,14 +42,16 @@ class VADCore(BaseVADProcessor):
             try:
                 # 初始化VAD模型
                 logger.info("正在加载VAD模型...")
-                from funasr import AutoModel
-                self.model = AutoModel(
-                    model=self.settings.model,
-                    model_revision="v2.0.4",
-                    disable_pbar=True,
-                    disable_update=True,
-                    speech_noise_thres=self.settings.speech_noise_thres,
-                    decibel_thres=self.settings.decibel_thres,
+                import sherpa_onnx
+                
+                config = sherpa_onnx.VadModelConfig()
+                config.silero_vad.model = self.settings.model_dir
+                config.sample_rate = self.settings.sample_rate
+                
+                # 创建 VAD 实例
+                self.model = sherpa_onnx.VoiceActivityDetector(
+                    config=config,
+                    buffer_size_in_seconds=self.settings.history_buffer_duration_sec
                 )
                 logger.info("VAD模型加载完成。")
 
@@ -63,18 +66,32 @@ class VADCore(BaseVADProcessor):
     def process_chunk(self, chunk: npt.NDArray, cache: dict[str, Any]) -> list:
         """
         处理音频块并返回语音活动检测结果。
+        Sherpa-ONNX VAD takes audio data incrementally.
         """
-        if self.status != VADStatus.READY:
+        if self.status != VADStatus.READY or self.model is None:
             raise RuntimeError(f"VAD处理器未准备就绪，当前状态: {self.status}")
 
-        segments = self.model.generate(
-            input=chunk,
-            cache=cache,
-            is_final=False,
-            chunk_size=self.chunk_size,
-            **self.kwargs
-        )
-
-        if segments and segments[0].get("value"):
-            return segments[0].get("value")
-        return []
+        # Sherpa-ONNX 期望每次输入一段音频
+        # 注意: Sherpa-ONNX 要求输入的波形应为 1维 np.float32 数组，范围在 [-1, 1]
+        self.model.accept_waveform(chunk)
+        
+        segments = []
+        while not self.model.empty():
+            segment = self.model.front
+            
+            # The Sherpa-ONNX SpeechSegment contains 'start' (frames), 'samples' (float32 array)
+            # Frame length usually depends on the VAD model internally but we can just use the provided samples
+            # to calculate the length.
+            # We want to return [start_ms, end_ms, samples] to simplify the outer processor
+            
+            start_ms = int((segment.start / self.settings.sample_rate) * 1000)
+            
+            # Extract samples as numpy array
+            samples = np.array(segment.samples, dtype=np.float32)
+            end_ms = start_ms + int((len(samples) / self.settings.sample_rate) * 1000)
+            
+            segments.append((start_ms, end_ms, samples))
+            
+            self.model.pop()
+            
+        return segments

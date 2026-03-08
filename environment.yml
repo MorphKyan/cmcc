@@ -6,15 +6,13 @@ channels:
 dependencies:
   - python=3.12
   - pip
-  # PyTorch CPU 版本
-  - cpuonly
-  - pytorch
-  - torchaudio
+
   - pip:
     # === 核心依赖 ===
     - loguru
     - numpy
-    - funasr
+    - sherpa-onnx>=1.10.3
+    - onnxruntime>=1.19.0
     - pandas
     - pydantic-settings
     - chromadb

@@ -16,8 +16,15 @@ export default defineConfig(({ command, mode }) => {
   // Configuration from environment variables with fallbacks
   const sslCert = env.VITE_SSL_CERT || 'local_morphk_icu.pem'
   const sslKey = env.VITE_SSL_KEY || 'local_morphk_icu.key'
-  const backendUrl = env.VITE_BACKEND_URL || 'http://localhost:8000'
-  console.log('[Vite Config] Backend URL:', backendUrl)
+  
+  // VITE_BACKEND_URL 供前端运行时使用 (决定 axios 请求的基础路径, 例如 /api)
+  const backendUrl = env.VITE_BACKEND_URL || '/api'
+  // VITE_PROXY_TARGET 供 Vite 本地开发服务器使用 (决定本地开发时 /api 的真实转发目标)
+  const proxyTarget = env.VITE_PROXY_TARGET || 'http://127.0.0.1:8000'
+  
+  console.log('[Vite Config] Backend Client URL:', backendUrl)
+  console.log('[Vite Config] Proxy Target:', proxyTarget)
+
   // Library build mode for AI Assistant widget
   if (mode === 'lib') {
     return {
@@ -69,20 +76,14 @@ export default defineConfig(({ command, mode }) => {
       port: 5173,
       cors: true,
       open: false,  // 禁止自动打开浏览器（服务器环境）
-      allowedHosts: ['web.cmcc.morphk.icu', 'localhost'],
-      // HMR settings for Reverse Proxy (NPM -> Vite, 不经过 Cloudflare)
-      // NPM 处理 SSL 终结，Vite 运行在 HTTP 模式
-      // 客户端通过 WSS (HTTPS 默认端口 443) 连接 HMR
-      hmr: {
-        protocol: 'wss',        // 使用 WebSocket Secure
-        host: 'web.cmcc.morphk.icu',
-        clientPort: 8443,       // 使用非标准端口（运营商封锁443）
-      },
+      allowedHosts: ['localhost'],
       proxy: {
         '/api': {
-          target: backendUrl,
+          // 如果 backendUrl 已经是绝对地址(跨域模式)，依然可以以它优先，否则走默认本地 8000 端口
+          target: backendUrl.startsWith('http') ? backendUrl : proxyTarget,
           changeOrigin: true,
           secure: false,
+          ws: true
         }
       }
     }

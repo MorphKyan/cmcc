@@ -3,6 +3,8 @@
 /__pycache__
 /chroma_db
 /config/config.toml
+/data/models
+
 
 # Claude设置文件
 .claude/settings.local.json

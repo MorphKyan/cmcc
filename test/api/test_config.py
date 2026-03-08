@@ -1,7 +1,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from src.config.config import AppSettings, VADSettings, FunASRSettings, RAGSettings, LLMSettings
+from src.config.config import AppSettings, VADSettings, ASRSettings, RAGSettings, LLMSettings
 
 # Test successful config retrieval
 def test_get_current_config(client):
@@ -19,13 +19,10 @@ def test_get_current_config(client):
         max_single_segment_time=1000,
         save_audio_segments=False
     )
-    mock_settings.asr = FunASRSettings(
-        model="test-asr-model",
-        language="zh",
-        use_itn=False,
-        batch_size_s=300.0,
-        merge_vad=False,
-        merge_length_s=10.0
+    mock_settings.asr = ASRSettings(
+        model_dir="/mock/path",
+        spk_model_path="/mock/path/spk",
+        use_itn=False
     )
     mock_settings.rag = RAGSettings(
         provider="mock-rag-provider",
@@ -56,7 +53,7 @@ def test_get_current_config(client):
 
     # Patch the get_settings dependency
     with patch("src.api.routers.config.get_settings", return_value=mock_settings):
-        response = client.get("/config/current")
+        response = client.get("/api/config/current")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
@@ -71,7 +68,7 @@ def test_get_current_config(client):
 
         # Verify specific values to ensure correct mapping
         assert config_data["vad"]["model"] == "test-vad-model"
-        assert config_data["asr"]["model"] == "test-asr-model"
+        assert config_data["asr"]["model_dir"] == "/mock/path"
         assert config_data["rag"]["provider"] == "mock-rag-provider"
         assert config_data["llm"]["provider"] == "mock-llm-provider"
 
@@ -82,7 +79,7 @@ def test_get_current_config_error(client):
     Test GET /config/current endpoint when an internal error occurs.
     """
     with patch("src.api.routers.config.get_settings", side_effect=Exception("Config load failed")):
-        response = client.get("/config/current")
+        response = client.get("/api/config/current")
         assert response.status_code == 500
         data = response.json()
         assert "detail" in data
