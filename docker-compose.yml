@@ -21,6 +21,7 @@ services:
       - ./config:/app/config
       - ./logs:/app/logs
       - ./chroma_db:/app/chroma_db
+      - ./models:/app/models
     environment:
       - PYTHONUNBUFFERED=1
       # 运行时功能开关

@@ -32,6 +32,10 @@ funasr/
 │   ├── cmcc_ca.key         # CA 私钥（保密）
 │   ├── lan_server.crt      # 服务器证书
 │   └── lan_server.key      # 服务器私钥
+├── models/                 # 模型目录 (需手动拷贝)
+│   ├── sense-voice-small/  # SenseVoice 模型
+│   ├── silero_vad.onnx     # VAD 模型
+│   └── wespeaker_resnet34.onnx # 声纹模型
 └── ...
 ```
 
@@ -39,7 +43,7 @@ funasr/
 
 - Docker 20.10+
 - Docker Compose 2.0+ (或 docker-compose 1.29+)
-- 开放端口：80, 443
+- 开放端口：443
 
 ---
 
@@ -95,24 +99,35 @@ openssl x509 -req -in lan_server.csr \
 ### 3.1 docker-compose.yml
 
 ```yaml
-version: '2.1'
+name: cmcc
 
 services:
   backend:
+    image: crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com/morph-builds/cmcc-backend:latest
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        ENABLE_MIC_INPUT: "false"
+        ENABLE_OLLAMA: "false"
     container_name: cmcc-backend
     restart: always
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./data:/app/data
       - ./config:/app/config
       - ./logs:/app/logs
       - ./chroma_db:/app/chroma_db
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENABLE_MIC_INPUT=false
+      - ENABLE_OLLAMA=false
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -120,14 +135,16 @@ services:
       - cmcc-network
 
   frontend:
+    image: crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com/morph-builds/cmcc-frontend:latest
     build:
       context: ./frontend
       dockerfile: ../Dockerfile.frontend
+      args:
+        VITE_BACKEND_URL: "${VITE_BACKEND_URL:-/api}"
     container_name: cmcc-frontend
     restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "${FRONTEND_SSL_PORT:-443}:443"
     volumes:
       - ./certs/lan_server.crt:/etc/nginx/certs/server.crt:ro
       - ./certs/lan_server.key:/etc/nginx/certs/server.key:ro
@@ -147,12 +164,6 @@ networks:
 
 ```nginx
 server {
-    listen 80;
-    server_name localhost;
-    return 301 https://$host$request_uri;
-}
-
-server {
     listen 443 ssl;
     server_name localhost;
 
@@ -162,19 +173,20 @@ server {
 
     # SSL 优化
     ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
     ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
 
     # 静态文件
     location / {
         root /usr/share/nginx/html;
-        index index.html;
+        index index.html index.htm;
         try_files $uri $uri/ /index.html;
     }
 
     # API 代理
-    location /api {
+    location /api/ {
         proxy_pass http://backend:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -183,14 +195,21 @@ server {
     }
 
     # WebSocket 代理
-    location /audio/ws {
+    location /api/audio/ws {
         proxy_pass http://backend:8000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_read_timeout 86400;
-        proxy_send_timeout 86400;
+    }
+    
+    # Error pages
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
     }
 }
 ```
@@ -202,8 +221,9 @@ server {
 ### 4.1 构建并启动
 
 ```bash
-# 构建镜像并启动
-docker-compose up -d --build
+# 从阿里云镜像仓库拉取并启动（推荐配置）
+# 或者如果要本地构建：docker-compose up -d --build
+docker-compose up -d
 
 # 查看状态
 docker-compose ps
@@ -261,7 +281,6 @@ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keyc
 
 | 访问方式 | URL |
 |---------|-----|
-| HTTP (自动跳转) | `http://192.168.31.xxx` |
 | HTTPS | `https://192.168.31.xxx` |
 | 使用域名 | `https://local.morphk.icu` (需配置 hosts) |
 

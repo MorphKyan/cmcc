@@ -16,8 +16,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   rm -f /etc/apt/apt.conf.d/docker-clean \
   && apt-get update && apt-get install -y --no-install-recommends \
   curl \
-  ffmpeg \
-  git
+  ffmpeg
 
 # 复制依赖文件
 COPY requirements/ /tmp/requirements/
@@ -52,9 +51,7 @@ RUN rm -rf /tmp/requirements
 ENV ENABLE_MIC_INPUT=$ENABLE_MIC_INPUT
 ENV ENABLE_OLLAMA=$ENABLE_OLLAMA
 
-# 下载模型 (将模型下载脚本复制并执行，缓存模型)
-COPY download_models.py .
-RUN python download_models.py
+# 模型由外部手动提供，通过 volume 挂载到 /app/models，不在构建时下载
 
 # 复制应用代码
 COPY src/ ./src/
