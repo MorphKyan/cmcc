@@ -1,8 +1,6 @@
 name: Build and Push Docker Images
 
 on:
-  push:
-    branches: [ "master", "main" ]
   workflow_dispatch: # 允许手动点按钮触发
 
 env:
