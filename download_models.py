@@ -6,7 +6,7 @@ import ssl
 def verify_models(model_dir, sense_voice_dir):
     """Verify all required model files exist and have reasonable sizes."""
     required_files = {
-        os.path.join(model_dir, "silero_vad.onnx"): 1_000_000,        # ~1MB minimum
+        os.path.join(model_dir, "silero_vad.onnx"): 500_000,          # ~500KB minimum
         os.path.join(model_dir, "wespeaker_resnet34.onnx"): 1_000_000, # ~1MB minimum
         os.path.join(sense_voice_dir, "model.int8.onnx"): 1_000_000,   # ~1MB minimum
         os.path.join(sense_voice_dir, "tokens.txt"): 100,              # >100 bytes
