@@ -51,13 +51,20 @@ class AEPClient:
         
         按Key字母顺序以key1=value1&key2=value2格式拼接为字符串，再取加盐的MD5。
         """
+        import json
         # Exclude 'sign' field, sort by key alphabetically
         sorted_items = sorted(
             ((k, v) for k, v in params.items() if k != "sign"),
             key=lambda x: x[0]
         )
+        
+        def _format_val(val):
+            if isinstance(val, list):
+                return json.dumps(val, ensure_ascii=False, separators=(',', ':'))
+            return str(val)
+
         # Build key1=value1&key2=value2 string
-        sign_string = "&".join(f"{k}={v}" for k, v in sorted_items)
+        sign_string = "&".join(f"{k}={_format_val(v)}" for k, v in sorted_items)
         # Add salt and calculate MD5
         sign_string_with_salt = sign_string + self._salt
         return hashlib.md5(sign_string_with_salt.encode()).hexdigest().upper()
@@ -97,10 +104,14 @@ class AEPClient:
 
         logger.info("[AEP] 发送语音命令: {params}", params=params)
 
+        url = self._base_url
+        if not url.endswith('/aep/voice/command') and not url.endswith('/aep/voice/playChoice'):
+            url = f"{url}/aep/voice/command"
+
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
                 response = await client.post(
-                    self._base_url,
+                    url,
                     json=params
                 )
                 response.raise_for_status()
@@ -115,6 +126,89 @@ class AEPClient:
                 logger.info("[AEP] 命令发送成功: device_name={device_name}", device_name=result.result)
             else:
                 logger.warning("[AEP] 命令发送失败: code={code}, message={message}", code=result.code, message=result.message)
+
+            return result
+
+        except httpx.HTTPStatusError as e:
+            logger.error("[AEP] HTTP错误: {status} - {text}", status=e.response.status_code, text=e.response.text)
+            return AEPVoiceCommandResponse(
+                success=False,
+                message=f"HTTP错误: {e.response.status_code}",
+                code=e.response.status_code,
+                result=None,
+                timestamp=0
+            )
+        except httpx.RequestError as e:
+            logger.error("[AEP] 网络请求错误: {error}", error=str(e))
+            return AEPVoiceCommandResponse(
+                success=False,
+                message=f"网络请求错误: {str(e)}",
+                code=500,
+                result=None,
+                timestamp=0
+            )
+        except Exception as e:
+            logger.exception("[AEP] 未知错误")
+            return AEPVoiceCommandResponse(
+                success=False,
+                message=f"未知错误: {str(e)}",
+                code=500,
+                result=None,
+                timestamp=0
+            )
+
+    async def send_play_choice(
+            self,
+            name: str,
+            type_: str,
+            resource: list[str],
+            sub_type: str = "",
+            command: str = "",
+            view: str = ""
+    ) -> AEPVoiceCommandResponse:
+        """Send play choice prompt to AEP central control system."""
+        request_id = str(uuid.uuid4())
+
+        # Build request params (without sign)
+        params = {
+            "cmdId": request_id,
+            "name": name,
+            "type": type_,
+            "subType": sub_type,
+            "command": command,
+            "view": view,
+            "resource": resource
+        }
+
+        # Calculate sign
+        sign = self._calculate_sign(params)
+        params["sign"] = sign
+
+        logger.info("[AEP] 发送资源选择命令: {params}", params=params)
+
+        url = self._base_url
+        if url.endswith('/aep/voice/command'):
+            url = url.replace('/aep/voice/command', '/aep/voice/playChoice')
+        elif not url.endswith('/aep/voice/playChoice'):
+            url = f"{url}/aep/voice/playChoice"
+
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.post(
+                    url,
+                    json=params
+                )
+                response.raise_for_status()
+                data = response.json()
+            logger.info("[AEP] 返回: {data}", data=data)
+            result = AEPVoiceCommandResponse(**data)
+
+            if result.success:
+                if result.result and not result.device_name:
+                    result.device_name = result.result
+                logger.info("[AEP] 选择命令发送成功: device_name={device_name}", device_name=result.result)
+            else:
+                logger.warning("[AEP] 选择命令发送失败: code={code}, message={message}", code=result.code, message=result.message)
 
             return result
 
