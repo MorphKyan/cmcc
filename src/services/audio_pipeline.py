@@ -343,6 +343,7 @@ def _get_command_description(cmd: ExhibitionCommand) -> str:
         CommandAction.SET_VOLUME.value: lambda c: f"将「{c.device_name}」音量设置为{c.params}",
         CommandAction.ADJUST_VOLUME.value: lambda c: f"{'提高' if c.params == 'up' else '降低'}「{c.device_name}」音量",
         CommandAction.DEVICE_CUSTOM_COMMAND.value: lambda c: f"控制设备「{c.device_name}」执行「{c.command}」",
+        CommandAction.PROMPT_CHOICE.value: lambda c: f"在设备「{c.device_name}」上提示选择「{c.resource}」",
     }
 
     if cmd.action in action_descriptions:
@@ -368,17 +369,31 @@ async def _execute_aep_command(
         执行结果字典，包含success、action、message字段
     """
     try:
-        # 调用AEP API
-        aep_client = get_aep_client()
-        response = await aep_client.send_voice_command(
-            name=cmd.device_name,
-            type_=cmd.device_type,
-            sub_type=cmd.sub_type,
-            view=cmd.view,
-            command=cmd.command,
-            param=cmd.params,
-            resource=cmd.resource,
-        )
+        # 拦截选择提示弹窗指令
+        if cmd.action == CommandAction.PROMPT_CHOICE.value:
+            aep_client = get_aep_client()
+            resource_list = cmd.resource if isinstance(cmd.resource, list) else [cmd.resource]
+                
+            response = await aep_client.send_play_choice(
+                name=cmd.device_name,
+                type_=cmd.device_type,
+                sub_type=cmd.sub_type,
+                command=cmd.command,
+                view=cmd.view,
+                resource=resource_list
+            )
+        else:
+            # 调用常规 AEP API
+            aep_client = get_aep_client()
+            response = await aep_client.send_voice_command(
+                name=cmd.device_name,
+                type_=cmd.device_type,
+                sub_type=cmd.sub_type,
+                view=cmd.view,
+                command=cmd.command,
+                param=cmd.params,
+                resource=cmd.resource,
+            )
 
         if response.success:
             # 保存device_name到context

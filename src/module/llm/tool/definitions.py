@@ -37,7 +37,7 @@ class ExhibitionCommand(BaseModel):
     view: str = Field(default="", description="视窗名称")
     command: str = Field(default="", description="设备的自定义命令名称")
     params: str | int | None = Field(default=None, description="命令的具体参数值（字符串或整数）")
-    resource: str = Field(default="", description="资源名称")
+    resource: str | list[str] = Field(default="", description="资源名称，或者是多项匹配时的资源列表")
 
 
 class OpenMediaInput(BaseModel):
@@ -358,17 +358,16 @@ class PromptChoiceInput(BaseModel):
     """Input for prompting multiple choices."""
     device: str = Field(description="目标设备名称，必须是知识库中 device 列表返回的精确 name 值")
     device_type: str = Field(description="设备类型，必须是知识库中该设备对应的 type 字段值。如 player 或 control")
-    resource: list[str] = Field(description="匹配到的多个资源名称的列表，最多返回3-5个最相关匹配项。")
+    resource: list[str] = Field(description="匹配到的多个资源名称的列表，最多返回3个最相关匹配项。")
 
 @tool(args_schema=PromptChoiceInput)
 def prompt_multiple_choices(device: str, device_type: str, resource: list[str]) -> ExhibitionCommand:
     """当用户的描述模糊且在知识库中匹配到了多于一个的高度相似资源文件（如播放视频）或设备时，调用此工具生成一个要求用户澄清的命令，将资源列表发送到屏幕供用户选择。"""
-    import json
     return ExhibitionCommand(
         action=CommandAction.PROMPT_CHOICE.value,
         device_name=device,
         device_type=device_type,
-        resource=json.dumps(resource, ensure_ascii=False)
+        resource=resource
     )
 
 

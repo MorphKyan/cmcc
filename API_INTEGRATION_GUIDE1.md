@@ -482,7 +482,7 @@
 | `command` | string | 否 | 命令名称 |
 | `view` | string | 否 | 视窗名称 |
 | `resource` | string | 是 | 资源名称 |
-| `sign` | string | 是 | JSON中除了sign字段以外的字段，按Key字母顺序以key1=value1&key2=value2&...格式拼接为字符串，再取加盐的MD5 |
+| `sign` | string | 是 | JSON中除了sign字段以外的字段，按Key字母顺序以key1=value1&key2=value2&...格式拼接为字符串，再取加盐的MD5。（注：若遇到数组/列表类型参数，如`["选项A", "选项B"]`，需将其使用标准的JSON序列化去除空格后转化为无空格字符串如`["选项A","选项B"]`，再参与拼接） |
 ```json
   {
 	  "id":"",
@@ -505,6 +505,58 @@
     "result": name,
     "timestamp": 1765421379834,
     "device_name": "设备名称"
+}
+```
+
+**错误响应** (设备不存在):
+```json
+{
+    "success": false,
+    "message": "设备不存在 ",
+    "code": 500,
+    "result": null,
+    "timestamp": 1765421379834
+}
+```
+
+### 7.2 播放内容选择指令
+从语音中解析语义提取出多个资源匹配选项后发送给中控系统，由中控系统提示用户选择。
+
+- **接口**: `POST /aep/voice/playChoice`
+- **Content-Type**: `application/json`
+
+**请求参数 (JSON Body)**:
+
+| 字段 | 类型 | 必填 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `name` | string | 是 | 设备名称 |
+| `type` | string | 是 | 设备类型，player：播放器 |
+| `subType` | string | 否 | 设备子类型，电控设备的子类型，可为空 |
+| `command` | string | 否 | 命令名称，可为空 |
+| `view` | string |否 | 视窗名称 |
+| `resource` | array | 是 | 匹配到的资源选项列表（例如 `["选项A", "选项B"]`） |
+| `sign` | string | 是 | JSON中除了sign字段以外的字段，按Key字母顺序以key1=value1格式拼接为字符串，再取加盐的MD5。（注：若遇到数组/列表类型参数，如`["选项A", "选项B"]`，需将其使用标准的JSON序列化去除空格后转化为无空格字符串如`["选项A","选项B"]`，再参与拼接） |
+```json
+  {
+	"cmdId":"",
+    "name": "顶灯",
+    "type": "control",
+    "subType": "灯光",
+    "command": "开机",
+    "resource": ["电信介绍", "电信5G介绍"],
+    "view": "左上角区域",
+	"sign": ""
+  }
+```
+
+**响应示例**:
+```json
+{
+    "success": true,
+    "message": "指令已发送 ",
+    "code": 200,
+    "result": name,
+    "timestamp": 1765421379834
 }
 ```
 
