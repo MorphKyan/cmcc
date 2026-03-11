@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from src.module.asr.base_asr_processor import BaseASRProcessor
     from src.module.rag.base_rag_processor import BaseRAGProcessor
     from src.module.llm.base_llm_handler import BaseLLMHandler
+    from src.services.tts_service import TTSService
 
 # 这里只声明变量，初始化将在lifespan事件中
 vad_core: BaseVADProcessor | None = None
@@ -18,6 +19,7 @@ asr_processor: BaseASRProcessor | None = None
 rag_processor: BaseRAGProcessor | None = None
 llm_processor: BaseLLMHandler | None = None
 data_service: DataService | None = None
+tts_service: TTSService | None = None
 
 # 性能指标管理器
 metrics_manager: PerformanceMetricsManager = PerformanceMetricsManager()

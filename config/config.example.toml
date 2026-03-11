@@ -89,3 +89,10 @@ llm_model_name = "doubao-seed-1-6-flash-250715"
 base_url = "http://host.docker.internal:8088/aep/voice/command"
 sign_salt = "cE0aM0qC0dB4aD2"
 request_timeout = 10
+
+# 文本转语音(TTS)配置
+[tts]
+model_dir = "./models/vits-melo-tts-zh_en"
+speed = 1.0
+speaker_id = 0
+num_threads = 2

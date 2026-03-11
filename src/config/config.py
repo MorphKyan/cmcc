@@ -426,6 +426,16 @@ class AEPSettings(BaseSettings):
     request_timeout: int = 10  # 请求超时时间(秒)
 
 
+class TTSSettings(BaseSettings):
+    """文本转语音(TTS)配置"""
+    model_config = SettingsConfigDict(env_prefix="TTS_")
+
+    model_dir: str = os.path.join(project_dir, "models", "vits-melo-tts-zh_en")
+    speed: float = 1.0
+    speaker_id: int = 0
+    num_threads: int = 2
+
+
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_nested_delimiter='_',
@@ -439,6 +449,7 @@ class AppSettings(BaseSettings):
     rag: RAGSettings = RAGSettings()
     llm: LLMSettings = LLMSettings()
     aep: AEPSettings = AEPSettings()
+    tts: TTSSettings = TTSSettings()
 
     def __init__(self, **kwargs):
         # 加载 TOML 配置 (自动检测优先级)

@@ -10,6 +10,7 @@ from src.core.feature_flags import FeatureFlags
 from src.module.asr.asr_processor import ASRProcessor
 from src.module.vad.vad_core import VADCore
 from src.services.data_service import DataService
+from src.services.tts_service import TTSService
 
 
 @asynccontextmanager
@@ -25,6 +26,7 @@ async def lifespan(app: FastAPI):
     asr_config = settings.asr
     rag_config = settings.rag
     llm_config = settings.llm
+    tts_config = settings.tts
 
     try:
         dependencies.data_service = DataService()
@@ -75,13 +77,17 @@ async def lifespan(app: FastAPI):
         else:
             raise RuntimeError(f"未知的 LLM provider: {llm_provider}")
 
-        # Start async initialization for VAD, RAG, LLM and ASR processors
+        # Initialize TTS service
+        dependencies.tts_service = TTSService(tts_config)
+
+        # Start async initialization for VAD, RAG, LLM, ASR, and TTS processors
         asyncio.create_task(dependencies.rag_processor.initialize())
         asyncio.create_task(dependencies.llm_processor.initialize())
         asyncio.create_task(dependencies.vad_core.initialize())
         asyncio.create_task(dependencies.asr_processor.initialize())
+        asyncio.create_task(dependencies.tts_service.initialize())
 
-        logger.info("应用启动序列已开始，VAD、RAG和LLM处理器正在后台初始化。")
+        logger.info("应用启动序列已开始，基础设施和处理器正在后台初始化。")
     except Exception as e:
         logger.exception(f"错误: 处理器初始化失败: {e}")
         # 在这里可以选择是否要阻止应用启动

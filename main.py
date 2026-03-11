@@ -19,6 +19,7 @@ from src.api.routers import tool
 from src.api.routers import pipeline
 from src.api.routers import asr
 from src.api.routers import hotwords
+from src.api.routers import tts
 from src.api.schemas import HealthResponse
 from src.config.logging_config import setup_logging
 from src.core.lifespan import lifespan
@@ -54,6 +55,7 @@ api_router.include_router(tool.router)
 api_router.include_router(pipeline.router)
 api_router.include_router(asr.router)
 api_router.include_router(hotwords.router)
+api_router.include_router(tts.router)
 
 # Include the global API router into the app
 app.include_router(api_router)
