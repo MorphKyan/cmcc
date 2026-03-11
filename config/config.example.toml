@@ -27,13 +27,6 @@ spk_model_path = "./models/wespeaker_resnet34.onnx"
 spk_sim_threshold = 0.55
 fallback_speaker_label = "环境音/非目标"
 batch_size = 1
-hotwords = [
-    "打开", "关闭", "播放", "暂停", "继续", "停止",
-    "跳转", "快进", "后退", "音量", "大声", "小声",
-    "提高", "降低", "静音", "门", "视频", "PPT",
-    "首页", "上一页", "下一页", "末页", "第几页",
-    "看一下", "带我去", "展厅", "区域", "设备"
-]
 
 # 数据文件路径配置
 [data]
@@ -41,6 +34,7 @@ media_data_path = "./data/media.csv"
 devices_data_path = "./data/devices.csv"
 areas_data_path = "./data/areas.csv"
 doors_data_path = "./data/doors.csv"
+hotwords_data_path = "./data/hotwords.json"
 
 # RAG (检索增强生成) 配置
 [rag]

@@ -34,6 +34,7 @@ class DataService:
         self._doors_cache: dict[str, dict[str, Any]] = {}
         self._devices_cache: dict[str, dict[str, Any]] = {}
         self._areas_cache: dict[str, dict[str, Any]] = {}
+        self._hotwords_cache: set[str] = set()
         self._initialized = True
         
         self.reload()
@@ -47,6 +48,7 @@ class DataService:
             devices_path = settings.data.devices_data_path
             areas_path = settings.data.areas_data_path
             doors_path = settings.data.doors_data_path
+            hotwords_path = settings.data.hotwords_data_path
 
             with self._data_lock:
                 if os.path.exists(media_path):
@@ -69,6 +71,9 @@ class DataService:
                     self._areas_cache = self._process_areas_data(areas_df)
                     logger.info(f"Loaded {len(self._areas_cache)} areas from {areas_path}")
 
+                self._hotwords_cache = self._load_hotwords()
+                logger.info(f"Loaded {len(self._hotwords_cache)} custom hotwords from {hotwords_path}")
+
             return True
 
         except Exception as e:
@@ -81,6 +86,36 @@ class DataService:
         except Exception as e:
             logger.error(f"Failed to read CSV file '{file_path}': {e}")
             return pd.DataFrame()
+
+    def _load_hotwords(self) -> set[str]:
+        try:
+            settings = get_settings()
+            path = settings.data.hotwords_data_path
+            if not os.path.exists(path):
+                return set()
+            import json
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return set(str(w) for w in data if str(w).strip())
+                return set()
+        except Exception as e:
+            logger.error(f"Failed to load hotwords: {e}")
+            return set()
+
+    def _save_hotwords(self, hotwords: set[str]) -> bool:
+        try:
+            settings = get_settings()
+            path = settings.data.hotwords_data_path
+            import json
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(list(hotwords), f, ensure_ascii=False, indent=4)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save hotwords: {e}")
+            return False
 
     def _process_media_data(self, df: pd.DataFrame) -> dict[str, dict[str, Any]]:
         media_dict = {}
@@ -262,8 +297,40 @@ class DataService:
         if settings.asr.hotwords:
             hotwords.update(settings.asr.hotwords)
 
+        # Merge user custom hotwords from JSON
+        if hasattr(self, '_hotwords_cache'):
+            hotwords.update(self._hotwords_cache)
+
         # Filter out empty strings and return list
         return [w for w in hotwords if w and w.strip()]
+
+    def get_custom_hotwords(self) -> list[str]:
+        """Get only the custom hotwords stored in hotwords.json."""
+        with self._data_lock:
+            return list(self._hotwords_cache)
+
+    async def add_hotwords(self, words: list[str]) -> None:
+        """Add custom hotwords to hotwords.json."""
+        with self._data_lock:
+            for w in words:
+                if w and str(w).strip():
+                    self._hotwords_cache.add(str(w).strip())
+            self._save_hotwords(self._hotwords_cache)
+
+    async def remove_hotwords(self, words: list[str]) -> None:
+        """Remove custom hotwords from hotwords.json."""
+        with self._data_lock:
+            for w in words:
+                w_strip = str(w).strip()
+                if w_strip in self._hotwords_cache:
+                    self._hotwords_cache.remove(w_strip)
+            self._save_hotwords(self._hotwords_cache)
+
+    async def clear_hotwords(self) -> None:
+        """Clear all custom hotwords in hotwords.json."""
+        with self._data_lock:
+            self._hotwords_cache.clear()
+            self._save_hotwords(self._hotwords_cache)
 
     # --- Write Methods ---
 

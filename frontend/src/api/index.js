@@ -127,5 +127,22 @@ export const restartAsr = () => {
   return api.post('/asr/restart')
 }
 
+// Hotwords API
+export const getHotwords = () => {
+  return api.get('/data/hotwords')
+}
+
+export const addHotwords = (words) => {
+  return api.post('/data/hotwords', { words })
+}
+
+export const deleteHotwords = (words) => {
+  return api.delete('/data/hotwords/batch', { data: { words } })
+}
+
+export const clearHotwords = () => {
+  return api.delete('/data/hotwords')
+}
+
 // 默认导出axios实例，便于其他模块直接使用
 export default api

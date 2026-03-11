@@ -95,3 +95,8 @@ class LocationUpdateRequest(BaseModel):
     """用户位置更新请求"""
     client_id: str
     location: str
+
+
+class HotwordsRequest(BaseModel):
+    """热词列表请求"""
+    words: list[str]

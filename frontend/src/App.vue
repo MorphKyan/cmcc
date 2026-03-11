@@ -174,6 +174,13 @@
             </div>
           </Transition>
 
+          <!-- 热词管理 -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="activeTab === 'hotwords'" class="page-view" key="hotwords">
+              <HotwordManager />
+            </div>
+          </Transition>
+
           <!-- 区域管理 -->
           <Transition name="fade" mode="out-in">
             <div v-if="activeTab === 'areas'" class="page-view" key="areas">
@@ -227,6 +234,7 @@ import DoorManager from './components/DoorManager.vue'
 import QueueMonitor from './components/QueueMonitor.vue'
 import PerformanceChart from './components/PerformanceChart.vue'
 import ToolManager from './components/ToolManager.vue'
+import HotwordManager from './components/HotwordManager.vue'
 import {
   getCurrentConfig,
   healthCheck,
@@ -253,7 +261,8 @@ export default {
     DoorManager,
     QueueMonitor,
     PerformanceChart,
-    ToolManager
+    ToolManager,
+    HotwordManager
   },
   data() {
     return {
@@ -262,6 +271,7 @@ export default {
         { id: 'home', label: '主页', icon: '🏠' },
         { id: 'devices', label: '设备管理', icon: '📱' },
         { id: 'resources', label: '资源管理', icon: '🎬' },
+        { id: 'hotwords', label: '热词管理', icon: '🏷️' },
         { id: 'areas', label: '区域管理', icon: '🗺️' },
         { id: 'door_resources', label: '门禁资源管理', icon: '🚪' },
         { id: 'queue', label: '队列监控', icon: '📈' },
