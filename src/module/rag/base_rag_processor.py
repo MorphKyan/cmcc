@@ -14,6 +14,7 @@ from loguru import logger
 
 from src.api.schemas import AreaItem, DeviceItem, DoorItem, MediaItem
 from src.config.config import RAGSettings
+from src.module.rag.bm25_retriever import BM25Retriever
 from src.module.rag.helper import (
     convert_areas_to_documents,
     convert_devices_to_documents,
@@ -51,6 +52,9 @@ class BaseRAGProcessor(ABC):
         self.status = RAGStatus.UNINITIALIZED
         self.error_message: str | None = None
         self._init_lock = asyncio.Lock()
+        
+        self.bm25_retriever = BM25Retriever(persist_dir=os.path.join(self.settings.chroma_db_dir, "bm25"))
+        
         logger.info("{class_name}已创建", class_name=self.__class__.__name__)
 
     @abstractmethod
@@ -95,12 +99,13 @@ class BaseRAGProcessor(ABC):
                     logger.info("未找到本地向量数据库，正在创建...")
                     await self._create_and_persist_db(self.embedding_model)
                 else:
-                    logger.info("正在从本地加载向量数据库...")
+                    logger.info("正在从本地加载向量数据库和BM25索引...")
                     self.vector_store = await asyncio.to_thread(
                         Chroma,
                         persist_directory=self.settings.chroma_db_dir,
                         embedding_function=self.embedding_model
                     )
+                    await asyncio.to_thread(self.bm25_retriever.load_index)
 
                 # 创建检索器
                 self.retriever = self.vector_store.as_retriever(
@@ -144,46 +149,79 @@ class BaseRAGProcessor(ABC):
                     query=query, types=metadata_types, k=k)
         
         if metadata_types is None:
-            # 无过滤
-            docs_with_scores = await self.vector_store.asimilarity_search_with_score(query, k=k)
+            type_values = None
         else:
-            # 使用metadata过滤
             type_values = [t.value for t in metadata_types]
-            filter_dict = {"type": {"$in": type_values}}
-            docs_with_scores = await self.vector_store.asimilarity_search_with_score(
+            
+        filter_dict = {"type": {"$in": type_values}} if type_values else None
+
+        # 1. 向量检索 (Chroma, 返回的是距离 distance，越小越好)
+        if filter_dict:
+            chroma_results = await self.vector_store.asimilarity_search_with_score(
                 query, k=k, filter=filter_dict
             )
+        else:
+            chroma_results = await self.vector_store.asimilarity_search_with_score(query, k=k)
+            
+        # 2. 稀疏检索 (BM25, 返回的是打分 score，越大越好)
+        bm25_results = await asyncio.to_thread(
+            self.bm25_retriever.retrieve, query, top_k=k, metadata_types=type_values
+        )
+
+        # 3. RRF (Reciprocal Rank Fusion) 融合排序
+        rrf_k = 60
+        fused_scores = {}
+        doc_map = {}
         
-        logger.info("检索到 {num_docs} 个相关文档。", num_docs=len(docs_with_scores))
+        # 排序 Chroma 结果 (距离升序)
+        chroma_sorted = sorted(chroma_results, key=lambda x: x[1])
+        for rank, (doc, _) in enumerate(chroma_sorted, 1):
+            doc_id = doc.page_content + str(doc.metadata.get("name", ""))
+            if doc_id not in list(doc_map.keys()):
+                fused_scores[doc_id] = 0
+                doc_map[doc_id] = doc
+            fused_scores[doc_id] += 1 / (rank + rrf_k)
+            
+        # 排序 BM25 结果 (得分降序)
+        for rank, (doc, score) in enumerate(bm25_results, 1):
+            # 如果 BM25 得分 > 0 才参与融合，避免完全不匹配的干扰
+            if score > 0:
+                doc_id = doc.page_content + str(doc.metadata.get("name", ""))
+                if doc_id not in list(doc_map.keys()):
+                    fused_scores[doc_id] = 0
+                    doc_map[doc_id] = doc
+                fused_scores[doc_id] += 1 / (rank + rrf_k)
+                
+        # 按照融合后的得分降序排列
+        sorted_fused = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
+        # 取 top_k
+        final_docs = [doc_map[doc_id] for doc_id, _ in sorted_fused[:k]]
+        
+        logger.info("融合检索到 {num_docs} 个相关文档。", num_docs=len(final_docs))
         
         # 输出检索结果关键信息
-        if docs_with_scores:
+        if final_docs:
             logger.info("=" * 60)
-            logger.info("  RAG检索结果详情")
-            logger.info("  返回数量: {count}", count=len(docs_with_scores))
+            logger.info("  Hybrid RAG 检索结果详情")
+            logger.info("  返回数量: {count}", count=len(final_docs))
             logger.info("-" * 60)
             
-            for idx, (doc, score) in enumerate(docs_with_scores, 1):
+            for idx, doc in enumerate(final_docs, 1):
                 metadata = doc.metadata
                 doc_type = metadata.get("type", "unknown")
                 doc_name = metadata.get("name", metadata.get("title", "未知"))
-                content_preview = doc.page_content[:80] + "..." if len(doc.page_content) > 80 else doc.page_content
-                # Chroma返回的是距离(distance)，越小越相似
-                similarity_pct = (1 / (1 + score)) * 100
                 
                 logger.info(
-                    "  [{idx}] {doc_type} | {name} | 相似度: {similarity:.1f}% (距离: {distance:.4f})",
+                    "  [{idx}] {doc_type} | {name} | RRF Score: {score:.4f}",
                     idx=idx, doc_type=doc_type, name=doc_name,
-                    similarity=similarity_pct, distance=score
+                    score=fused_scores[doc.page_content + str(doc.metadata.get("name", ""))]
                 )
             
             logger.info("=" * 60)
         else:
             logger.warning(f"[RAG 检索为空] 对于查询 '{query}' (类型: {metadata_types})，知识库中未匹配到任何相关文档片段。")
-        
-        # 只返回文档，不返回得分
-        docs = [doc for doc, _ in docs_with_scores]
-        return docs
+            
+        return final_docs
 
     @abstractmethod
     async def close(self) -> None:
@@ -219,6 +257,7 @@ class BaseRAGProcessor(ABC):
             await asyncio.to_thread(self.vector_store.reset_collection)
             documents = self._load_all_documents()
             await asyncio.to_thread(self.vector_store.add_documents, documents)
+            await asyncio.to_thread(self.bm25_retriever.build_index, documents)
             self.status = RAGStatus.READY
             self.error_message = None
             logger.info("RAG数据库刷新完成")
@@ -241,7 +280,8 @@ class BaseRAGProcessor(ABC):
                 persist_directory=self.chroma_db_dir
             )
             self.vector_store = await asyncio.to_thread(create_db_call)
-            logger.info("数据库已保存在 '{db_dir}'", db_dir=self.chroma_db_dir)
+            await asyncio.to_thread(self.bm25_retriever.build_index, documents)
+            logger.info("数据库已保存在 '{db_dir}' 和 '{bm25_dir}'", db_dir=self.chroma_db_dir, bm25_dir=self.bm25_retriever.persist_dir)
         except (FileNotFoundError, ValueError) as e:
             raise IOError(f"创建数据库失败: {e}") from e
 

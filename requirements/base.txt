@@ -18,3 +18,5 @@ av==16.0.1
 httpx==0.27.2
 modelscope==1.28.1
 scipy==1.14.1
+rank_bm25==0.2.2
+jieba==0.42.1
