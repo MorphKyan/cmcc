@@ -92,9 +92,15 @@ class DocumentFormatter:
                 name = area_info.get("name", "")
                 aliases_str = area_info.get("aliases", "")
                 description_str = area_info.get("description", "")
-                aliases = [alias.strip() for alias in aliases_str.split(",")] if aliases_str else []
+                
+                description = description_str
+                if aliases_str:
+                    aliases = [alias.strip() for alias in aliases_str.split(",") if alias.strip()]
+                    if aliases:
+                        description = f"{description_str}，也称为{'、'.join(aliases)}" if description_str else f"也称为{'、'.join(aliases)}"
+                
                 result.append({
                     "name": name,
-                    "description": f"{description_str}，也称为{aliases}"
+                    "description": description
                 })
         return json.dumps(result, ensure_ascii=False, indent=2)

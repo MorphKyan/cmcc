@@ -82,7 +82,7 @@ class DataService:
 
     def _load_csv_file(self, file_path: str) -> pd.DataFrame:
         try:
-            return pd.read_csv(file_path)
+            return pd.read_csv(file_path, keep_default_na=False)
         except Exception as e:
             logger.error(f"Failed to read CSV file '{file_path}': {e}")
             return pd.DataFrame()
@@ -376,7 +376,7 @@ class DataService:
             backup_path = file_path + '.backup'
             if os.path.exists(file_path):
                 shutil.copy2(file_path, backup_path)
-                existing_df = pd.read_csv(file_path)
+                existing_df = pd.read_csv(file_path, keep_default_na=False)
                 combined_df = pd.concat([existing_df, new_df], ignore_index=True)
             else:
                 combined_df = new_df
