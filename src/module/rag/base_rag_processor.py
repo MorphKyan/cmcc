@@ -105,7 +105,11 @@ class BaseRAGProcessor(ABC):
                         persist_directory=self.settings.chroma_db_dir,
                         embedding_function=self.embedding_model
                     )
-                    await asyncio.to_thread(self.bm25_retriever.load_index)
+                    success = await asyncio.to_thread(self.bm25_retriever.load_index)
+                    if not success:
+                        logger.warning("未能加载 BM25 索引，可能文件不存在，尝试重构索引...")
+                        documents = self._load_all_documents()
+                        await asyncio.to_thread(self.bm25_retriever.build_index, documents)
 
                 # 创建检索器
                 self.retriever = self.vector_store.as_retriever(
@@ -235,6 +239,7 @@ class BaseRAGProcessor(ABC):
         documents.extend(convert_doors_to_documents(data_service.get_all_doors_data()))
         documents.extend(convert_media_to_documents(data_service.get_all_media_data()))
         documents.extend(convert_devices_to_documents(data_service.get_all_devices_data()))
+        documents.extend(convert_areas_to_documents(data_service.get_all_areas_data()))
 
         if not documents:
             raise ValueError("从CSV加载的文档为空")
