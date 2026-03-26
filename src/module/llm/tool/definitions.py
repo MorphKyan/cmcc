@@ -362,7 +362,7 @@ class PromptChoiceInput(BaseModel):
 
 @tool(args_schema=PromptChoiceInput)
 def prompt_multiple_choices(device: str, device_type: str, resource: list[str]) -> ExhibitionCommand:
-    """当用户的描述模糊且在知识库中匹配到了多于一个的高度相似资源文件（如播放视频）或设备时，调用此工具生成一个要求用户澄清的命令，将资源列表发送到屏幕供用户选择。"""
+    """多资源模糊匹配工具。当用户的语音指令中包含“打开”、“播放”、“展示”或“看看”等播放资源的意图时，如果其描述不明确，或者匹配到多个名称相近的相似资源，导致无法唯一确定具体播放哪个时，请积极调用此工具。将候选资源列表返回屏幕供用户选择。"""
     return ExhibitionCommand(
         action=CommandAction.PROMPT_CHOICE.value,
         device_name=device,
