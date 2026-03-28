@@ -30,51 +30,23 @@ sudo systemctl enable docker
 sudo systemctl start docker
 ```
 
-### 配置 Docker 镜像加速（推荐）
-
-国内网络环境下，建议配置镜像加速以提升拉取速度：
-
-```bash
-sudo mkdir -p /etc/docker
-sudo tee /etc/docker/daemon.json <<-'EOF'
-{
-  "registry-mirrors": ["https://zq47k11p.mirror.aliyuncs.com"]
-}
-EOF
-sudo systemctl daemon-reload
-sudo systemctl restart docker
-```
-
-> **说明**：项目的 Dockerfile 已内置以下国内镜像配置：
-> - **apt 源**：阿里云镜像 (`mirrors.aliyun.com`)
-> - **pip 源**：清华镜像 (`pypi.tuna.tsinghua.edu.cn`)
-> - **npm 源**：淘宝镜像 (`registry.npmmirror.com`)
-
 ## 项目结构
 
-确保以下文件已上传到服务器（可通过 `scp`、`git clone` 或 USB 传输）：
+对于直接拉取镜像部署，确保以下文件和目录结构已上传或在服务器上部署：
 
 ```
 cmcc/
-├── Dockerfile                # 后端 Docker 镜像配置
-├── Dockerfile.frontend       # 前端 Docker 镜像配置
-├── docker-compose.yml        # Docker Compose 编排配置
-├── requirements/             # Python 依赖（分层）
-│   ├── base.txt              # 核心依赖
-│   ├── mic.txt               # 麦克风输入依赖（可选）
-│   └── ollama.txt            # Ollama 支持依赖（可选）
-├── requirements.txt          # Python 依赖（汇总）
-├── src/                      # 后端源码
-├── frontend/                 # 前端源码
-│   ├── nginx.conf            # Nginx 配置
-│   ├── local_morphk_icu.pem  # SSL 证书
-│   └── local_morphk_icu.key  # SSL 私钥
-├── config/                   # 配置文件
-├── data/                     # 数据目录
-├── chroma_db/                # 向量数据库存储
-└── logs/                     # 日志目录
+├── docker-compose-deploy.yaml  # Docker Compose 部署配置文件
+├── certs/                      # SSL 证书挂载目录
+│   ├── lan_server.crt          # SSL 证书文件
+│   └── lan_server.key          # SSL 私钥文件
+├── config/                     # 后端配置文件目录
+├── data/                       # 后端数据存储目录
+├── models/                     # 模型存储目录（如有需要）
+├── chroma_db/                  # 向量数据库存储目录
+└── logs/                       # 日志持久化目录
 ```
-
+<!-- 
 ## SSL 证书配置
 
 应用使用 HTTPS 访问，需要配置 SSL 证书。
@@ -92,47 +64,28 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout frontend/local_morphk_icu.key \
   -out frontend/local_morphk_icu.pem \
   -subj "/CN=localhost"
-```
+``` -->
 
 ## 部署步骤
 
-### 1. 进入项目目录
+### 1. 克隆项目并进入目录
 
 ```bash
-cd /path/to/cmcc
+git clone https://github.com/MorphKyan/cmcc.git
+cd cmcc
 ```
 
-### 2. 创建必要的目录
+### 2. 下载模型文件
+
+应用运行需要预选下载音频处理模型。请确保服务器已安装 Python 并在项目根目录下执行：
 
 ```bash
-mkdir -p logs/nginx chroma_db
+python download_models.py
 ```
 
-### 3. 配置功能开关（可选）
+该脚本会自动从 HuggingFace 和 GitHub 下载并验证模型文件（包含 VAD、SenseVoiceSmall 等），并存放在 `./models` 目录。
 
-项目支持通过 Docker 构建参数和环境变量控制可选功能：
-
-| 功能 | 构建参数 | 环境变量 | 默认值 |
-|------|----------|----------|--------|
-| 本地麦克风输入 | `ENABLE_MIC_INPUT` | `ENABLE_MIC_INPUT` | `false` |
-| Ollama 本地服务 | `ENABLE_OLLAMA` | `ENABLE_OLLAMA` | `false` |
-
-如需启用 Ollama 支持，修改 `docker-compose.yml`：
-
-```yaml
-services:
-  backend:
-    build:
-      args:
-        ENABLE_OLLAMA: "true"    # 构建时安装 langchain-ollama
-    environment:
-      - ENABLE_OLLAMA=true       # 运行时启用功能
-```
-
-> **注意**：如果 `config/config.toml` 中 `rag.provider` 或 `llm.provider` 设置为 `"ollama"`，
-> 必须启用 `ENABLE_OLLAMA`，否则应用启动时会报错。
-
-### 4. 配置服务端口（可选）
+### 3. 配置服务端口（可选）
 
 默认情况下，前端使用端口 80/443，后端使用端口 8000。如需修改，请创建 `.env` 文件：
 
@@ -146,68 +99,47 @@ vim .env
 
 `.env` 文件内容示例：
 ```env
-# 前端 HTTP 端口
-FRONTEND_PORT=8380
-
-# 前端 HTTPS 端口
+# 前端 HTTPS 端口（默认 443）
 FRONTEND_SSL_PORT=8443
 
-# 后端 API 端口
+# 后端 API 端口（仅做 HTTP 暴露供特殊情况访问时修改这部分，默认 8000）
 BACKEND_PORT=23306
 ```
 
-### 5. 启动服务
+### 4. 启动服务
 
-**方式一：拉取云端构建好的镜像（推荐）**
-
-适用于生产环境或网络受限环境，需先登录阿里云镜像仓库（只需一次）：
+需先登录阿里云镜像仓库（只需一次）：
 
 ```bash
 # 登录阿里云镜像仓库（输入你的阿里云账号和 registry 密码）
 docker login crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com
 
 # 拉取最新镜像并启动
-docker compose pull
-docker compose up -d
+docker compose -f docker-compose-deploy.yaml pull
+docker compose -f docker-compose-deploy.yaml up -d
 ```
 
-**方式二：本地构建**
-
-适用于开发环境或需要修改代码时：
-
-```bash
-# 默认构建
-docker compose up -d --build
-
-# 或手动指定构建参数
-docker compose build --build-arg ENABLE_OLLAMA=true
-docker compose up -d
-```
-
-此命令将：
-- 构建后端和前端 Docker 镜像
-- 创建并启动容器
-- 后端启动后，前端才会启动（通过健康检查确保）
-
-### 6. 验证部署
+### 5. 验证部署
 
 检查容器运行状态：
 ```bash
-docker compose ps
+docker compose -f docker-compose-deploy.yaml ps
 ```
 
-应看到两个服务都处于 `running` 状态：
+应看到两个服务都处于正常运行状态：
 ```
 NAME            STATUS                   PORTS
 cmcc-backend    Up (healthy)             0.0.0.0:8000->8000/tcp
-cmcc-frontend   Up                       0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
+cmcc-frontend   Up                       0.0.0.0:443->443/tcp
 ```
 
-### 7. 访问应用
+### 6. 访问应用
 
-- **前端页面**: `https://<服务器IP>`（HTTP 自动跳转 HTTPS）
-- **后端 API**: `https://<服务器IP>/api`（通过 Nginx 代理）
-- **WebSocket**: `wss://<服务器IP>/ws`（通过 Nginx 代理）
+- **前端页面**: `https://<服务器IP>:<FRONTEND_SSL_PORT>` (当前环境只支持 HTTPS，默认 443 端口可省略)
+- **后端 API**: 
+  - 通过 Nginx (HTTPS): `https://<服务器IP>:<FRONTEND_SSL_PORT>/api/`
+  - 直接后端访问 (HTTP): `http://<服务器IP>:<BACKEND_PORT>/api/`
+- **WebSocket**: `wss://<服务器IP>:<FRONTEND_SSL_PORT>/api/audio/ws`（通过 Nginx 代理）
 
 ## 日常维护
 
@@ -215,35 +147,33 @@ cmcc-frontend   Up                       0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tc
 
 ```bash
 # 查看所有容器日志
-docker compose logs -f
+docker compose -f docker-compose-deploy.yaml logs -f
 
 # 仅查看后端日志
-docker compose logs -f backend
+docker compose -f docker-compose-deploy.yaml logs -f backend
 
 # 仅查看前端日志
-docker compose logs -f frontend
+docker compose -f docker-compose-deploy.yaml logs -f frontend
 ```
 
 ### 停止服务
 
 ```bash
-docker compose down
+docker compose -f docker-compose-deploy.yaml down
 ```
 
 ### 重启服务
 
 ```bash
-docker compose restart
+docker compose -f docker-compose-deploy.yaml restart
 ```
 
 ### 更新应用
 
 ```bash
-# 拉取最新代码
-git pull
-
-# 重新构建并启动
-docker compose up -d --build
+# 重拉镜像并重启
+docker compose -f docker-compose-deploy.yaml pull
+docker compose -f docker-compose-deploy.yaml up -d
 ```
 
 ## 日志管理
@@ -276,53 +206,33 @@ tail -f logs/nginx/access.log
 
 ## 故障排查
 
-### 权限问题
-
-```bash
-# 将当前用户添加到 docker 组
-sudo usermod -aG docker $USER
-# 重新登录后生效
-```
-
 ### 端口冲突
 
-如果默认端口被占用，请新建或修改 `.env` 文件（参考 [配置服务端口](#4-配置服务端口可选)）：
+如果默认端口被占用，请新建或修改 `.env` 文件（参考 [配置服务端口](#3-配置服务端口可选)）：
 
 ```env
-FRONTEND_PORT=8080
 FRONTEND_SSL_PORT=8443
-BACKEND_PORT=8080
+BACKEND_PORT=23306
 ```
 
 ### 容器无法启动
 
 ```bash
 # 查看详细错误信息
-docker compose logs backend
-docker compose logs frontend
-
-# 检查镜像构建是否成功
-docker compose build --no-cache
+docker compose -f docker-compose-deploy.yaml logs backend
+docker compose -f docker-compose-deploy.yaml logs frontend
 ```
 
 ### 健康检查失败
 
 如果后端健康检查失败，检查：
 1. 后端服务是否正常启动
-2. `/api/health` 接口是否正常响应
+2. `/api/` 接口是否正常响应 (可在内部访问 `http://localhost:8000/api/`)
 
 ```bash
 # 进入后端容器调试
-docker compose exec backend bash
+docker compose -f docker-compose-deploy.yaml exec backend bash
 
 # 手动测试健康检查
-curl http://localhost:8000/api/health
-```
-
-### SSL 证书问题
-
-确保证书文件存在且路径正确：
-```bash
-ls -la frontend/local_morphk_icu.pem
-ls -la frontend/local_morphk_icu.key
+curl http://localhost:8000/api/
 ```

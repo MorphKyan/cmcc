@@ -1,0 +1,49 @@
+name: cmcc
+
+services:
+  backend:
+    image: crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com/morph-builds/cmcc-backend:latest
+    container_name: cmcc-backend
+    restart: always
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./chroma_db:/app/chroma_db
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      # 运行时功能开关
+      - ENABLE_MIC_INPUT=false
+      - ENABLE_OLLAMA=false
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - cmcc-network
+
+  frontend:
+    image: crpi-levx0ydbtxzjpzw9.cn-beijing.personal.cr.aliyuncs.com/morph-builds/cmcc-frontend:latest
+    container_name: cmcc-frontend
+    restart: always
+    ports:
+      - "${FRONTEND_SSL_PORT:-443}:443"
+    volumes:
+      - ./certs/lan_server.crt:/etc/nginx/certs/server.crt:ro
+      - ./certs/lan_server.key:/etc/nginx/certs/server.key:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - cmcc-network
+
+networks:
+  cmcc-network:
+    driver: bridge
