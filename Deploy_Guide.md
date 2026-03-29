@@ -106,7 +106,27 @@ FRONTEND_SSL_PORT=8443
 BACKEND_PORT=23306
 ```
 
-### 4. 启动服务
+### 4. 配置业务参数
+
+项目使用 TOML 格式文件管理后端核心业务参数（如 LLM 提供商、检索库、AEP 中控接口等）。
+
+请根据您的部署环境选择对应的模版并进行配置：
+
+- **生产环境 (Production)**:
+  ```bash
+  cp config/config.prod.example.toml config/config.toml
+  ```
+- **开发环境 (Development)**:
+  ```bash
+  cp config/config.dev.example.toml config/config.toml
+  ```
+
+> [!TIP]
+> 如果您需要针对特定场景进行微调，可以参考通用示例 `config/config.example.toml`。
+
+复制后，请务必使用编辑器（如 `vim`）修改 `config/config.toml` 中的关键敏感信息，例如 `api_key` 和 `base_url`。
+
+### 5. 启动服务
 
 需先登录阿里云镜像仓库（只需一次）：
 用户名：MorphKyan
@@ -121,7 +141,7 @@ docker compose -f docker-compose-deploy.yaml pull
 docker compose -f docker-compose-deploy.yaml up -d
 ```
 
-### 5. 验证部署
+### 6. 验证部署
 
 检查容器运行状态：
 ```bash
@@ -135,7 +155,7 @@ cmcc-backend    Up (healthy)             0.0.0.0:8000->8000/tcp
 cmcc-frontend   Up                       0.0.0.0:443->443/tcp
 ```
 
-### 6. 访问应用
+### 7. 访问应用
 
 - **前端页面**: `https://<服务器IP>:<FRONTEND_SSL_PORT>` (当前环境只支持 HTTPS，默认 443 端口可省略)
 - **后端 API**: 

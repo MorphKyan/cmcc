@@ -1,3 +1,4 @@
+# 生产环境配置 (Production)
 # 语音活动检测 (VAD) 配置
 [vad]
 chunk_size = 200
@@ -5,7 +6,7 @@ sample_rate = 16000
 model = "fsmn-vad"
 # VAD 最大切割音频时长(ms)
 max_single_segment_time = 20000
-save_audio_segments = false
+save_audio_segments = false # 生产环境建议关闭以节省磁盘
 # 历史缓冲区最大时长(秒)
 history_buffer_duration_sec = 30
 # 音频块队列最大容量
@@ -38,33 +39,22 @@ hotwords_data_path = "./data/hotwords.json"
 
 # RAG (检索增强生成) 配置
 [rag]
-# RAG 提供商选择: "ollama", "modelscope", 或 "dashscope"
-provider = "ollama"
+provider = "dashscope"
 chroma_db_dir = "./chroma_db"
 top_k_results = 10
 # 分类检索 top_k 配置
 door_top_k = 30
 media_top_k = 30
 device_top_k = 30
-# Ollama 配置
-ollama_embedding_model = "qwen3-embedding:0.6b"
-ollama_base_url = "http://127.0.0.1:11434"
-# ModelScope 配置
-modelscope_embedding_model = "Qwen/Qwen3-Embedding-0.6B"
-modelscope_base_url = "https://api-inference.modelscope.cn/v1"
-modelscope_api_key = "ms-b5d21340-4551-4343-86e8-e1c1430ae1f9"
 # DashScope 配置
 dashscope_embedding_model = "text-embedding-v4"
 dashscope_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-dashscope_api_key = "sk-5d29b7ca2f074ffea3b7de63c9348ee5"
+dashscope_api_key = "sk-bf4138532cbc436dbb261865901ec0a9"
 
 # 大语言模型 (LLM) 配置
 [llm]
 # LLM 提供商选择: "ollama" 或 "modelscope"
 provider = "modelscope"
-# ollama 配置
-ollama_model = "qwen3:8b"
-ollama_base_url = "http://127.0.0.1:11434"
 # ModelScope 配置
 modelscope_model = "Qwen/Qwen3-30B-A3B-Instruct-2507"
 modelscope_base_url = "https://api-inference.modelscope.cn/v1"
@@ -77,15 +67,9 @@ retry_delay = 0.1
 request_timeout = 10
 connection_timeout = 10
 
-# 火山引擎配置 (备用)
-[volcengine]
-ark_api_key = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
-ark_base_url = "https://ark.cn-beijing.volces.com/api/v3"
-llm_model_name = "doubao-seed-1-6-flash-250715"
-
 # AEP中控系统配置
 [aep]
-#base_url = "http://114.242.9.52:9088/aep/voice/command"
+# 生产环境通常通过 Docker 宿主机网关访问
 base_url = "http://host.docker.internal:8088/aep/voice/command"
 sign_salt = "cE0aM0qC0dB4aD2"
 request_timeout = 10
@@ -95,4 +79,4 @@ request_timeout = 10
 model_dir = "./models/vits-melo-tts-zh_en"
 speed = 1.0
 speaker_id = 0
-num_threads = 2
+num_threads = 4
