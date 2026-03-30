@@ -55,6 +55,11 @@ class BaseRAGProcessor(ABC):
         
         self.bm25_retriever = BM25Retriever(persist_dir=os.path.join(self.settings.chroma_db_dir, "bm25"))
         
+        # Embedding token用量统计
+        self._total_embed_chars = 0
+        self._total_embed_docs = 0
+        self._total_embed_queries = 0
+        
         logger.info("{class_name}已创建", class_name=self.__class__.__name__)
 
     @abstractmethod
@@ -149,6 +154,18 @@ class BaseRAGProcessor(ABC):
             raise RuntimeError(f"RAG处理器未准备就绪，当前状态: {self.status}")
         
         k = top_k if top_k is not None else self.settings.top_k_results
+        
+        # 记录查询Embedding用量
+        query_chars = len(query)
+        self._total_embed_chars += query_chars
+        self._total_embed_queries += 1
+        logger.info(
+            "RAG检索 | 查询Embedding - 字符数: {chars}, 累计查询: {total_queries}次, 累计字符: {total_chars}",
+            chars=query_chars,
+            total_queries=self._total_embed_queries,
+            total_chars=self._total_embed_chars
+        )
+        
         logger.info("正在为查询检索上下文: '{query}', 类型过滤: {types}, top_k: {k}", 
                     query=query, types=metadata_types, k=k)
         
@@ -261,6 +278,16 @@ class BaseRAGProcessor(ABC):
             self.status = RAGStatus.INITIALIZING
             await asyncio.to_thread(self.vector_store.reset_collection)
             documents = self._load_all_documents()
+            
+            # 记录刷新时的Embedding用量
+            total_chars = sum(len(doc.page_content) for doc in documents)
+            self._total_embed_chars += total_chars
+            self._total_embed_docs += len(documents)
+            logger.info(
+                "刷新数据库 | Embedding用量 - 文档数: {doc_count}, 总字符数: {total_chars}",
+                doc_count=len(documents), total_chars=total_chars
+            )
+            
             await asyncio.to_thread(self.vector_store.add_documents, documents)
             await asyncio.to_thread(self.bm25_retriever.build_index, documents)
             self.status = RAGStatus.READY
@@ -277,6 +304,16 @@ class BaseRAGProcessor(ABC):
         """从CSV加载文档，创建向量数据库并持久化到磁盘"""
         try:
             documents = self._load_all_documents()
+            
+            # 记录批量Embedding用量
+            total_chars = sum(len(doc.page_content) for doc in documents)
+            self._total_embed_chars += total_chars
+            self._total_embed_docs += len(documents)
+            logger.info(
+                "创建向量数据库 | Embedding用量 - 文档数: {doc_count}, 总字符数: {total_chars}",
+                doc_count=len(documents), total_chars=total_chars
+            )
+            
             logger.info("正在创建向量嵌入...")
             create_db_call = functools.partial(
                 Chroma.from_documents,

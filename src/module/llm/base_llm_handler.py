@@ -102,6 +102,30 @@ class BaseLLMHandler(ABC):
         
         logger.debug("处理链构建完成")
 
+    def _log_token_usage(self, response, label: str = "LLM调用") -> None:
+        """
+        记录本次LLM调用的token消耗量。
+        
+        使用 LangChain 标准化的 usage_metadata 属性获取 token 用量，
+        该属性兼容所有 LLM Provider（OpenAI、DashScope、Ollama 等）。
+        
+        Args:
+            response: LLM返回的AIMessage
+            label: 日志标签，用于区分不同场景的调用
+        """
+        if not hasattr(response, 'usage_metadata') or response.usage_metadata is None:
+            logger.debug("{label} | Token用量信息不可用", label=label)
+            return
+        
+        usage = response.usage_metadata
+        logger.info(
+            "{label} | Token消耗 - 输入: {input_tokens}, 输出: {output_tokens}, 总计: {total_tokens}",
+            label=label,
+            input_tokens=usage.get('input_tokens', 'N/A'),
+            output_tokens=usage.get('output_tokens', 'N/A'),
+            total_tokens=usage.get('total_tokens', 'N/A'),
+        )
+
     def _on_tools_updated(self) -> None:
         """
         工具更新回调 - 当动态工具发生变化时重建工具列表和处理链。
@@ -171,7 +195,8 @@ class BaseLLMHandler(ABC):
             }
 
             import asyncio
-            await asyncio.wait_for(self.chain.ainvoke(health_check_input), timeout=5.0)
+            health_response = await asyncio.wait_for(self.chain.ainvoke(health_check_input), timeout=5.0)
+            self._log_token_usage(health_response, label="健康检查")
 
             return True
         except Exception as e:
@@ -199,6 +224,7 @@ class BaseLLMHandler(ABC):
         try:
             chain_input = self._prepare_chain_input(user_input, rag_docs, user_location, chat_history)
             response = await self.chain.ainvoke(chain_input)
+            self._log_token_usage(response, label="get_response")
             return self._format_response(response)
         except Exception as api_error:
             logger.exception("调用LLM API时出错: {error}", error=str(api_error))
@@ -235,6 +261,7 @@ class BaseLLMHandler(ABC):
         for initial_attempt in range(max_retries):
             try:
                 ai_msg = await self.chain.ainvoke(chain_input)
+                self._log_token_usage(ai_msg, label=f"get_response_with_retries(初始调用, attempt={initial_attempt + 1})")
                 break  # 成功则退出循环
             except Exception as e:
                 error_str = str(e)
@@ -332,6 +359,7 @@ class BaseLLMHandler(ABC):
             
             try:
                 ai_msg = await self.chain.ainvoke(chain_input)
+                self._log_token_usage(ai_msg, label=f"get_response_with_retries(重试, attempt={attempt + 1})")
                 messages.append(ai_msg)
             except Exception as e:
                 logger.error(f"LLM retry call failed: {e}")
