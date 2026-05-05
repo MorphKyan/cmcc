@@ -77,13 +77,21 @@ cd cmcc
 
 ### 2. 下载模型文件
 
-应用运行需要预选下载音频处理模型。请确保服务器已安装 Python 并在项目根目录下执行：
+应用运行需要预选下载音频处理和语音合成模型。请在项目根目录下依次执行：
 
+**下载 ASR & VAD 模型 (基础识别模型)：**
 ```bash
 python download_models.py
 ```
+该脚本会自动下载并验证 VAD 和 SenseVoiceSmall 等模型。
 
-该脚本会自动从 HuggingFace 和 GitHub 下载并验证模型文件（包含 VAD、SenseVoiceSmall 等），并存放在 `./models` 目录。
+**下载 TTS 模型 (语音合成模型)：**
+```bash
+python tests/download_tts_models.py
+```
+该脚本会下载中英文 TTS 模型，确保应用可以正常进行语音播报。
+
+所有模型文件都将存放在 `./models` 目录中。
 
 ### 3. 配置服务端口（可选）
 
