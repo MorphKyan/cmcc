@@ -2,11 +2,7 @@
 
 本文档描述了如何接入数据服务 API，包括设备、区域、媒体、门数据的批量上传、查询和清空，用户位置的更新，以及 RAG 服务的管理与查询。
 
-## 基础信息
-
-- **基础 URL**: 
-  - 数据管理: `/data`
-  - RAG 服务: `/rag`
+- **基础 URL**: `/api`
 - **数据格式**: JSON
 
 ---
@@ -16,7 +12,7 @@
 ### 1.1 批量上传设备
 上传一批设备数据到系统中。
 
-- **接口**: `POST /data/devices/batch`
+- **接口**: `POST /api/data/devices/batch`
 - **Content-Type**: `application/json`
 
 **请求参数 (JSON Body)**:
@@ -69,7 +65,7 @@
 ### 1.2 获取所有设备
 获取当前系统中的所有设备数据。
 
-- **接口**: `GET /data/devices`
+- **接口**: `GET /api/data/devices`
 
 **响应示例**:
 ```json
@@ -87,7 +83,7 @@
 ### 1.3 清空设备数据
 清空系统中所有的设备数据。
 
-- **接口**: `DELETE /data/devices`
+- **接口**: `DELETE /api/data/devices`
 
 **响应示例**:
 ```json
@@ -104,7 +100,7 @@
 ### 2.1 批量上传区域
 上传一批区域数据。
 
-- **接口**: `POST /data/areas/batch`
+- **接口**: `POST /api/data/areas/batch`
 - **Content-Type**: `application/json`
 
 **请求参数 (JSON Body)**:
@@ -136,7 +132,7 @@
 ```
 
 ### 2.2 获取所有区域
-- **接口**: `GET /data/areas`
+- **接口**: `GET /api/data/areas`
 
 **响应示例**:
 ```json
@@ -150,7 +146,7 @@
 ```
 
 ### 2.3 清空区域数据
-- **接口**: `DELETE /data/areas`
+- **接口**: `DELETE /api/data/areas`
 
 **响应示例**:
 ```json
@@ -167,7 +163,7 @@
 ### 3.1 批量上传媒体数据
 上传一批媒体资源数据（如视频、音频等）。
 
-- **接口**: `POST /data/media/batch`
+- **接口**: `POST /api/data/media/batch`
 - **Content-Type**: `application/json`
 
 **请求参数 (JSON Body)**:
@@ -207,7 +203,7 @@
 ```
 
 ### 3.2 获取所有媒体数据
-- **接口**: `GET /data/media`
+- **接口**: `GET /api/data/media`
 
 **响应示例**:
 ```json
@@ -222,7 +218,7 @@
 ```
 
 ### 3.3 清空媒体数据
-- **接口**: `DELETE /data/media`
+- **接口**: `DELETE /api/data/media`
 
 **响应示例**:
 ```json
@@ -237,7 +233,7 @@
 ## 4. 门禁资源管理 (Doors)
 
 ### 4.1 批量上传门数据
-- **接口**: `POST /data/doors/batch`
+- **接口**: `POST /api/data/doors/batch`
 - **Content-Type**: `application/json`
 
 **请求参数 (JSON Body)**:
@@ -272,7 +268,7 @@
 ```
 
 ### 4.2 获取所有门数据
-- **接口**: `GET /data/doors`
+- **接口**: `GET /api/data/doors`
 
 **响应示例**:
 ```json
@@ -288,7 +284,7 @@
 ```
 
 ### 4.3 清空门数据
-- **接口**: `DELETE /data/doors`
+- **接口**: `DELETE /api/data/doors`
 
 **响应示例**:
 ```json
@@ -308,7 +304,7 @@
 > [!NOTE]
 > 需要客户端先建立 WebSocket 连接后才能更新位置，否则会返回 404 错误。
 
-- **接口**: `POST /data/location`
+- **接口**: `POST /api/data/location`
 - **Content-Type**: `application/json`
 
 **请求参数 (JSON Body)**:
@@ -352,7 +348,7 @@
 ### 6.1 获取 RAG 状态
 获取 RAG 处理器的当前状态。
 
-- **接口**: `GET /rag/status`
+- **接口**: `GET /api/rag/status`
 
 **状态说明**:
 
@@ -388,7 +384,7 @@
 ### 6.2 刷新 RAG 数据库
 刷新 RAG 数据库端点。主要用于在更新了底层数据文件后，手动触发 RAG 向量数据库的刷新。
 
-- **接口**: `POST /rag/refresh`
+- **接口**: `POST /api/rag/refresh`
 - **Content-Type**: `application/json`
 
 **响应示例**:
@@ -402,7 +398,7 @@
 ### 6.3 重新初始化 RAG
 异步触发 RAG 处理器的重新初始化。适用于解决外部依赖（如 Ollama 服务或数据文件）问题后需要重新启动 RAG 服务的场景。
 
-- **接口**: `POST /rag/reinitialize`
+- **接口**: `POST /api/rag/reinitialize`
 - **状态码**: `202 Accepted` (任务已接受，后台执行中)
 
 > [!IMPORTANT]
@@ -425,7 +421,7 @@
 ### 6.4 查询 RAG 数据库
 直接查询 RAG 向量数据库，获取与输入相关的上下文信息。
 
-- **接口**: `POST /rag/query`
+- **接口**: `POST /api/rag/query`
 - **Content-Type**: `application/json`
 
 **请求参数 (JSON Body)**:
