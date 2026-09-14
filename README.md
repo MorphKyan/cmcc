@@ -19,8 +19,7 @@
 ├── src/
 │   ├── __init__.py
 │   ├── config.py               # 存放所有配置，如API密钥、模型路径、Prompt模板
-│   ├── data_loader.py          # 从CSV加载和格式化文档
-│   ├── ark_llm_handler.py      # 封装与火山引擎大模型的交互逻辑
+│   ├── llm/                    # 封装与大模型的交互逻辑
 │   ├── ollama_llm_handler.py   # 封装与本地Ollama大模型的交互逻辑
 │   ├── rag_processor.py        # 负责创建和查询本地ChromaDB向量数据库
 │   ├── audio_input.py          # 处理麦克风音频输入
@@ -64,7 +63,7 @@
     -   在macOS上: `brew install portaudio`
 
 4.  **配置API Key**:
-    打开 `src/config/config.py` 文件，找到 `ARK_API_KEY` 变量，并将其替换为您自己的火山引擎API密钥。
+    打开 `config/config.toml` 文件，配置相应的大模型及向量模型 API 密钥（例如 `openai_compatible_api_key` 或 `dashscope_api_key`）。
 
 ### 配置文件优先级
 
@@ -130,7 +129,7 @@ python main.py
 4.  **语音转文字 (ASR)**: 将检测到的语音段发送给FunASR模型，转换为文本。
 5.  **检索 (Retrieve)**: 识别出的文本被用作查询，在ChromaDB中进行语义搜索，找出最相关的几条知识（例如，相关的视频或设备信息）。
 6.  **增强 (Augment)**: 检索到的知识被格式化并插入到一个预设的Prompt模板中，形成一个内容丰富的上下文。
-7.  **生成 (Generate)**: 增强后的Prompt被发送给大模型（火山引擎或Ollama）。
+7.  **生成 (Generate)**: 增强后的Prompt被发送给大模型（OpenAI兼容大模型、百炼或Ollama）。
 8.  **输出**: 大模型根据上下文和用户指令，生成一个结构化的JSON命令，并打印在控制台。
 
 ## 运行API服务

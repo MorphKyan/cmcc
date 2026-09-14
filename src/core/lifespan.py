@@ -41,10 +41,10 @@ async def lifespan(app: FastAPI):
 
         # Initialize RAG processor based on provider configuration
         rag_provider = rag_config.provider.lower()
-        if rag_provider == "modelscope":
-            from src.module.rag.modelscope_rag_processor import ModelScopeRAGProcessor
-            dependencies.rag_processor = ModelScopeRAGProcessor(rag_config)
-            logger.info("使用ModelScope RAG处理器")
+        if rag_provider in ("openai_compatible", "openai", "siliconflow", "modelscope"):
+            from src.module.rag.openai_compatible_rag_processor import OpenAICompatibleRAGProcessor
+            dependencies.rag_processor = OpenAICompatibleRAGProcessor(rag_config)
+            logger.info("使用 OpenAI-Compatible RAG处理器")
         elif rag_provider == "dashscope":
             from src.module.rag.dashscope_rag_processor import DashScopeRAGProcessor
             dependencies.rag_processor = DashScopeRAGProcessor(rag_config)
@@ -60,10 +60,10 @@ async def lifespan(app: FastAPI):
 
         # Initialize LLM processor based on provider configuration
         llm_provider = llm_config.provider.lower()
-        if llm_provider == "modelscope":
-            from src.module.llm.modelscope_llm_handler import ModelScopeLLMHandler
-            dependencies.llm_processor = ModelScopeLLMHandler(llm_config)
-            logger.info("使用ModelScope LLM处理器")
+        if llm_provider in ("openai_compatible", "openai", "siliconflow", "modelscope"):
+            from src.module.llm.openai_compatible_llm_handler import OpenAICompatibleLLMHandler
+            dependencies.llm_processor = OpenAICompatibleLLMHandler(llm_config)
+            logger.info("使用 OpenAI-Compatible LLM处理器")
         elif llm_provider == "dashscope":
             from src.module.llm.dashscope_llm_handler import DashScopeLLMHandler
             dependencies.llm_processor = DashScopeLLMHandler(llm_config)

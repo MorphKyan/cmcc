@@ -7,8 +7,7 @@ from src.config.config import AppSettings, VADSettings, ASRSettings, RAGSettings
 def test_get_current_config(client):
     """
     Test GET /config/current endpoint for successful config retrieval.
-    Verifies that the response structure matches expected keys and values,
-    and specifically ensures 'volcengine' is absent.
+    Verifies that the response structure matches expected keys and values.
     """
     # Mock settings to return deterministic values
     mock_settings = MagicMock(spec=AppSettings)
@@ -64,7 +63,6 @@ def test_get_current_config(client):
         assert "asr" in config_data
         assert "rag" in config_data
         assert "llm" in config_data
-        assert "volcengine" not in config_data  # Ensure this is gone
 
         # Verify specific values to ensure correct mapping
         assert config_data["vad"]["model"] == "test-vad-model"

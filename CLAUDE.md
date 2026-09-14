@@ -36,14 +36,15 @@ This is a real-time voice control center for China Mobile's smart exhibition hal
 │   │   ├── rag/                   # Retrieval-Augmented Generation
 │   │   │   ├── __init__.py
 │   │   │   ├── base_rag_processor.py  # Base RAG processor interface
-│   │   │   ├── modelscope_rag_processor.py  # ModelScope RAG implementation
-│   │   │   └── rag_processor.py   # Main RAG processor
+│   │   │   ├── openai_compatible_rag_processor.py  # OpenAI-compatible RAG implementation
+│   │   │   ├── dashscope_rag_processor.py  # DashScope RAG implementation
+│   │   │   └── ollama_rag_processor.py     # Ollama RAG implementation
 │   │   ├── llm/                   # Large Language Model handlers
 │   │   │   ├── __init__.py
 │   │   │   ├── base_llm_handler.py    # Base LLM handler interface
-│   │   │   ├── ark_llm_handler.py     # Interface with VolcEngine's large model
-│   │   │   ├── modelscope_llm_handler.py  # ModelScope LLM implementation
-│   │   │   └── ollama_llm_handler.py  # Interface with local Ollama large model
+│   │   │   ├── openai_compatible_llm_handler.py  # OpenAI-compatible LLM implementation
+│   │   │   ├── dashscope_llm_handler.py          # DashScope LLM implementation
+│   │   │   └── ollama_llm_handler.py             # Interface with local Ollama large model
 │   │   └── data_loader.py         # Loads and formats documents from CSV
 │   ├── services/                  # Business logic services
 │   │   ├── __init__.py
@@ -62,7 +63,7 @@ The system follows a modular microservice architecture with the following key co
 - **VAD Processor** (`src/module/vad/`) - Voice Activity Detection to filter out silence using FunASR
 - **ASR Processor** (`src/module/asr/`) - Speech-to-text conversion using FunASR models
 - **RAG Processor** (`src/module/rag/`) - Context retrieval using ChromaDB vector database with multiple implementations
-- **LLM Handlers** (`src/module/llm/`) - Interfaces with different LLM providers (VolcEngine Ark, Ollama, ModelScope). Ollama and ModelScope handlers support async initialization to prevent blocking during startup.
+- **LLM Handlers** (`src/module/llm/`) - Interfaces with different LLM providers. Handlers support async initialization to prevent blocking during startup.
 - **Data Loader** (`src/module/data_loader.py`) - Loads knowledge base from CSV files in the `data/` directory
 - **Configuration** (`src/config/`) - Centralized configuration management and logging setup
 - **API Layer** (`src/api/`) - RESTful endpoints for audio processing and RAG database management

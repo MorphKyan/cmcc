@@ -19,6 +19,10 @@ def test_rag_settings():
     The directory path is created but NOT the directory itself - this allows
     the RAG processor to detect it doesn't exist and create fresh DB from CSV data.
     """
+    dashscope_api_key = os.getenv("DASHSCOPE_API_KEY")
+    if not dashscope_api_key:
+        pytest.skip("DASHSCOPE_API_KEY is required for external RAG integration tests")
+
     # Create a unique temp directory path that doesn't exist yet
     temp_base = tempfile.gettempdir()
     temp_dir = os.path.join(temp_base, f"rag_test_db_{uuid.uuid4().hex[:8]}")
@@ -29,7 +33,7 @@ def test_rag_settings():
         provider="dashscope",
         dashscope_embedding_model=os.getenv("DASHSCOPE_EMBEDDING_MODEL", "text-embedding-v3"),
         dashscope_base_url=os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
-        dashscope_api_key=os.getenv("DASHSCOPE_API_KEY", "sk-5d29b7ca2f074ffea3b7de63c9348ee5"),
+        dashscope_api_key=dashscope_api_key,
     )
     
     yield settings
@@ -70,4 +74,3 @@ COMBINED_QUERIES = [
     ("在行业应用全景屏上播放智慧城市的视频", ["行业应用全景屏", "智慧城市"]),
     ("未来科技赋能中心有哪些屏幕可以用", ["未来科技赋能中心", "屏幕"]),
 ]
-

@@ -174,8 +174,8 @@ class DataSettings(BaseSettings):
 class RAGSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="RAG_")
 
-    # RAG Provider selection: "ollama", "modelscope", or "dashscope"
-    provider: str = "modelscope"
+    # RAG Provider selection: "openai_compatible", "dashscope", or "ollama"
+    provider: str = "openai_compatible"
 
     # Common settings
     chroma_db_dir: str = os.path.join(project_dir, "chroma_db")
@@ -185,19 +185,25 @@ class RAGSettings(BaseSettings):
     media_top_k: int = 30  # 媒体类型文档检索数量
     device_top_k: int = 30  # 设备类型文档检索数量
 
+    # OpenAI-compatible settings (SiliconFlow, ModelScope, etc.)
+    openai_compatible_embedding_model: str = "BAAI/bge-m3"
+    openai_compatible_base_url: str = "https://api.siliconflow.cn/v1"
+    openai_compatible_api_key: SecretStr = SecretStr("")
+    openai_compatible_chunk_size: int = 16
+
     # Ollama-specific settings
     ollama_embedding_model: str = "qwen3-embedding:0.6b"
     ollama_base_url: str = "http://127.0.0.1:11434"
 
-    # ModelScope-specific settings
+    # ModelScope-specific fallback settings
     modelscope_embedding_model: str = "Qwen/Qwen3-Embedding-0.6B"
     modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
-    modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
+    modelscope_api_key: SecretStr = SecretStr("")
 
     # dashscope-specific settings (using OpenAI Compatible API)
     dashscope_embedding_model: str = "text-embedding-v4"
     dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    dashscope_api_key: SecretStr = SecretStr("sk-5d29b7ca2f074ffea3b7de63c9348ee5")  # 请手动填写百炼平台的 API Key
+    dashscope_api_key: SecretStr = SecretStr("")  # 请手动填写百炼平台的 API Key
 
 
 # LLM 配置默认值常量
@@ -211,22 +217,27 @@ class LLMSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LLM_")
     system_prompt_template: str = SYSTEM_PROMPT_TEMPLATE
     user_context_template: str = USER_CONTEXT_TEMPLATE
-    # LLM Provider selection: "ollama", "modelscope", or "dashscope"
-    provider: str = "modelscope"
+    # LLM Provider selection: "openai_compatible", "dashscope", or "ollama"
+    provider: str = "openai_compatible"
+
+    # OpenAI-compatible settings (SiliconFlow, ModelScope, DeepSeek, etc.)
+    openai_compatible_model: str = "Qwen/Qwen2.5-7B-Instruct"
+    openai_compatible_base_url: str = "https://api.siliconflow.cn/v1"
+    openai_compatible_api_key: SecretStr = SecretStr("")
 
     # ollama specific settings
     ollama_model: str = "qwen3:8b"
     ollama_base_url: str = "http://127.0.0.1:11434"
 
-    # ModelScope specific settings
+    # ModelScope specific fallback settings
     modelscope_model: str = "Qwen/Qwen3-8B"
     modelscope_base_url: str = "https://api-inference.modelscope.cn/v1"
-    modelscope_api_key: SecretStr = SecretStr("ms-b5d21340-4551-4343-86e8-e1c1430ae1f9")
+    modelscope_api_key: SecretStr = SecretStr("")
 
     # DashScope specific settings (using OpenAI Compatible API)
     dashscope_model: str = "qwen-plus"
     dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    dashscope_api_key: SecretStr = SecretStr("sk-5d29b7ca2f074ffea3b7de63c9348ee5")
+    dashscope_api_key: SecretStr = SecretStr("")
     # Validation and retry settings
     max_validation_retries: int = DEFAULT_MAX_VALIDATION_RETRIES
     retry_delay: float = DEFAULT_RETRY_DELAY

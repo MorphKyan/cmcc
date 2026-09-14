@@ -38,37 +38,42 @@ hotwords_data_path = "./data/hotwords.json"
 
 # RAG (检索增强生成) 配置
 [rag]
-# RAG 提供商选择: "ollama", "modelscope", 或 "dashscope"
-provider = "ollama"
+# RAG 提供商选择: "openai_compatible", "dashscope", 或 "ollama"
+provider = "openai_compatible"
 chroma_db_dir = "./chroma_db"
 top_k_results = 10
 # 分类检索 top_k 配置
 door_top_k = 30
 media_top_k = 30
 device_top_k = 30
+# OpenAI 兼容配置（支持硅基流动 SiliconFlow、魔搭 ModelScope 等）
+openai_compatible_embedding_model = "BAAI/bge-m3"
+openai_compatible_base_url = "https://api.siliconflow.cn/v1"
+openai_compatible_api_key = ""
+openai_compatible_chunk_size = 16
 # Ollama 配置
 ollama_embedding_model = "qwen3-embedding:0.6b"
 ollama_base_url = "http://127.0.0.1:11434"
-# ModelScope 配置
-modelscope_embedding_model = "Qwen/Qwen3-Embedding-0.6B"
-modelscope_base_url = "https://api-inference.modelscope.cn/v1"
-modelscope_api_key = "ms-b5d21340-4551-4343-86e8-e1c1430ae1f9"
-# DashScope 配置
+# DashScope 配置 (生产环境用)
 dashscope_embedding_model = "text-embedding-v4"
 dashscope_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-dashscope_api_key = "sk-5d29b7ca2f074ffea3b7de63c9348ee5"
+dashscope_api_key = ""
 
 # 大语言模型 (LLM) 配置
 [llm]
-# LLM 提供商选择: "ollama" 或 "modelscope"
-provider = "modelscope"
+# LLM 提供商选择: "openai_compatible", "dashscope", 或 "ollama"
+provider = "openai_compatible"
+# OpenAI 兼容配置（支持硅基流动 SiliconFlow、魔搭 ModelScope、DeepSeek 等）
+openai_compatible_model = "Qwen/Qwen2.5-7B-Instruct"
+openai_compatible_base_url = "https://api.siliconflow.cn/v1"
+openai_compatible_api_key = ""
 # ollama 配置
 ollama_model = "qwen3:8b"
 ollama_base_url = "http://127.0.0.1:11434"
-# ModelScope 配置
-modelscope_model = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-modelscope_base_url = "https://api-inference.modelscope.cn/v1"
-modelscope_api_key = "ms-b5d21340-4551-4343-86e8-e1c1430ae1f9"
+# DashScope 配置 (生产环境用)
+dashscope_model = "qwen-plus"
+dashscope_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+dashscope_api_key = ""
 
 # Validation and retry settings
 max_validation_retries = 2
@@ -76,12 +81,6 @@ retry_delay = 0.1
 # Network timeout settings
 request_timeout = 10
 connection_timeout = 10
-
-# 火山引擎配置 (备用)
-[volcengine]
-ark_api_key = "aabd9362-9ca8-43ac-bb4d-828f0ba98f4d"
-ark_base_url = "https://ark.cn-beijing.volces.com/api/v3"
-llm_model_name = "doubao-seed-1-6-flash-250715"
 
 # AEP中控系统配置
 [aep]
