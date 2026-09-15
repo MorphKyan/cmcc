@@ -51,6 +51,7 @@ class OpenAICompatibleLLMHandler(BaseLLMHandler):
                 top_p=0.8,
                 timeout=self.settings.request_timeout,
                 max_retries=0,
+                extra_body={"enable_thinking": False},
             )
             logger.info("OpenAI 兼容模型创建成功，使用模型: {model}, base_url: {base_url}", model=model_name, base_url=base_url)
             return model

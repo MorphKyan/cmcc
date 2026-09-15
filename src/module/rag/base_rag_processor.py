@@ -100,7 +100,8 @@ class BaseRAGProcessor(ABC):
                 self.embedding_model = self._create_embedding_model()
                 
                 # 加载或创建向量数据库
-                if not os.path.exists(self.chroma_db_dir):
+                chroma_db_file = os.path.join(self.chroma_db_dir, "chroma.sqlite3")
+                if not os.path.exists(chroma_db_file):
                     logger.info("未找到本地向量数据库，正在创建...")
                     await self._create_and_persist_db(self.embedding_model)
                 else:
