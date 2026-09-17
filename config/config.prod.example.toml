@@ -53,12 +53,12 @@ dashscope_api_key = ""
 
 # 大语言模型 (LLM) 配置
 [llm]
-# LLM 提供商选择: "ollama" 或 "modelscope"
-provider = "modelscope"
-# ModelScope 配置
-modelscope_model = "Qwen/Qwen3-30B-A3B-Instruct-2507"
-modelscope_base_url = "https://api-inference.modelscope.cn/v1"
-modelscope_api_key = ""
+# LLM 提供商选择: "openai_compatible", "dashscope", 或 "ollama"
+provider = "openai_compatible"
+# OpenAI 兼容配置
+openai_compatible_model = "qwen3.7-flash"
+openai_compatible_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+openai_compatible_api_key = ""
 
 # Validation and retry settings
 max_validation_retries = 2
