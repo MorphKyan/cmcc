@@ -47,8 +47,6 @@ class OpenAICompatibleLLMHandler(BaseLLMHandler):
                 model=model_name,
                 base_url=base_url,
                 api_key=api_key,
-                temperature=0.7,
-                top_p=0.8,
                 timeout=self.settings.request_timeout,
                 max_retries=0,
                 extra_body={"enable_thinking": False},
